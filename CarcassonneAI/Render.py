@@ -1,6 +1,6 @@
 from Board import Board, Node
 from Feature import *
-from Tile import Tile
+from Tile import Tile, rotate
 
 def printFeature(tile: Tile, cardinal: int) -> str:
     if tile.edges[cardinal] == FeatType.CITY:
@@ -12,12 +12,39 @@ def printFeature(tile: Tile, cardinal: int) -> str:
         return "-"
     return "|"
 
+
 def renderTile(tile: Tile):
     print(" -  " + printFeature(tile, 0) + "  - ")   
     print("|       |")
     print(printFeature(tile,3) + "  T." + str(tile.id) + "  " + printFeature(tile,1))
     print("|       |")
     print(" -  " + printFeature(tile, 2) + "  - ")
+
+
+def renderPlayOptions(tile: Tile):
+    print("Tile Orientations: \n")
+
+    orientations = [rotate(tile, i) for i in range(4)]
+
+    # print north edges
+    output = ""
+    for t in orientations:
+        output += " -  " + printFeature(t, 0) + "  -   "
+    print(output)
+    print("|       |  " * 4)
+    
+    # print west and east
+    output = ""
+    for t in orientations:
+        output += printFeature(t,3) + "  T." + str(t.id) + "  " + printFeature(t,1) + "  "
+    print(output)
+    print("|       |  " * 4)
+
+    # print south rows
+    output = ""
+    for t in orientations:
+        output += " -  " + printFeature(t, 2) + "  -   "
+    print(output)
 
 # render a board with basic characters - goes row by row 
 def render2(board: Board):
@@ -53,7 +80,7 @@ def render2(board: Board):
         for x in range(board.minX, board.maxX+1):
             node = board.board.get((x,y))
             if (x, y) in board.openLocations:
-                output += "|  opn  |"
+                output += "|  open |"
             elif node is None:
                 output += "|       |"
             else:

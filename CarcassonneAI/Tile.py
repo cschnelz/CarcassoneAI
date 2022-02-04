@@ -23,6 +23,12 @@ class Tile:
 
 # returns a rotated version of input tile where north becomes east = 1, south = 2, west = 3
 def rotate(tile: Tile, i: int) -> Tile:
-    newFeatures = tile.features
-    for feat in newFeatures:
-        
+    newFeatures = []
+    for feat in tile.features:
+        if feat.featType == FeatType.CITY:
+            newEdges = [(e + i) % 4 for e in feat.edges]
+            newFeatures.append(City(newEdges, feat.shield))
+        elif feat.featType == FeatType.ROAD:
+            newEdges = [(e + i) % 4 for e in feat.edges]
+            newFeatures.append(Road(newEdges, feat.terminated))
+    return Tile(tile.id, newFeatures)

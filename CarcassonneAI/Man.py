@@ -1,5 +1,5 @@
 from Manager import Manager
-from Tile import Tile
+from Tile import Tile, rotate
 from Feature import *
 from Board import Board
 import Render 
@@ -33,10 +33,11 @@ print(board.board.get((0,0)).neighbors[3].tile.id)
 
 print('\n\n')
 Render.render2(board)
+print('\n\n')
 
-print('\n')
-print("curr tile:")
-Render.renderTile(tileList[5])
+
+#t = rotate(tileList[5], 1)
+Render.renderPlayOptions(tileList[5])
 
 #2, 0, 4
 

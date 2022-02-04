@@ -1,0 +1,686 @@
+[
+    {
+        "id" : 1,
+        "features" : [
+            { 
+                "City" : {"Edges" : [0,3], "Shield" : "True"}
+            }, 
+            { 
+                "Road" : {"Edges" : [1,2]}
+            }
+        ]
+    },
+    {
+        "id" : 2,
+        "features" : [
+            {
+                "City" : {"Edges" : [0]}
+            },
+            {
+                "City" : {"Edges" : [1]}
+            }
+        ]
+    },
+    {
+        "id" : 3,
+        "features" : [
+            {
+                "City" : {"Edges" : [0,1,3]}
+            }
+        ]
+    },
+    {
+        "id" : 4,
+        "features" : [
+            {
+                "City" : {"Edges" : [0]}
+            }
+        ]
+    },
+    {
+        "id" : 5,
+        "features" : [
+            {
+                "Road" : {"Edges" : [0,2]}
+            },
+            {
+                "Garden" : {}
+            }
+        ]
+    },
+    {
+        "id" : 6,
+        "features" : [
+            {
+                "Road" : {"Edges" : [1,2,3], "Terminated" : "True"}
+            }
+        ]
+    },
+    {
+        "id" : 7,
+        "features" : [
+            {
+                "Chapel" : {}
+            }
+        ]
+    },
+    {
+        "id" : 8,
+        "features" : [
+            {
+                "City" : {"Edges" : [0]}
+            },
+            {
+                "Road" : {"Edges" : [1,2]}
+            }
+        ]
+    },
+    {
+        "id" : 9,
+        "features" : [
+            {
+                "City" : {"Edges" : [0]}
+            },
+            {
+                "Road" : {"Edges" : [1,2,3]}
+            }
+        ]
+    },
+    {
+        "id" : 10,
+        "features" : [
+            {
+                "Road" : {"Edges" : [0,2]}
+            }
+        ]
+    },
+    {
+        "id" : 11,
+        "features" : [
+            {
+                "City" : {"Edges": [0]}
+            },
+            {
+                "Garden" : {}
+            }
+        ]
+    },
+    {
+        "id" : 12,
+        "features" : [
+            {
+                "City" : {"Edges": [0,1], "Shield": "True"}
+            },
+            {
+                "Garden" : {}
+            }
+        ]
+    },
+    {
+        "id" : 13,
+        "features" : [
+            {
+                "City" : {"Edges": [0]}
+            },
+            {
+                "Road" : {"Edges": [2,3]}
+            }
+        ]
+    },
+    {
+        "id" : 14,
+        "features" : [
+            {
+                "City" : {"Edges": [0,1,3], "Shield":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 15,
+        "features" : [
+            {
+                "Road" : {"Edges":[2,3]}
+            }
+        ]
+    },
+    {
+        "id" : 16,
+        "features" : [
+            {
+                "City" : {"Edges":[0,3]}
+            },
+            {
+                "Road" : {"Edges":[1,2]}
+            }
+        ]
+    },
+    {
+        "id" : 17,
+        "features" : [
+            {
+                "Road" : {"Edges":[1,2,3], "Terminated":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 18,
+        "features" : [
+            {
+                "City" : {"Edges":[0]}
+            },
+            {
+                "Road" : {"Edges":[2,3]}
+            }
+        ]
+    },
+    {
+        "id" : 19,
+        "features" : [
+            {
+                "City" : {"Edges":[0]}
+            },
+            {
+                "Road" : {"Edges":[1,2,3], "Terminated":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 20,
+        "features" : [
+            {
+                "Chapel" : {}
+            },
+            {
+                "Road" : {"Edges":[2], "Terminated":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 21,
+        "features" : [
+            {
+                "City" : {"Edges":[0]}
+            },
+            {
+                "Road":{"Edges":[1,3]}
+            }
+        ]
+    },
+    {
+        "id" : 22,
+        "features" : [
+            {
+                "City":{"Edges":[0]}
+            },
+            {
+                "City":{"Edges":[2]}
+            }
+        ]
+    },
+    {
+        "id" : 23,
+        "features" : [
+            {
+                "City":{"Edges":[0,1,3],"Shield":"True"}
+            },
+            {
+                "Road":{"Edges":[2],"Terminated":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 24,
+        "features" : [
+            {
+                "Road":{"Edges":[1,2,3], "Terminated":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 25,
+        "features" : [
+            {
+                "Garden" :{}
+            },
+            {
+                "Road":{"Edges":[2,3]}
+            }
+        ]
+    },
+    {
+        "id" : 26,
+        "features" : [
+            {
+                "Road":{"Edges":[0,2]}
+            }
+        ]
+    },
+    {
+        "id" : 27,
+        "features" : [
+            {
+                "City":{"Edges":[0]}
+            }
+        ]
+    },
+    {
+        "id" : 28,
+        "features" : [
+            {
+                "City":{"Edges":[1,3], "Shield":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 29,
+        "features" : [
+            {
+                "Road":{"Edges":[2,3]}
+            }
+        ]
+    },
+    {
+        "id" : 30,
+        "features" : [
+            {
+                "City":{"Edges":[0,3]}
+            },
+            {
+                "Road":{"Edges":[1,2]}
+            }
+        ]
+    },
+    {
+        "id" : 31,
+        "features" : [
+            {
+                "City":{"Edges":[0,3], "Shield":"True"}
+            },
+            {
+                "Road":{"Edges":[1,2]}
+            }
+        ]
+    },
+    {
+        "id" : 32,
+        "features" : [
+            {
+                "City":{"Edges":[0]}
+            },
+            {
+                "City":{"Edges":[1]}
+            },
+            {
+                "Garden":{}
+            }
+        ]
+    },
+    {
+        "id" : 33,
+        "features" : [
+            {
+                "City":{"Edges":[0,1,3]}
+            }
+        ]
+    },
+    {
+        "id" : 34,
+        "features" : [
+            {
+                "City":{"Edges":[0]}    
+            },
+            {
+                "Road":{"Edges":[1,3]}
+            }
+        ]
+    },
+    {
+        "id" : 35,
+        "features" : [
+            {
+                "Road":{"Edges":[0,2]}
+            }
+        ]
+    },
+    {
+        "id" : 36,
+        "features" : [
+            {
+                "Chapel":{}
+            }
+        ]
+    },
+    {
+        "id" : 37,
+        "features" : [
+            {
+                "Road":{"Edges":[0,2]}
+            }
+        ]
+    },
+    {
+        "id" : 38,
+        "features" : [
+            {
+                "Chapel":{}
+            }
+        ]
+    },
+    {
+        "id" : 39,
+        "features" : [
+            {
+                "Road":{"Edges":[0,2]}
+            }
+        ]
+    },
+    {
+        "id" : 40,
+        "features" : [
+            {
+                "Road":{"Edges":[1,2,3],"Terminated":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 41,
+        "features" : [
+            {
+                "Road":{"Edges":[0,2]}
+            }
+        ]
+    },
+    {
+        "id" : 42,
+        "features" : [
+            {
+                "Road":{"Edges":[2,3]}
+            }
+        ]
+    },
+    {
+        "id" : 43,
+        "features" : [
+            {
+                "City":{"Edges":[0,1,3]}
+            },
+            {
+                "Garden":{}
+            }
+        ]
+    },
+    {
+        "id" : 44,
+        "features" : [
+            {
+                "Chapel":{}
+            },
+            {
+                "Road":{"Edges":[2], "Terminated":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 45,
+        "features" : [
+            {
+                "Road":{"Edges":[2,3]}
+            }
+        ]
+    },
+    {
+        "id" : 46,
+        "features" : [
+            {
+                "City":{"Edges":[0]}
+            },
+            {
+                "Road":{"Edges":[1,2,3], "Terminated":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 47,
+        "features" : [
+            {
+                "Road":{"Edges":[0,2]}
+            }
+        ]
+    },
+    {
+        "id" : 48,
+        "features" : [
+            {
+                "Road":{"Edges":[2,3]}
+            }
+        ]
+    },
+    {
+        "id" : 49,
+        "features" : [
+            {
+                "City":{"Edges":[0]}
+            },
+            {
+                "Road":{"Edges":[2,3]}
+            }
+        ]
+    },
+    {
+        "id" : 50,
+        "features" : [
+            {
+                "Road":{"Edges":[0,1,2,3], "Terminated":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 51,
+        "features" : [
+            {
+                "City":{"Edges":[0,1]}
+            },
+            {
+                "Garden":{}
+            }
+        ]
+    },
+    {
+        "id" : 52,
+        "features" : [
+            {
+                "City":{"Edges":[0,1,3]}
+            },
+            {
+                "Road":{"Edges":[2],"Terminated":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 53,
+        "features" : [
+            {
+                "City":{"Edges":[0]}
+            }
+        ]
+    },
+    {
+        "id" : 54,
+        "features" : [
+            {
+                "City":{"Edges":[1,3], "Shield":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 55,
+        "features" : [
+            {
+                "City":{"Edges":[0,1]}
+            }
+        ]
+    },
+    {
+        "id" : 56,
+        "features" : [
+            {
+                "Road":{"Edges":[2,3]}
+            }
+        ]
+    },
+    {
+        "id" : 57,
+        "features" : [
+            {
+                "City":{"Edges":[1,3]}
+            }
+        ]
+    },
+    {
+        "id" : 58,
+        "features" : [
+            {
+                "Road":{"Edges":[2,3]}
+            }
+        ]
+    },
+    {
+        "id" : 59,
+        "features" : [
+            {
+                "Road":{"Edges":[2,3]}    
+            }
+        ]
+    },
+    {
+        "id" : 60,
+        "features" : [
+            {
+                "Chapel":{}
+            }
+        ]
+    },
+    {
+        "id" : 61,
+        "features" : [
+            {
+                "City":{"Edges":[0]}
+            },
+            {
+                "Road":{"Edges":[1,3]}
+            }
+        ]
+    },
+    {
+        "id" : 62,
+        "features" : [
+            {
+                "City":{"Edges":[0]}
+            },
+            {
+                "City":{"Edges":[2]}
+            }
+        ]
+    },
+    {
+        "id" : 63,
+        "features" : [
+            {
+                "City":{"Edges":[0,1,2,3], "Shield":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 64,
+        "features" : [
+            {
+                "City":{"Edges":[0,3]}
+            },
+            {
+                "Road":{"Edges":[1,2]}
+            }
+        ]
+    },
+    {
+        "id" : 65,
+        "features" : [
+            {
+                "City":{"Edges":[0]}
+            }
+        ]
+    },
+    {
+        "id" : 66,
+        "features" : [
+            {
+                "City":{"Edges":[0]}
+            },
+            {
+                "Road":{"Edges":[1,2]}
+            }
+        ]
+    },
+    {
+        "id" : 67,
+        "features" : [
+            {
+                "City":{"Edges":[0,1]}
+            }
+        ]
+    },
+    {
+        "id" : 68,
+        "features" : [
+            {
+                "City":{"Edges":[0]}
+            },
+            {
+                "Road":{"Edges":[1,2]}
+            }
+        ]
+    },
+    {
+        "id" : 69,
+        "features" : [
+            {
+                "City":{"Edges":[0,1], "Shield":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 70,
+        "features" : [
+            {
+                "City":{"Edges":[0]}
+            },
+            {
+                "City":{"Edges":[2]}
+            },
+            {
+                "Garden":{}
+            }
+        ]
+    },
+    {
+        "id" : 71,
+        "features" : [
+            {
+                "City":{"Edges":[0,1,3],"Shield":"True"}
+            },
+            {
+                "Road":{"Edges":[2],"Terminated":"True"}
+            }
+        ]
+    },
+    {
+        "id" : 72,
+        "features" : [
+            {
+                "City":{"Edges":[0]}
+            },
+            {
+                "Road":{"Edges":[1,3]}
+            }
+        ]
+    }    
+]

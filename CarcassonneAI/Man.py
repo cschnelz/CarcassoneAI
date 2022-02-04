@@ -1,3 +1,4 @@
+from Manager import Manager
 from Tile import Tile
 from Feature import *
 from Board import Board
@@ -11,7 +12,7 @@ tileList = [
     Tile(2, [Road([0, 1, 2], True)]),
     Tile(3, [City([1], False)]),
     Tile(4, [City([2], False), City([3], True)]),
-    Tile(5, [Road([2], True), Road([1], False)])
+    Tile(5, [Road([2], True), City([1], False)])
 ]
 
 
@@ -33,10 +34,30 @@ print(board.board.get((0,0)).neighbors[3].tile.id)
 print('\n\n')
 Render.render2(board)
 
-print('\n\n')
-print("curr tile:\n")
+print('\n')
+print("curr tile:")
 Render.renderTile(tileList[5])
-print("isValid -1 -1?\n")
-print(board.isValid(-1, -1, tileList[5]))
 
-board.addTile(-1, -1, tileList[5])
+#2, 0, 4
+
+## def game():
+    # core game loop:
+        # draw board
+
+        # give tile to current player
+        # report valid placement options
+
+        # place tile in accordance to player/computer input
+
+        # poll for meeple placement
+
+        # check for finished features
+        # remove any meeples on said features
+        # increment score accordingly
+
+        # advance to next player
+        # continue
+
+print("\n\nsimulate a turn")
+dispatchTile = tileList[5]
+#validLocations(board, dispatchTile)

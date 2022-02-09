@@ -1,19 +1,14 @@
-from Manager import Manager
 from Tile import Tile, rotate
 from Feature import *
 from Board import Board
-import Render 
+from Render import *
+from Import import importTiles
+from Manager import buildFeatures, finishedFeature
 
 ## 0 === North, 1 === East, 2 === South, 3 === West
 
-tileList = [ 
-    Tile(0, [Road([1,3], False), City([0], True)]), 
-    Tile(1, [City([0], True)]),
-    Tile(2, [Road([0, 1, 2], True)]),
-    Tile(3, [City([1], False)]),
-    Tile(4, [City([2], False), City([3], True)]),
-    Tile(5, [Road([2], True), City([1], False)])
-]
+
+tileList = importTiles('TileSetSepRoads.json')
 
 
 tile = tileList[0]
@@ -24,21 +19,25 @@ print("\n")
 print(tileList[0].canConnectTo(tileList[2], 3))
 print(tileList[1].canConnectTo(tileList[3], 0))
 
-board = Board(tileList[0])
-board.addTile(-1, 0, tileList[2])
-board.addTile(0, -1, tileList[4])
-print(board.board)
-
-print(board.board.get((0,0)).neighbors[3].tile.id)
-
-print('\n\n')
-Render.render2(board)
-print('\n\n')
+board = Board(rotate(tileList[25], 0))
+board.addTile(0, -1, rotate(tileList[34], 2))
+board.addTile(0, -2, rotate(tileList[43], 0))
+board.addTile(0, 1, rotate(tileList[16], 2))
+board.addTile(-1, 1, rotate(tileList[46], 3))
 
 
-#t = rotate(tileList[5], 1)
-Render.renderPlayOptions(tileList[5])
+render3(board, tileList[50])
+render2(board)
 
+featureList = buildFeatures(0, 0, board.tileAt(0,0), 0, board)
+print(featureList)
+#print(finishedFeature(0, 0, board.tileAt(0,0), 0, board))
+
+tile1 = Tile(888, [City([0], False), Road([1,2], False)], 'zz', 0)
+print(tile1.grass)
+
+
+input()
 #2, 0, 4
 
 ## def game():
@@ -59,6 +58,4 @@ Render.renderPlayOptions(tileList[5])
         # advance to next player
         # continue
 
-print("\n\nsimulate a turn")
-dispatchTile = tileList[5]
 #validLocations(board, dispatchTile)

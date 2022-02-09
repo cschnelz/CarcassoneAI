@@ -58,7 +58,13 @@
         "img-code" : "w",
         "features" : [
             {
-                "Road" : {"Edges" : [1,2,3], "Terminated" : "True"}
+                "Road" : {"Edges" : [1]}
+            },
+            {
+                "Road" : {"Edges" :[2]}
+            },
+            {
+                "Road" : {"Edges":[3]}
             }
         ]
     },
@@ -91,7 +97,13 @@
                 "City" : {"Edges" : [1]}
             },
             {
-                "Road" : {"Edges" : [0,2,3], "Terminated":"True"}
+                "Road" : {"Edges" : [0]}
+            },
+            {
+                "Road" : {"Edges" : [2] }
+            },
+            {
+                "Road" : {"Edges" : [3] }
             }
         ]
     },
@@ -175,7 +187,13 @@
         "img-code" : "w",
         "features" : [
             {
-                "Road" : {"Edges":[1,2,3], "Terminated":"True"}
+                "Road" : {"Edges":[1]}
+            },
+            {
+                "Road" : {"Edges" : [2] }
+            },
+            {
+                "Road" : {"Edges" : [3] }
             }
         ]
     },
@@ -199,7 +217,13 @@
                 "City" : {"Edges":[1]}
             },
             {
-                "Road" : {"Edges":[0,2,3], "Terminated":"True"}
+                "Road" : {"Edges":[0]}
+            },
+            {
+                "Road" : {"Edges" : [2] }
+            },
+            {
+                "Road" : {"Edges" : [3] }
             }
         ]
     },
@@ -211,7 +235,7 @@
                 "Chapel" : {}
             },
             {
-                "Road" : {"Edges":[2], "Terminated":"True"}
+                "Road" : {"Edges":[2]}
             }
         ]
     },
@@ -247,7 +271,7 @@
                 "City":{"Edges":[0,1,3],"Shield":"True"}
             },
             {
-                "Road":{"Edges":[2],"Terminated":"True"}
+                "Road":{"Edges":[2]}
             }
         ]
     },
@@ -256,7 +280,13 @@
         "img-code" : "w",
         "features" : [
             {
-                "Road":{"Edges":[1,2,3], "Terminated":"True"}
+                "Road":{"Edges":[1]}
+            },
+            {
+                "Road" : {"Edges" : [2] }
+            },
+            {
+                "Road" : {"Edges" : [3] }
             }
         ]
     },
@@ -418,7 +448,13 @@
         "img-code" : "w",
         "features" : [
             {
-                "Road":{"Edges":[1,2,3],"Terminated":"True"}
+                "Road":{"Edges":[1]}
+            },
+            {
+                "Road" : {"Edges" : [2] }
+            },
+            {
+                "Road" : {"Edges" : [3] }
             }
         ]
     },
@@ -460,7 +496,7 @@
                 "Chapel":{}
             },
             {
-                "Road":{"Edges":[2], "Terminated":"True"}
+                "Road":{"Edges":[2]}
             }
         ]
     },
@@ -481,7 +517,13 @@
                 "City" : {"Edges":[1]}
             },
             {
-                "Road" : {"Edges":[0,2,3], "Terminated":"True"}
+                "Road" : {"Edges":[0]}
+            },
+            {
+                "Road" : {"Edges" : [2] }
+            },
+            {
+                "Road" : {"Edges" : [3] }
             }
         ]
     },
@@ -520,7 +562,16 @@
         "img-code" : "x",
         "features" : [
             {
-                "Road":{"Edges":[0,1,2,3], "Terminated":"True"}
+                "Road":{"Edges":[0]}
+            },
+            {
+                "Road" : {"Edges" : [1] }
+            },
+            {
+                "Road" : {"Edges" : [2] }
+            },
+            {
+                "Road" : {"Edges" : [3] }
             }
         ]
     },
@@ -544,7 +595,7 @@
                 "City":{"Edges":[0,1,3]}
             },
             {
-                "Road":{"Edges":[2],"Terminated":"True"}
+                "Road":{"Edges":[2]}
             }
         ]
     },
@@ -739,7 +790,7 @@
                 "City":{"Edges":[0,1,3],"Shield":"True"}
             },
             {
-                "Road":{"Edges":[2],"Terminated":"True"}
+                "Road":{"Edges":[2]}
             }
         ]
     },

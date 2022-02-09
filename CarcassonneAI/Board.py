@@ -72,6 +72,16 @@ class Board:
         # if we get through all directions, the tile can fit
         return True
 
+    def getNeighbor(self, x: int, y: int, direction: int) -> Tile:
+        node = self.board.get((x, y))
+        if node.neighbors[direction] is not None:
+            return node.neighbors[direction].tile
+        return None
+
+    def tileAt(self, x: int, y: int) -> Tile:
+        node = self.board.get((x,y))
+        return node.tile
+
     # track the bounding coords of the game board
     def expandBounds(self, coords: List[tuple]):
         for coord in coords:

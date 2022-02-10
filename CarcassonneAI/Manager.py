@@ -101,6 +101,9 @@ def finishedFeature(x, y, tile: Tile, featEdge: int, board: Board) -> bool:
 
 def finishedRecursive(x: int, y: int, tile: Tile, inEdge: int, board: Board, featureList, flag):
     inFeature = tile.featureAtEdge(inEdge)
+    if inFeature is None:
+        flag[0] = False
+        return
 
     for edge in inFeature.edges:
         if (tile.id, edge) not in featureList:
@@ -130,6 +133,13 @@ def runGame(board: Board):
         render3(board, currTile)
 
         o, x, y = input("input orientation and x and y coords: ").split()
-        board.addTile(int(x), int(y), orientations[int(o)])
+        x = int(x)
+        y = int(y)
+        o = int(o)
+        board.addTile(x, y, orientations[o])
+        
+        for i in range(4):
+            if finishedFeature(x,y,board.tileAt(x,y),i,board):
+                print(f"finished feature originating from {x}, {y}, direction: {o}")
         ## board.test
         render2(board)

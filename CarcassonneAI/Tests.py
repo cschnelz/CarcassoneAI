@@ -64,6 +64,12 @@ def createBoard5():
     board.addTile(-1, 1, rotate(tileList[46], 3))
     return board
 
+def createBoard6():
+    importTiles('TileSetSepRoads.json')
+    board = Board(rotate(tileList[1], 0))
+    board.addTile(1, 0, rotate(tileList[3], 3))
+    return board
+
 class testFinishedFeatures(unittest.TestCase):
         
     def testMultipleCompleteCity(self):
@@ -93,6 +99,10 @@ class testFinishedFeatures(unittest.TestCase):
     def testUnfinishedRoad(self):
         board = createBoard5()
         self.assertFalse(finishedFeature(0, 1, board.tileAt(0,1), 3, board))
+
+    def testSizeTwoCity(self):
+        board = createBoard6()
+        self.assertTrue(finishedFeature(0,0, board.tileAt(0,0), 1, board))
 
 class testFeatureImports(unittest.TestCase):
 

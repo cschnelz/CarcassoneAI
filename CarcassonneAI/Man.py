@@ -25,20 +25,20 @@ board.addTile(0, -1, rotate(tileList[30], 2))
 board.addTile(1, -1, rotate(tileList[27], 0))
 board.addTile(1, 0, rotate(tileList[56], 1))
 board.addTile(2, -1, rotate(tileList[15], 3))
+
+
+
+
 board.addTile(2, 0, tileList[50])
+for i in range(4):
+    if finishedFeature(2,0,board.tileAt(2,0),i,board):
+        print(f"finished feature originating from {2}, {0}, direction: {i}")
+    else:
+        print(f"no finished features in direction {i}")
 
 
 render3(board, tileList[50])
 render2(board)
-
-featureList = buildFeatures(0, 0, board.tileAt(0,0), 1, board)
-print(featureList)
-print(finishedFeature(0, 0, board.tileAt(0,0), 0, board))
-
-tile1 = Tile(888, [City([0], False), Road([1,2], False)], 'zz', 0)
-print(tile1.grass)
-
-
 input()
 #2, 0, 4
 

@@ -51,5 +51,5 @@ def rotate(tile: Tile, i: int) -> Tile:
         elif feat.featType == FeatType.ROAD:
             newEdges = [(e + i) % 4 for e in feat.edges]
             newFeatures.append(Road(newEdges, feat.terminated))
-    return Tile(tile.id, newFeatures, tile.imgCode, i)
+    return Tile(tile.id, newFeatures, tile.imgCode, (tile.orientation + i)%4)
 

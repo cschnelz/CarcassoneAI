@@ -149,7 +149,8 @@ def destroyFrames():
 
 def drawCurrTile(root, currTile: Tile):
     img = Image.open(rf'Images/tile-{currTile.imgCode}.png')
-    imgTk = ImageTk.PhotoImage(img)
+    imgR = rotateImage(img, currTile.orientation)
+    imgTk = ImageTk.PhotoImage(imgR)
     label = tk.Label(root, text="Current Tile:")
     label.grid(column=0, row=0, padx=10, sticky='w')
 
@@ -157,16 +158,20 @@ def drawCurrTile(root, currTile: Tile):
     labelImg = tk.Label(root, image=imgTk)
     labelImg.img = imgTk
     labelImg.grid(column=1, row=0)
+    currTileFrame.grid(row=0, column=0,pady=10)
 
 def drawCoordsY(root, board: Board):
     for y in range(board.minY, board.maxY + 1):
         label = tk.Label(root, text=f'{y}')
         label.grid(column=0, row=y - board.minY, pady=40, sticky='w')
+    gridFrameY.grid(column=0, row=2,padx=10, rowspan=(board.maxY- board.minY))
 
 def drawCoords(root, board: Board):
     for x in range(board.minX, board.maxX+1):
         label = tk.Label(root, text=f'{x}')
         label.grid(row=0, column=x - board.minX, padx=40, sticky='n')
+    gridFrame.grid(column=2, row=1,pady=10, columnspan=(board.maxX - board.minX))
+
 
 def rotateImage(img, orientation):
     if orientation == 0:
@@ -191,13 +196,10 @@ def render3(board: Board, currTile:  Tile):
     destroyFrames()
 
     drawCurrTile(currTileFrame, currTile)
-    drawCoords(gridFrame, board)
     drawCoordsY(gridFrameY, board)
+    drawCoords(gridFrame, board)
     for item, node in board.board.items():
         drawTile(frame, board, item[0], item[1], node)
     
-    currTileFrame.grid(row=0, column=0,pady=10)
-    gridFrameY.grid(column=0, row=2,padx=10, rowspan=(board.maxY- board.minY))
-    gridFrame.grid(column=2, row=1,pady=10, columnspan=(board.maxX - board.minX))
     frame.grid(column=2, row=2, rowspan=(board.maxY- board.minY), columnspan=(board.maxX - board.minX))
     top.update()

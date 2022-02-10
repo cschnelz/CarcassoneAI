@@ -57,7 +57,7 @@ class Board:
         # for all neighbor tiles of this location
             # can the tile link to that neighbor in that direction
         if (x, y) not in self.openLocations:
-            sys.exit("not open location")
+            return False
         neighbors = neighborCoordinates(x, y)
 
         # for all adjacent coords

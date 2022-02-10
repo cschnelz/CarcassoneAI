@@ -26,9 +26,15 @@ def dispatchTile() -> Tile:
     del tileList[dispatchId]
     return tile
 
+def dispatchForced(int) -> Tile:
+    return tileList[int]
+
 # set up board and players
-def initialize():
-    startingTile = dispatchTile()
+def initialize(forcedOrder: List):
+    if len(forcedOrder) > 0:
+        startingTile = dispatchForced(forcedOrder.pop(0))
+    else:
+        startingTile = dispatchTile()
 
     # initialize board with a first tile
     board = Board(startingTile)
@@ -37,7 +43,7 @@ def initialize():
         # create player objects 
 
     # begin game loop
-    runGame(board)
+    runGame(board, forcedOrder)
 
 # given a tile, report locations and orientations it can be placed
 def printValidLocations(board: Board, tile: Tile):
@@ -47,6 +53,11 @@ def printValidLocations(board: Board, tile: Tile):
     for i in range(4):
         validLocations = [x for x in openLocations if board.isValid(x[0], x[1], orientations[i])]
         print(f"Open coordinates for orientation {i}: " + str(validLocations))
+
+def printValidLocationsSingle(board: Board, currTile: Tile):
+    validLocations = [x for x in board.openLocations if board.isValid(x[0], x[1], currTile)]
+    print(f"Open coordinates for current Tile: " + str(validLocations))
+
 
 def getOrientations(tile: Tile) -> List[Tile]:
     return [rotate(tile, i) for i in range(4)] 
@@ -119,27 +130,41 @@ def finishedRecursive(x: int, y: int, tile: Tile, inEdge: int, board: Board, fea
             else:
                 flag[0] = False
 
-def runGame(board: Board):
+def runGame(board: Board, forcedOrder: List):
     # run the game until we have used all tiles
     while len(tileList) > 0:
-        currTile = dispatchTile()
-        orientations = getOrientations(currTile)
-
-
-        renderPlayOptions(currTile)
-        printValidLocations(board, currTile)
+        if len(forcedOrder) > 0:
+            currTile = dispatchForced(forcedOrder.pop(0))
+        else:
+            currTile = dispatchTile()
 
         ## draws the board and current tile
-        render3(board, currTile)
+        x = 0
+        y = 0
 
-        o, x, y = input("input orientation and x and y coords: ").split()
-        x = int(x)
-        y = int(y)
-        o = int(o)
-        board.addTile(x, y, orientations[o])
+        while (True):
+            print('\n')
+            render3(board, currTile)
+            try:
+                printValidLocationsSingle(board, currTile)
+                res = input("input r to rotate, coordinates x y to insert, or q to quit: ").split()
+                if res[0] == 'q':
+                    sys.exit("Quitting")
+
+                if res[0] == 'r':
+                    currTile = rotate(currTile, 1)
+                    continue
+
+                x = int(res[0])
+                y = int(res[1])
+                if board.isValid(x, y, currTile):
+                    board.addTile(x, y, currTile)
+                    break
+                print("Invalid insertion, please input again")
+            except ValueError:
+                print("Improper input, please try again")
         
         for i in range(4):
             if finishedFeature(x,y,board.tileAt(x,y),i,board):
-                print(f"finished feature originating from {x}, {y}, direction: {o}")
+                print(f"finished feature originating from {x}, {y}, direction: {i}")
         ## board.test
-        render2(board)

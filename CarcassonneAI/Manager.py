@@ -3,21 +3,20 @@
 ## Polls for valid tile locations and tells board where to add tile
 
 from random import random
-from xmlrpc.client import Boolean
 from Tile import Tile, rotate
 from Board import Board
 from typing import List
 from Feature import *
 from Render import *
 from Import import importTiles
+from Player import Player
 
 # List of player classes that hold score, meeple counts, etc
-players = []
+players = [Player(0), Player(1)]
 current_player = 0
 
 # Load the tiles from the TileList json and initialize the list of Tile objects
 tileList = importTiles('TileSetSepRoads.json')
-
 
 # get a random tile from the tile list and remove it
 def dispatchTile() -> Tile:
@@ -63,13 +62,51 @@ def getOrientations(tile: Tile) -> List[Tile]:
     return [rotate(tile, i) for i in range(4)] 
 
 ## make a play decision
-def playTile(board: Board, validLocations: List[tuple]):
-    pass
+def playTile(board: Board, currTile: Tile):
+    x = 0
+    y = 0
+
+    while (True):
+        print('\n')
+        render3(board, currTile)
+        try:
+            printValidLocationsSingle(board, currTile)
+            res = input("input r to rotate, coordinates x y to insert, or q to quit: ").split()
+            if res[0] == 'q':
+                sys.exit("Quitting")
+
+            if res[0] == 'r':
+                currTile = rotate(currTile, 1)
+                continue
+
+            x = int(res[0])
+            y = int(res[1])
+            if board.isValid(x, y, currTile):
+                board.addTile(x, y, currTile)
+                break
+            print("Invalid insertion, please input again")
+        except ValueError:
+            print("Improper input, please try again")
+
+    return x, y
+
+# holds information about a connected feature - used for tracking meeple placement, scoring, completion, etc
+class combinedFeature:
+    def __init__(self):
+        self.completed = True
+        self.featType = None
+    features: List[Feature] = []
+    meepled: List[Feature] = []
 
 # After a tile is inserted into the board
-def checkCompletedFeatures():
-    pass
-
+def checkCompletedFeatures(x, y, board: Board) -> List[combinedFeature]:
+    completed = []
+    for i in range(4):
+        combined = finishedFeature(x,y,board.tileAt(x,y),i,board)
+        if combined.completed:
+            print(f"finished feature originating from {x}, {y}, direction: {i}")
+            completed.append(combined)
+    return completed
 
 def shiftCoords(x, y, direction):
     if direction == 0:
@@ -100,21 +137,48 @@ def buildFeatures(x, y, tile: Tile, featEdge: int, board: Board):
     buildRecursive(x, y, tile, featEdge, board, featureList)
     return featureList
 
+# check if a list of features is finished
+def finishedFeature(x, y, tile: Tile, featEdge: int, board: Board) -> combinedFeature:
+    combined = combinedFeature()
+    combined.featType = tile.featureAtEdge(featEdge).featType if tile.featureAtEdge(featEdge) is not None else None
+    finishedRecursive(x, y, tile, featEdge, board, combined)
+    return combined
 
-
-
-# check if a list of city Features is finished
-def finishedFeature(x, y, tile: Tile, featEdge: int, board: Board) -> bool:
-    featureList = []
-    flag = [True]
-    finishedRecursive(x, y, tile, featEdge, board, featureList, flag)
-    return flag[0]
-
-def finishedRecursive(x: int, y: int, tile: Tile, inEdge: int, board: Board, featureList, flag):
+def finishedRecursive(x: int, y: int, tile: Tile, inEdge: int, board: Board, combined: combinedFeature):
     inFeature = tile.featureAtEdge(inEdge)
     if inFeature is None:
-        flag[0] = False
+        combined.completed = False
         return
+    if inFeature.occupiedBy is not None:
+        combined.meepled.append(inFeature)
+
+    for edge in inFeature.edges:
+        if (tile.id, edge) not in combined.features:
+            # if there's more edges to this feature, add them
+            combined.features.append((tile.id, edge))
+
+            # shift to the next tile and recurse
+            nextEdge = inFeature.getOppositeEdge(edge)
+            nextX, nextY = shiftCoords(x, y, edge)
+            nextTile = board.getNeighbor(x,y,edge)
+            if nextTile is not None:
+                finishedRecursive(nextX, nextY, nextTile, nextEdge, board, combined)
+            else:
+                combined.completed = False
+
+# check if a feature has a meeple on it already
+def isOccupied(x, y, tile: Tile, featEdge: int, board: Board) -> bool:
+    featureList = []
+    flag = [False]
+    occupiedRecursive(x, y, tile, featEdge, board, featureList, flag)
+    return flag[0]
+
+def occupiedRecursive(x: int, y: int, tile: Tile, inEdge: int, board: Board, featureList, flag):
+    inFeature = tile.featureAtEdge(inEdge)
+    if inFeature is None:
+        return
+    if inFeature.occupiedBy is not None:
+        flag[0] = True
 
     for edge in inFeature.edges:
         if (tile.id, edge) not in featureList:
@@ -126,9 +190,42 @@ def finishedRecursive(x: int, y: int, tile: Tile, inEdge: int, board: Board, fea
             nextX, nextY = shiftCoords(x, y, edge)
             nextTile = board.getNeighbor(x,y,edge)
             if nextTile is not None:
-                finishedRecursive(nextX, nextY, nextTile, nextEdge, board, featureList, flag)
-            else:
-                flag[0] = False
+                occupiedRecursive(nextX, nextY, nextTile, nextEdge, board, featureList, flag)
+
+def placeMeeple(x: int, y: int, board: Board):
+    # if player has meeples and there are places to put meeples, ask where theyd like to place meeple
+    
+    # get list of open features
+    tile = board.tileAt(x, y)
+    openEdges = []
+
+    if tile.features[0].featType is not FeatType.CHAPEL:
+        openFeatures = [feat for feat in tile.features if not(isOccupied(x, y, tile, feat.edges[0], board))]
+    else:
+        openFeatures = [tile.features[0]]
+
+    if len(openFeatures) > 0:
+        print("Free features: ")
+        for feature in openFeatures:
+            print(f"Feature: {feature.featType.name} on edges: {feature.edges}")
+            openEdges.extend(feature.edges)
+
+        while(True):
+            feat = input("Place Meeple? input feat number or n for no: ")
+            try:
+                if feat != 'n':
+                    # denote that the tile played and the feature selected is occupied
+                    if int(feat) > len(openFeatures) - 1:
+                        print("out of range")
+                        continue
+                    tile.occupied = openFeatures[int(feat)]
+                    openFeatures[int(feat)].occupiedBy = players[current_player]
+                    break
+            except ValueError:
+                print("improper input")
+                continue
+    else:
+        print("No available features for placement")
 
 def runGame(board: Board, forcedOrder: List):
     # run the game until we have used all tiles
@@ -137,34 +234,13 @@ def runGame(board: Board, forcedOrder: List):
             currTile = dispatchForced(forcedOrder.pop(0))
         else:
             currTile = dispatchTile()
-
-        ## draws the board and current tile
-        x = 0
-        y = 0
-
-        while (True):
-            print('\n')
-            render3(board, currTile)
-            try:
-                printValidLocationsSingle(board, currTile)
-                res = input("input r to rotate, coordinates x y to insert, or q to quit: ").split()
-                if res[0] == 'q':
-                    sys.exit("Quitting")
-
-                if res[0] == 'r':
-                    currTile = rotate(currTile, 1)
-                    continue
-
-                x = int(res[0])
-                y = int(res[1])
-                if board.isValid(x, y, currTile):
-                    board.addTile(x, y, currTile)
-                    break
-                print("Invalid insertion, please input again")
-            except ValueError:
-                print("Improper input, please try again")
         
-        for i in range(4):
-            if finishedFeature(x,y,board.tileAt(x,y),i,board):
-                print(f"finished feature originating from {x}, {y}, direction: {i}")
+        x, y = playTile(board, currTile)
+        placeMeeple(x, y, board)
+        completed = checkCompletedFeatures(x, y, board)
+        
+        #for feature in completed:
+
+        global current_player
+        current_player = (current_player + 1) % 2
         ## board.test

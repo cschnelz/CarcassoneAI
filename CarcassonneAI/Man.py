@@ -20,21 +20,22 @@ print(tileList[0].canConnectTo(tileList[2], 3))
 print(tileList[1].canConnectTo(tileList[3], 0))
 
 
-board = Board(rotate(tileList[0], 1))
-board.addTile(0, -1, rotate(tileList[30], 2))
-board.addTile(1, -1, rotate(tileList[27], 0))
-board.addTile(1, 0, rotate(tileList[56], 1))
-board.addTile(2, -1, rotate(tileList[15], 3))
 
 
 
+board = Board(tileList[70])
+tile = tileList[46]
+tile.occuped = tile.features[0]
+tile.features[0].occupiedBy = Player(0)
+board.addTile(0, 1, tile)
+board.addTile(0, 2, tileList[46])
 
-board.addTile(2, 0, tileList[50])
-for i in range(4):
-    if finishedFeature(2,0,board.tileAt(2,0),i,board):
-        print(f"finished feature originating from {2}, {0}, direction: {i}")
-    else:
-        print(f"no finished features in direction {i}")
+# board = Board(tileList[15])
+# tile = rotate(tileList[50], 1)
+# tile.occupied = tile.features[0]
+# tile.features[0].occupiedBy = Player(0)
+# board.addTile(-1, 0, tile)
+# board.addTile(-1, -1, tileList[1])
 
 
 render3(board, tileList[50])

@@ -1,3 +1,4 @@
+from turtle import color
 from Board import Board, Node
 from Feature import *
 from Tile import Tile, rotate
@@ -131,6 +132,10 @@ gridFrame = tk.Frame(top)
 gridFrameY = tk.Frame(top)
 frame = tk.Frame(top)
 
+MEEPLE_SIZE = 35
+TILE_SIZE = 100
+
+images = []
 
 def destroyFrames():
     for widgets in frame.winfo_children():
@@ -164,13 +169,13 @@ def drawCoordsY(root, board: Board):
     for y in range(board.minY, board.maxY + 1):
         label = tk.Label(root, text=f'{y}')
         label.grid(column=0, row=y - board.minY, pady=40, sticky='w')
-    gridFrameY.grid(column=0, row=2,padx=10, rowspan=(board.maxY- board.minY))
+    gridFrameY.grid(column=0, row=2,padx=10, rowspan=(board.maxY- board.minY), sticky="n")
 
 def drawCoords(root, board: Board):
     for x in range(board.minX, board.maxX+1):
         label = tk.Label(root, text=f'{x}')
         label.grid(row=0, column=x - board.minX, padx=40, sticky='n')
-    gridFrame.grid(column=2, row=1,pady=10, columnspan=(board.maxX - board.minX))
+    gridFrame.grid(column=2, row=1,pady=10, columnspan=(board.maxX - board.minX), sticky="w")
 
 
 def rotateImage(img, orientation):
@@ -183,14 +188,47 @@ def rotateImage(img, orientation):
     if orientation == 3:
         return img.rotate(90)
 
-def drawTile(root, board: Board, x, y, node: Node):
+def meepleOffset(board: Board, x: int, y: int, t: Tile):
+    xCoord = (x - board.minX) * TILE_SIZE
+    yCoord = (y - board.minY)* TILE_SIZE
+
+    feat = t.occupied
+    if feat.featType is FeatType.CHAPEL:
+        return xCoord, yCoord
+
+    if feat.edges[0] == 0:
+        yCoord -= MEEPLE_SIZE
+    elif feat.edges[0] == 1:
+        xCoord += MEEPLE_SIZE
+    elif feat.edges[0] == 2:
+        yCoord += MEEPLE_SIZE
+    else:
+        xCoord -= MEEPLE_SIZE
+    return xCoord, yCoord
+
+def drawMeeple(canvas: tk.Canvas, board: Board, x, y, node: Node):
+    t = node.tile
+    if t.occupied is not None:
+        color = t.occupied.occupiedBy.color
+        
+        meeple = ImageTk.PhotoImage(Image.open(rf'Images/{color}.png').resize((MEEPLE_SIZE,MEEPLE_SIZE)))
+        images.append(meeple)
+        xCoord, yCoord = meepleOffset(board, x, y, t)
+        canvas.create_image(xCoord,yCoord, image=meeple)
+
+def drawTile(canvas: tk.Canvas, board: Board, x, y, node: Node):
     img = Image.open(rf'Images/tile-{node.tile.imgCode}.png')
     imgR = rotateImage(img, node.tile.orientation)
     imgTk = ImageTk.PhotoImage(imgR)
-    label = tk.Label(root, image = imgTk)
-    label.img = imgTk
+    images.append(imgTk)
 
-    label.grid(column= x - board.minX, row= y - board.minY)
+    canvas.create_image((x - board.minX) * TILE_SIZE, (y - board.minY)* TILE_SIZE,image=imgTk)
+
+    drawMeeple(canvas, board, x, y, node)
+    #label.grid(column= x - board.minX, row= y - board.minY)
+    
+
+    #canvas.grid(column= x - board.minX, row= y - board.minY)
 
 def render3(board: Board, currTile:  Tile):
     destroyFrames()
@@ -198,8 +236,13 @@ def render3(board: Board, currTile:  Tile):
     drawCurrTile(currTileFrame, currTile)
     drawCoordsY(gridFrameY, board)
     drawCoords(gridFrame, board)
+    #frame.grid(column=3, row=3, rowspan=(board.maxY- board.minY), columnspan=(board.maxX - board.minX))
+    canvas = tk.Canvas(top, width=1000, height=1000)
+    canvas.grid(column=2, row=2, rowspan=(board.maxY- board.minY), padx=40, pady=50)
     for item, node in board.board.items():
-        drawTile(frame, board, item[0], item[1], node)
-    
-    frame.grid(column=2, row=2, rowspan=(board.maxY- board.minY), columnspan=(board.maxX - board.minX))
+        drawTile(canvas, board, item[0], item[1], node)
+
+    #can.create_rectangle(50,50,1010,1010,fill="red")
+
+    #frame.grid(column=2, row=2, rowspan=(board.maxY- board.minY), columnspan=(board.maxX - board.minX))
     top.update()

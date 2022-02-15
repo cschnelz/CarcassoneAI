@@ -6,7 +6,8 @@ from Import import importTiles
 
 import unittest
 
-tileList = importTiles('TileSetSepRoads.json')
+tileFile = 'TileSetSepRoads.json'
+tileList = importTiles(tileFile)
 
 class testTileConnections(unittest.TestCase):
     ## Test north to non-south connection
@@ -19,7 +20,7 @@ class testTileConnections(unittest.TestCase):
 
 # one large completed city and one smaller uncompleted
 def createBoard1():
-    importTiles('TileSetSepRoads.json')
+    importTiles(tileFile)
     board = Board(tileList[0])
 
     board.addTile(0,-1,rotate(tileList[15], 2))
@@ -30,13 +31,13 @@ def createBoard1():
 
 # single tile with a corner city
 def createBoard2():
-    importTiles('TileSetSepRoads.json')
+    importTiles(tileFile)
     board = Board(tileList[0])
     return board
 
 # big looping city
 def createBoard3():
-    importTiles('TileSetSepRoads.json')
+    importTiles(tileFile)
     board = Board(rotate(tileList[0], 1))
     board.addTile(0, -1, rotate(tileList[30], 2))
     board.addTile(1, -1, rotate(tileList[27], 0))
@@ -47,7 +48,7 @@ def createBoard3():
 
 # city that branches in two directions and both are unfinished
 def createBoard4():
-    importTiles('TileSetSepRoads.json')
+    importTiles(tileFile)
     board = Board(rotate(tileList[0], 1))
     board.addTile(0, -1, rotate(tileList[30], 2))
     board.addTile(1, -1, rotate(tileList[27], 0))
@@ -56,7 +57,7 @@ def createBoard4():
 
 # one terminated road crossing 0,0 and one non terminated road crossing -1 1
 def createBoard5():
-    importTiles('TileSetSepRoads.json')
+    importTiles(tileFile)
     board = Board(rotate(tileList[25], 0))
     board.addTile(0, -1, rotate(tileList[34], 2))
     board.addTile(0, -2, rotate(tileList[43], 0))
@@ -65,7 +66,7 @@ def createBoard5():
     return board
 
 def createBoard6():
-    importTiles('TileSetSepRoads.json')
+    importTiles(tileFile)
     board = Board(rotate(tileList[1], 0))
     board.addTile(1, 0, rotate(tileList[3], 3))
     return board
@@ -74,40 +75,40 @@ class testFinishedFeatures(unittest.TestCase):
         
     def testMultipleCompleteCity(self):
         board = createBoard1()
-        self.assertTrue(finishedFeature(0, 0, board.tileAt(0,0), 0, board))
+        self.assertTrue(finishedFeature(0, 0, board.tileAt(0,0), 0, board).completed)
 
     def testMultipleIncompleteCity(self):
         board = createBoard1()
-        self.assertFalse(finishedFeature(-1, 0, board.tileAt(-1,0), 3, board))
+        self.assertFalse(finishedFeature(-1, 0, board.tileAt(-1,0), 3, board).completed)
 
     def testSingleTileTwoEdges(self):
         board = createBoard2()
-        self.assertFalse(finishedFeature(0, 0, board.tileAt(0,0), 0, board))
+        self.assertFalse(finishedFeature(0, 0, board.tileAt(0,0), 0, board).completed)
 
     def testLoopingCity1(self):
         board = createBoard3()
-        self.assertTrue(finishedFeature(0, 0, board.tileAt(0,0), 0, board))
+        self.assertTrue(finishedFeature(0, 0, board.tileAt(0,0), 0, board).completed)
 
     def testBranchingUnfinished(self):
         board = createBoard4()
-        self.assertFalse(finishedFeature(0, 0, board.tileAt(0,0), 0, board))
+        self.assertFalse(finishedFeature(0, 0, board.tileAt(0,0), 0, board).completed)
 
     def testFinishedRoad(self):
         board = createBoard5()
-        self.assertTrue(finishedFeature(0, 0, board.tileAt(0,0), 0, board))
+        self.assertTrue(finishedFeature(0, 0, board.tileAt(0,0), 0, board).completed)
     
     def testUnfinishedRoad(self):
         board = createBoard5()
-        self.assertFalse(finishedFeature(0, 1, board.tileAt(0,1), 3, board))
+        self.assertFalse(finishedFeature(0, 1, board.tileAt(0,1), 3, board).completed)
 
     def testSizeTwoCity(self):
         board = createBoard6()
-        self.assertTrue(finishedFeature(0,0, board.tileAt(0,0), 1, board))
+        self.assertTrue(finishedFeature(0,0, board.tileAt(0,0), 1, board).completed)
 
 class testFeatureImports(unittest.TestCase):
 
     def testChapel1(self):
-        importTiles('TileSetSepRoads.json')
+        importTiles(tileFile)
         tile = tileList[35]
         self.assertTrue(tile.chapel)
         tile2 = Tile(7777, [Road([1], False)], 'zz', 0)
@@ -119,6 +120,34 @@ class testFeatureImports(unittest.TestCase):
         grasses = tile1.grass
         self.assertTrue(tile1.edges[3] is None)
         self.assertTrue(grasses[0].edges == [2])
+
+class testMeepleOccupied(unittest.TestCase):
+
+    def testCity(self):
+        importTiles(tileFile)
+        board = Board(tileList[15])
+        tile = rotate(tileList[50], 1)
+        tile.occupied = tile.features[0]
+        tile.features[0].occupiedBy = Player(0)
+        board.addTile(-1, 0, tile)
+        board.addTile(-1, -1, tileList[1])
+        self.assertTrue(isOccupied(-1,-1,board.tileAt(-1,-1),2,board))
+        self.assertFalse(isOccupied(-1,-1,board.tileAt(-1,-1),1,board))
+
+    def testRoads(self):
+        importTiles(tileFile)
+        tile = tileList[70]
+        board = Board(tile)
+
+        board.addTile(0, 1, tileList[40])
+        self.assertFalse(isOccupied(0,1,board.tileAt(0,1),0, board))
+
+        tile = tileList[46]
+        tile.occuped = tile.features[0]
+        tile.features[0].occupiedBy = Player(1)
+        board.addTile(0, 2, tile)
+        self.assertTrue(isOccupied(0,2,board.tileAt(0,2),2,board))
+
 
 
 if __name__ == '__main__':

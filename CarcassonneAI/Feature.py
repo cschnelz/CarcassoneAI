@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import List
 import sys
+from Player import Player
 
 class FeatType(Enum):
     CITY = 1
@@ -15,6 +16,8 @@ class Feature():
         if not isinstance(info, bool):
             sys.exit("bad info")
         self.edges = edges
+        self.featType = None
+        self.occupiedBy: Player = None
 
     def getOppositeEdge(self, inEdge: int) -> int:
         pass
@@ -23,27 +26,26 @@ class City(Feature):
     def __init__(self, edges: List[int], info: bool):
         super().__init__(edges, info)
         self.shield = info
+        self.featType = FeatType.CITY
 
     def getOppositeEdge(self, inEdge: int) -> int:
         return (inEdge + 2) % 4
  
-    featType = FeatType.CITY
+    
 
 class Road(Feature):
     def __init__(self, edges: List[int], info: bool):
         super().__init__(edges, info)
         self.terminated = info
+        self.featType = FeatType.ROAD
 
     def getOppositeEdge(self, inEdge: int) -> int:
-        return (inEdge + 2) % 4
-
-    featType = FeatType.ROAD
+        return (inEdge + 2) % 4 
 
 class Grass(Feature):
     def __init__(self, edges: List[int], info: bool):
         self.edges = edges
-
-    featType = FeatType.GRASS
+        self.featType = FeatType.GRASS    
 
     def getOppositeEdge(self, inEdge: int) -> int:
         if inEdge % 2 == 0:
@@ -53,8 +55,7 @@ class Grass(Feature):
 class Chapel(Feature):
     def __init__(self, edges: List[int], info: bool):
         self.edges = []
-
-    featType = FeatType.CHAPEL
+        self.featType = FeatType.CHAPEL
 
     def getOppositeEdge(self, inEdge: int) -> int:
         pass

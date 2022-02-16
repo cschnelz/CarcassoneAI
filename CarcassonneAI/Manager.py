@@ -268,7 +268,7 @@ def placeMeeple(x: int, y: int, board: Board):
                         print("out of range")
                         continue
                     tile.occupied = openFeatures[int(feat)]
-                    openFeatures[int(feat)].occupiedBy = players[current_player]
+                    tile.occupied.occupiedBy = players[current_player]
                     players[current_player].meepleCount -= 1
                     break
                 break

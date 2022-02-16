@@ -7,12 +7,15 @@ class Tile:
         if not isinstance(features, List):
             sys.exit("bad features")
 
-        self.id: int = id
-        self.features: List[Feature] = features
+        self.id = id
+
+        self.features = features
         self.grasses = grasses
+        # shortcut, stores FeatType enum per-side for faster checking
         self.edges: List[FeatType] = [None] * 4
-        
+
         self.orientation = orientation
+
         self.occupied: Feature = None
         
         self.chapel = False
@@ -32,7 +35,7 @@ class Tile:
     ## return the feature object of given edge, or None
     def featureAtEdge(self, edge: int) -> Feature:
         for feature in self.features:
-            if feature.featType is not FeatType.GRASS and edge in feature.edges:
+            if edge in feature.edges:
                 return feature
         return None
 
@@ -59,12 +62,15 @@ class Tile:
                 if self.edges[3] == FeatType.CITY:
                     cities.append(self.featureAtEdge(3))
 
+        ## REWRITE this so that it passes the edge-finding stuff to the grass class
         # div 2
         # if original odd add 1
         # if original even - 1
         return cities
 
 # returns a rotated version of input tile where north becomes east = 1, south = 2, west = 3
+
+## rewrite this so it doesn't need feature-specific info
 def rotate(tile: Tile, i: int) -> Tile:
     newFeatures = []
     newGrass = []

@@ -10,7 +10,7 @@ class Player:
         else:
             self.color = 'blue'
 
-    meeples = 7
-    score = 0
+        self.meepleCount = 7
+        self.score = 0
     
     

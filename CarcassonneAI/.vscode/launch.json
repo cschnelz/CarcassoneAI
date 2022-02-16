@@ -8,9 +8,9 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "main.py",
+            "program": "Man.py",
             "console": "integratedTerminal",
-            "args": ["0","2", "3", "21"]
+            //"args": ["1","56", "3", "21"]
         }
     ]
 }

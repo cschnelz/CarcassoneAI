@@ -1,3 +1,4 @@
+from re import M
 from turtle import color
 from Board import Board, Node
 from Feature import *
@@ -196,23 +197,52 @@ def meepleOffset(board: Board, x: int, y: int, t: Tile):
     if feat.featType is FeatType.CHAPEL:
         return xCoord, yCoord
 
-    if feat.edges[0] == 0:
-        yCoord -= MEEPLE_SIZE
-    elif feat.edges[0] == 1:
-        xCoord += MEEPLE_SIZE
-    elif feat.edges[0] == 2:
-        yCoord += MEEPLE_SIZE
-    else:
-        xCoord -= MEEPLE_SIZE
+    if feat.featType is FeatType.ROAD or feat.featType is FeatType.CITY:
+        if feat.edges[0] == 0:
+            yCoord -= MEEPLE_SIZE
+        elif feat.edges[0] == 1:
+            xCoord += MEEPLE_SIZE
+        elif feat.edges[0] == 2:
+            yCoord += MEEPLE_SIZE
+        else:
+            xCoord -= MEEPLE_SIZE
+    elif feat.featType is FeatType.GRASS:
+        if feat.edges[0] == 0:
+            yCoord -= (MEEPLE_SIZE - 10)
+            xCoord -= (MEEPLE_SIZE - 15)
+        elif feat.edges[0] == 1:
+            yCoord -= (MEEPLE_SIZE - 10)
+            xCoord += (MEEPLE_SIZE - 15)
+        elif feat.edges[0] == 2:
+            yCoord -= (MEEPLE_SIZE - 15)
+            xCoord += (MEEPLE_SIZE - 10)
+        elif feat.edges[0] == 3:
+            yCoord += (MEEPLE_SIZE - 15)
+            xCoord += (MEEPLE_SIZE - 10)
+        elif feat.edges[0] == 4:
+            yCoord += (MEEPLE_SIZE - 10)
+            xCoord += (MEEPLE_SIZE - 15)
+        elif feat.edges[0] == 5:
+            yCoord -= (MEEPLE_SIZE - 10)
+            xCoord -= (MEEPLE_SIZE - 15)
+        elif feat.edges[0] == 6:
+            yCoord -= (MEEPLE_SIZE - 15)
+            xCoord -= (MEEPLE_SIZE - 10)
+        elif feat.edges[0] == 7:
+            yCoord -= (MEEPLE_SIZE - 15)
+            xCoord -= (MEEPLE_SIZE - 10)
+
+
     return xCoord, yCoord
 
 def drawMeeple(canvas: tk.Canvas, board: Board, x, y, node: Node):
     t = node.tile
-    if t.occupied is not None:
+    if t.occupied is not None and t.occupied.occupiedBy is not None:
         color = t.occupied.occupiedBy.color
         
         meeple = ImageTk.PhotoImage(Image.open(rf'Images/{color}.png').resize((MEEPLE_SIZE,MEEPLE_SIZE)))
         images.append(meeple)
+        
         xCoord, yCoord = meepleOffset(board, x, y, t)
         canvas.create_image(xCoord,yCoord, image=meeple)
 

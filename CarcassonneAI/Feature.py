@@ -27,35 +27,43 @@ class City(Feature):
         super().__init__(edges, info)
         self.shield = info
         self.featType = FeatType.CITY
+        self.scorePer = 2
 
     def getOppositeEdge(self, inEdge: int) -> int:
         return (inEdge + 2) % 4
  
-    
+    def score(self):
+        return 2 + (2 if self.shield else 0)
 
 class Road(Feature):
     def __init__(self, edges: List[int], info: bool):
         super().__init__(edges, info)
         self.terminated = info
         self.featType = FeatType.ROAD
+        self.scorePer = 1
 
     def getOppositeEdge(self, inEdge: int) -> int:
         return (inEdge + 2) % 4 
 
+    def score(self):
+        return 1
+
 class Grass(Feature):
     def __init__(self, edges: List[int], info: bool):
-        self.edges = edges
-        self.featType = FeatType.GRASS    
+        super().__init__(edges, info)
+        self.featType = FeatType.GRASS
+        self.scorePer = 0    
 
     def getOppositeEdge(self, inEdge: int) -> int:
         if inEdge % 2 == 0:
-            return (inEdge) + 5 % 8
+            return (inEdge + 5) % 8
         return (inEdge + 3) % 8
 
 class Chapel(Feature):
     def __init__(self, edges: List[int], info: bool):
         self.edges = []
         self.featType = FeatType.CHAPEL
+        self.scorePer = 9
 
     def getOppositeEdge(self, inEdge: int) -> int:
         pass

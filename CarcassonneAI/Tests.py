@@ -1,13 +1,17 @@
+from tabnanny import check
 from Tile import rotate
 from Feature import *
 from Board import Board
 from Manager import *
 from Import import importTiles
+from typing import List
 
 import unittest
 
 tileFile = 'TileSetSepRoads.json'
-tileList = importTiles(tileFile)
+tileList: List[Tile] = importTiles(tileFile)
+
+testPlayers = [Player(0), Player(1)]
 
 class testTileConnections(unittest.TestCase):
     ## Test north to non-south connection
@@ -111,15 +115,9 @@ class testFeatureImports(unittest.TestCase):
         importTiles(tileFile)
         tile = tileList[35]
         self.assertTrue(tile.chapel)
-        tile2 = Tile(7777, [Road([1], False)], 'zz', 0)
+        tile2 = Tile(7777, [Road([1], False)], [],'zz', 0)
         self.assertFalse(tile2.chapel)
 
-    def testGrass(self):
-        tile1 = Tile(888, [City([0], False), Road([1,2], False)], 'zz', 0)
-        feats = tile1.features
-        grasses = tile1.grass
-        self.assertTrue(tile1.edges[3] is None)
-        self.assertTrue(grasses[0].edges == [2])
 
 class testMeepleOccupied(unittest.TestCase):
 
@@ -148,7 +146,226 @@ class testMeepleOccupied(unittest.TestCase):
         board.addTile(0, 2, tile)
         self.assertTrue(isOccupied(0,2,board.tileAt(0,2),2,board))
 
+def resetScore():
+    testPlayers[0].score = testPlayers[1].score = 0
+
+def calculateScoreQuiet(completed: List[combinedFeature]):
+    for c in completed:
+        for feat in c.meepled:
+            feat.occupiedBy = None
+        if len(c.playersOn) > 0:
+            redCount = c.playersOn.count('red')
+            blueCount = c.playersOn.count('blue')
+
+            if redCount == blueCount:
+                testPlayers[0].score += c.score
+                testPlayers[1].score += c.score
+            elif redCount > blueCount:
+                testPlayers[0].score += c.score
+            else:
+                testPlayers[1].score += c.score
+
+class testScoring(unittest.TestCase):
+
+    def testCity(self):
+        importTiles(tileFile)
+        resetScore()
+        self.assertTrue(players[0].score == players[1].score)
+
+        board = Board(tileList[56])
+        
+        tile = tileList[3]
+        tile.occupied = tile.features[0]
+        tile.features[0].occupiedBy = testPlayers[1]
+        board.addTile(0,1,tile)
+
+        tile = tileList[31]
+        board.addTile(0, -1, tile)
+
+        completed = checkCompletedFeatures(0, -1, board)
+        calculateScoreQuiet(completed)
+
+        self.assertTrue(testPlayers[0].score == 0 and testPlayers[1].score == 6)
+    
+    def testRoad(self):
+        importTiles(tileFile)
+        resetScore()
+        self.assertTrue(testPlayers[0].score == testPlayers[1].score)
+
+        board = Board(tileList[70])
+        tile = tileList[40]
+        tile.occupied = tile.features[0]
+        tile.features[0].occupiedBy = testPlayers[0]
+        board.addTile(0,1,tile)
+        board.addTile(0,2,rotate(tileList[16], 2))
+
+        completed = checkCompletedFeatures(0, 2, board)
+        calculateScoreQuiet(completed)
+
+        self.assertTrue(testPlayers[0].score == 3 and testPlayers[1].score == 0)
+
+    def testLoopCity(self):
+        importTiles(tileFile)
+        resetScore()
+        self.assertTrue(testPlayers[0].score == testPlayers[1].score and testPlayers[0].score == 0)
+
+        board = Board(rotate(tileList[63], 2))
+        tile = rotate(tileList[50],1)
+        tile.occupied = tile.features[0]
+        tile.occupied.occupiedBy = testPlayers[1]
+        board.addTile(0,1,tile)
+
+        board.addTile(1, 0, rotate(tileList[30], 3))
+        board.addTile(1, 1, tileList[29])
+
+        completed = checkCompletedFeatures(1, 1, board)
+        self.assertTrue(len(completed) == 1)
+        
+        calculateScoreQuiet(completed)
+
+        self.assertTrue(testPlayers[0].score == 0 and testPlayers[1].score == 10)
+
+    def testSharedPoints(self):
+        importTiles(tileFile)
+        resetScore()
+        self.assertTrue(testPlayers[0].score == testPlayers[1].score and testPlayers[0].score == 0)
+
+        board = Board(rotate(tileList[63], 2))
+        tile = rotate(tileList[50],1)
+        tile.occupied = tile.features[0]
+        tile.occupied.occupiedBy = testPlayers[1]
+        board.addTile(0,1,tile)
+
+        tile = rotate(tileList[30], 3)
+        tile.occupied = tile.features[0]
+        tile.occupied.occupiedBy = testPlayers[0]
+        board.addTile(1, 0, tile)
+        board.addTile(1, 1, tileList[29])
+
+        completed = checkCompletedFeatures(1, 1, board)
+        self.assertTrue(len(completed) == 1)
+
+        calculateScoreQuiet(completed)
+
+        self.assertTrue(testPlayers[0].score == 10 and testPlayers[1].score == 10)
+
+    def testMajorityTakesAll(self):
+        importTiles(tileFile)
+        resetScore()
+        self.assertTrue(testPlayers[0].score == testPlayers[1].score and testPlayers[0].score == 0)
+
+        board = Board(rotate(tileList[63], 2))
+        tile = rotate(tileList[50],1)
+        tile.occupied = tile.features[0]
+        tile.occupied.occupiedBy = testPlayers[1]
+        board.addTile(0,1,tile)
+
+        tile = rotate(tileList[30], 3)
+        tile.occupied = tile.features[0]
+        tile.occupied.occupiedBy = testPlayers[0]
+        board.addTile(1, 0, tile)
+
+        tile = tileList[29]
+        tile.occupied = tile.features[0]
+        tile.occupied.occupiedBy = testPlayers[0]
+        board.addTile(1, 1, tile)
+
+        completed = checkCompletedFeatures(1, 1, board)
+        self.assertTrue(len(completed) == 1)
+
+        calculateScoreQuiet(completed)
+
+        self.assertTrue(testPlayers[0].score == 10 and testPlayers[1].score == 0)
+
+class testRotation(unittest.TestCase):
+    def testRotateCity(self):
+        importTiles(tileFile)
+        tile = tileList[29]
+
+        tile2 = rotate(tile, 1)
+        self.assertTrue(tile2.edges[0] == FeatType.CITY and tile2.edges[1] == FeatType.CITY)
+        self.assertTrue(set(tile2.features[0].edges) == set([0,1]))
+
+    def testRotateRoad(self):
+        importTiles(tileFile)
+        tile = tileList[29]
+
+        tile2 = rotate(tile, 2)
+        self.assertTrue(tile2.edges[0] == FeatType.ROAD and tile2.edges[3] == FeatType.ROAD)
+        self.assertTrue(set(tile2.features[1].edges) == set([0,3]))
+
+    def testRotateGrass(self):
+        importTiles(tileFile)
+        tile = tileList[29]
+
+        self.assertTrue(tile.edges[0] == FeatType.CITY and tile.edges[3] == FeatType.CITY)        
+        self.assertTrue(tile.edges[1] == FeatType.ROAD and tile.edges[2] == FeatType.ROAD)
+        self.assertTrue(tile.grasses[0].edges == [2,5])
+
+        tile2 = rotate(tile, 1)
+
+        self.assertTrue(tile2.edges[1] == FeatType.CITY)
+        self.assertTrue(set(tile2.grasses[0].edges) == set([4,7]))
 
 
+class testFields(unittest.TestCase):
+    def fieldBoard(self):
+        importTiles(tileFile)
+        tile = tileList[70]
+        board = Board(tile)
+
+        board.addTile(0, 1, tileList[40])
+        
+        tile = tileList[46]
+        tile.occupied = tile.grasses[0]
+        tile.occupied.occupiedBy = testPlayers[1]
+        board.addTile(0, 2, tile)
+        return board
+
+    def testFieldBuilding(self):
+        board = self.fieldBoard()
+        completed = buildField(0,0,board.tileAt(0,0,),5,board)
+        leftFields = set([(71,5), (41,0),(41,7),(41,6),(41,5),(47,7),(47,6),(47,5),(47,0)])
+        self.assertEqual(set(completed.features), leftFields)
+
+        rightFields = set([(71,4), (41,1),(41,2),(41,3),(41,4),(47,1),(47,2),(47,3),(47,4)])
+        completed = buildField(0,0,board.tileAt(0,0),4,board)
+        self.assertEqual(set(completed.features), rightFields)
+
+        board.addTile(0,3,rotate(tileList[19], 2))
+        totalFields = leftFields.union(rightFields).union(set([(20,0),(20,1),(20,2),(20,3),(20,4),(20,5),(20,6),(20,7)]))
+        completed2 = buildField(0,0,board.tileAt(0,0), 5, board)
+        self.assertEqual(set(completed2.features), totalFields)
+
+    def testCityAdjacency(self):
+        t3 = rotate(tileList[0], 1)
+        board = Board(t3)
+        c3 = t3.features[0]
+
+        t2 = rotate(tileList[30],2)
+        board.addTile(0, -1, t2)
+        c2 = t2.features[0]
+
+        t1 = rotate(tileList[27], 0)
+        board.addTile(1, -1, t1)
+        c1 = t1.features[0]
+
+        t4 = rotate(tileList[56], 1)
+        board.addTile(1, 0, t4)
+        c4 = t4.features[0]
+        
+        board.addTile(1,-2, rotate(tileList[25], 1))
+        board.addTile(0,-2, rotate(tileList[14], 3))
+        board.addTile(-1,-1, rotate(tileList[24], 3))
+        board.addTile(-1,0, rotate(tileList[28], 2))
+
+        completed = buildField(0,0,board.tileAt(0,0),7,board)
+        self.assertEqual(completed.adjacentCities, {c1,c2,c3})
+
+        completed2 = buildField(0,0,board.tileAt(0,0),6,board)
+        self.assertFalse(completed2.adjacentCities)
+
+        completed3 = buildField(1,-1,board.tileAt(1,-1),5,board)
+        self.assertEqual(completed3.adjacentCities, {c4,c1})
 if __name__ == '__main__':
     unittest.main()

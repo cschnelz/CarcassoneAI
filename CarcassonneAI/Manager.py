@@ -68,7 +68,7 @@ def playTile(board: Board, currTile: Tile):
 
     while (True):
         print('\n')
-        render3(board, currTile)
+        render3(board, currTile, players)
         try:
             printValidLocationsSingle(board, currTile)
             res = input("input r to rotate, coordinates x y to insert, or q to quit: ").split()
@@ -125,25 +125,7 @@ def shiftCoords(x, y, direction):
         return (x+1, y)
     return (x-1, y)
 
-def buildRecursive(x: int, y: int, tile: Tile, inEdge: int, board: Board, featureList):
-    inFeature = tile.featureAtEdge(inEdge)
 
-    for edge in inFeature.edges:
-        if (tile.id, edge) not in featureList:
-            # if there's more edges to this feature, add them
-            featureList.append((tile.id, edge))
-
-            # shift to the next tile and recurse
-            nextEdge = (edge + 2) % 4
-            nextX, nextY = shiftCoords(x, y, edge)
-            nextTile = board.getNeighbor(x,y,edge)
-            if nextTile is not None:
-                buildRecursive(nextX, nextY, nextTile, nextEdge, board, featureList)
-
-def buildFeatures(x, y, tile: Tile, featEdge: int, board: Board):
-    featureList = []
-    buildRecursive(x, y, tile, featEdge, board, featureList)
-    return featureList
 
 # check if a list of features is finished
 def finishedFeature(x, y, tile: Tile, featEdge: int, board: Board) -> combinedFeature:

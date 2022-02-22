@@ -1,7 +1,4 @@
 
-
-
-
 class Player:
     def __init__(self, id):
         self.id = id
@@ -12,5 +9,3 @@ class Player:
 
         self.meepleCount = 7
         self.score = 0
-    
-    

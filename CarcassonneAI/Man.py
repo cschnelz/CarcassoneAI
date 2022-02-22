@@ -45,7 +45,7 @@ board.addTile(0, 2, tile)
 
 combined = buildField(0,0,board.tileAt(0,0),5,board)
 
-render3(board, tileList[50])
+render3(board, tileList[50], players)
 render2(board)
 input()
 #2, 0, 4

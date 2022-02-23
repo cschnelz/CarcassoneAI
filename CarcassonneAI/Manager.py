@@ -1,9 +1,8 @@
-## Game state manager and core game loop
-## Holds tile pool and delivers new tiles
-## Polls for valid tile locations and tells board where to add tile
+## Static functions for management and calculations
 
+from math import comb
 from random import random
-from Tile import Tile, rotate
+from Tile import Tile, featureAtEdgeStatic, grassAtEdgeStatic, rotate
 from Board import Board
 from typing import List
 from Feature import *
@@ -17,6 +16,7 @@ current_player = 0
 
 # Load the tiles from the TileList json and initialize the list of Tile objects
 tileList = importTiles('TileSetSepRoads.json')
+playedTiles = []
 
 # get a random tile from the tile list and remove it
 def dispatchTile() -> Tile:
@@ -36,6 +36,7 @@ def initialize(forcedOrder: List):
         startingTile = dispatchTile()
 
     # initialize board with a first tile
+    playedTiles.append(startingTile)
     board = Board(startingTile)
     #render2(board)
     # self.players
@@ -97,6 +98,7 @@ class combinedFeature:
         self.featType = None
         self.score = 0
         self.features = []
+        self.tileFeat = []
         self.meepled: List[Feature] = []
         self.tiles = []
         self.playersOn = []
@@ -109,7 +111,8 @@ class combinedFeature:
 def checkCompletedFeatures(x, y, board: Board) -> List[combinedFeature]:
     completed = []
     for i in range(4):
-        combined = finishedFeature(x,y,board.tileAt(x,y),i,board)
+        tile = board.tileAt(x,y)
+        combined = buildFeature(x,y,i,board,tile.featureAtEdge(i))
         if combined.completed:
             # prevents duping of looped features
             if combined not in completed:
@@ -125,102 +128,70 @@ def shiftCoords(x, y, direction):
         return (x+1, y)
     return (x-1, y)
 
-
+def shiftCoordsGrass(x, y, direction):
+    direction = int(direction / 2)
+    if direction == 0:
+        return (x, y-1)
+    if direction == 2:
+        return (x, y+1)
+    if direction == 1:
+        return (x+1, y)
+    return (x-1, y)
 
 # check if a list of features is finished
-def finishedFeature(x, y, tile: Tile, featEdge: int, board: Board) -> combinedFeature:
+def buildFeature(x, y, featEdge: int, board: Board, featType: FeatType) -> combinedFeature:
     combined = combinedFeature()
-    combined.featType = tile.featureAtEdge(featEdge).featType if tile.featureAtEdge(featEdge) is not None else None
-    finishedRecursive(x, y, tile, featEdge, board, combined)
+    tile = board.tileAt(x,y)
+    if featType is None:
+        return combined
+
+    if featType is FeatType.GRASS:
+        if tile.grasses is not []:
+            combined.featType = FeatType.GRASS
+            finishedRecursive(x, y, featEdge, board, combined, grassAtEdgeStatic, shiftCoordsGrass)
+    else:
+        if tile.featureAtEdge(featEdge) is not None:
+            combined.featType = tile.featureAtEdge(featEdge).featType
+            finishedRecursive(x, y, featEdge, board, combined, featureAtEdgeStatic, shiftCoords)
+
     return combined
 
-def finishedRecursive(x: int, y: int, tile: Tile, inEdge: int, board: Board, combined: combinedFeature):
-    inFeature = tile.featureAtEdge(inEdge)
-    if inFeature is None:
-        combined.completed = False
-        return
+def finishedRecursive(x: int, y: int, inEdge: int, board: Board, combined: combinedFeature, featureFunc, shiftFunc):
+    tile = board.tileAt(x,y)
+    inFeature: Feature = featureFunc(tile, inEdge)
+    
+    # add info about meeples on this feature    
     if inFeature.occupiedBy is not None:
         if inFeature not in combined.meepled:
             combined.meepled.append(inFeature)
             combined.playersOn.append(inFeature.occupiedBy.color)
     
+    # check that the tile hasn't been scored yet, and add the score for the feature
     if tile.id not in combined.tiles:
         combined.tiles.append(tile.id)
         combined.score += inFeature.score()
 
+    # recursively search across all other edges this feature is on
     for edge in inFeature.edges:
         if (tile.id, edge) not in combined.features:
             # if there's more edges to this feature, add them
             combined.features.append((tile.id, edge))
+            combined.tileFeat.append((tile,inFeature))
 
             # shift to the next tile and recurse
             nextEdge = inFeature.getOppositeEdge(edge)
-            nextX, nextY = shiftCoords(x, y, edge)
-            nextTile = board.getNeighbor(x,y,edge)
-            if nextTile is not None:
-                finishedRecursive(nextX, nextY, nextTile, nextEdge, board, combined)
+            nextX, nextY = shiftFunc(x, y, edge)
+            if board.tileAt(nextX, nextY) is not None:
+                finishedRecursive(nextX, nextY, nextEdge, board, combined, featureFunc, shiftFunc)
             else:
                 combined.completed = False
 
-# check if a feature has a meeple on it already
-def isOccupied(x, y, tile: Tile, featEdge: int, board: Board) -> bool:
-    featureList = []
-    flag = [False]
-    occupiedRecursive(x, y, tile, featEdge, board, featureList, flag)
-    return flag[0]
-
-def occupiedRecursive(x: int, y: int, tile: Tile, inEdge: int, board: Board, featureList, flag):
-    inFeature = tile.featureAtEdge(inEdge)
-    if inFeature is None:
-        return
-    if inFeature.occupiedBy is not None:
-        flag[0] = True
-
-    for edge in inFeature.edges:
-        if (tile.id, edge) not in featureList:
-            # if there's more edges to this feature, add them
-            featureList.append((tile.id, edge))
-
-            # shift to the next tile and recurse
-            nextEdge = inFeature.getOppositeEdge(edge)
-            nextX, nextY = shiftCoords(x, y, edge)
-            nextTile = board.getNeighbor(x,y,edge)
-            if nextTile is not None:
-                occupiedRecursive(nextX, nextY, nextTile, nextEdge, board, featureList, flag)
-
-def buildField(x: int, y: int, tile: Tile, inEdge: int, board: Board):
-    combined = combinedFeature()
-    if tile.grasses is not []:
-        combined.featType = FeatType.GRASS
-        fieldRecursive(x, y, tile, inEdge, board, combined)
-    return combined
-
-def fieldRecursive(x: int, y: int, tile: Tile, inEdge: int, board: Board, combined: combinedFeature):
-    inField = tile.grassAtEdge(inEdge)
-
-    if inField is None:
-        return
-    if inField.occupiedBy is not None:
-        if inField not in combined.meepled:
-            combined.meepled.append(inField)
-            combined.playersOn.append(inField.occupiedBy.color)
-    
-    if tile.id not in combined.tiles:
-        combined.tiles.append(tile.id)
-
-    for edge in inField.edges:
-        if (tile.id, edge) not in combined.features:
-            # if there's more edges to this feature, add them
-            combined.features.append((tile.id, edge))
-            adjacentCity = set(tile.adjacentCity(inField))
-            combined.adjacentCities = combined.adjacentCities.union(adjacentCity)
-
-            # shift to the next tile and recurse
-            nextEdge = inField.getOppositeEdge(edge)
-            nextX, nextY = shiftCoords(x, y, int(edge / 2))
-            nextTile = board.getNeighbor(x,y, int(edge / 2))
-            if nextTile is not None:
-                fieldRecursive(nextX, nextY, nextTile, nextEdge, board, combined)
+def adjacentCities(completed: combinedFeature):
+    cities = set()
+    for tf in completed.tileFeat:
+        tileCities = tf[0].adjacentCity(tf[1])
+        cities.union(tileCities)
+    return cities
 
 def placeMeeple(x: int, y: int, board: Board):
     # if player has meeples and there are places to put meeples, ask where theyd like to place meeple
@@ -229,7 +200,7 @@ def placeMeeple(x: int, y: int, board: Board):
     tile = board.tileAt(x, y)
 
     if tile.features[0].featType is not FeatType.CHAPEL:
-        openFeatures = [feat for feat in tile.features if not(isOccupied(x, y, tile, feat.edges[0], board))]
+        openFeatures = [feat for feat in tile.features if not(buildFeature(x, y, feat.edges[0], board,tile.features[0].featType).meepled)]
     else:
         openFeatures = [tile.features[0]]
 
@@ -297,6 +268,7 @@ def runGame(board: Board, forcedOrder: List):
 
         # get placement location, meeple placement, and then check for completed features and update score
         x, y = playTile(board, currTile)
+        playedTiles.append(currTile)
         placeMeeple(x, y, board)
         completed = checkCompletedFeatures(x, y, board)
 

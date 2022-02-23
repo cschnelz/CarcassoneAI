@@ -86,3 +86,14 @@ def rotate(tile: Tile, i: int) -> Tile:
         newGrass.append(Grass(newEdges, False))
     return Tile(tile.id, newFeatures, newGrass, tile.imgCode, (tile.orientation + i)%4)
 
+def featureAtEdgeStatic(tile: Tile, edge: int) -> Feature:
+        for feature in tile.features:
+            if edge in feature.edges:
+                return feature
+        return None
+
+def grassAtEdgeStatic(tile: Tile, edge: int) -> Grass:
+        for grass in tile.grasses:
+            if edge in grass.edges:
+                return grass
+        return None

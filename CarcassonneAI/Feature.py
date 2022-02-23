@@ -22,6 +22,9 @@ class Feature():
     def getOppositeEdge(self, inEdge: int) -> int:
         pass
 
+    def score(self):
+        pass
+
 class City(Feature):
     def __init__(self, edges: List[int], info: bool):
         super().__init__(edges, info)
@@ -59,6 +62,9 @@ class Grass(Feature):
             return (inEdge + 5) % 8
         return (inEdge + 3) % 8
 
+    def score(self):
+        return 0
+
 class Chapel(Feature):
     def __init__(self, edges: List[int], info: bool):
         self.edges = []
@@ -67,3 +73,6 @@ class Chapel(Feature):
 
     def getOppositeEdge(self, inEdge: int) -> int:
         pass
+
+    def score(self):
+        return 0

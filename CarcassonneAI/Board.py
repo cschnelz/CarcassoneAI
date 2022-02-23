@@ -80,7 +80,7 @@ class Board:
 
     def tileAt(self, x: int, y: int) -> Tile:
         node = self.board.get((x,y))
-        return node.tile
+        return node.tile if node is not None else None
 
     # track the bounding coords of the game board
     def expandBounds(self, coords: List[tuple]):

@@ -1,4 +1,5 @@
 from State import State
+from Render import render3
 ## game class
 
 ## usage:
@@ -11,11 +12,11 @@ from State import State
 
 class Game:
     def __init__(self):
-        pass
+        self.state = State()
 
     def getState(self):
         # get the current game state
-        pass
+        return self.state
 
     def getActions(self): #-> List[Action]
         # get current valid actions, where each action represents a 
@@ -24,6 +25,8 @@ class Game:
 
     def applyAction(self, action):
         # update the state based on the action
+
+        # get a new tile as currentTile
         pass
 
     def gameOver(self) -> bool:
@@ -32,7 +35,7 @@ class Game:
 
     def render(self):
         # render the board
-        pass
+        render3(self.state.board, self.state.currentTile,self.state.players)
 
     ## Agent-side
     def copyState(self):

@@ -119,7 +119,6 @@ def checkCompletedFeatures(x, y, board: Board) -> List[combinedFeature]:
 
     for node in board.neighbors8(x,y):
         if node.tile.chapel and node.tile.occupied.featType == FeatType.CHAPEL:
-            neigh = board.neighbors8(node.x, node.y)
             if len(board.neighbors8(node.x,node.y)) == 8:
                 combined = combinedFeature()
                 combined.score = 9

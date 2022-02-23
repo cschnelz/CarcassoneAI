@@ -19,6 +19,9 @@ class Feature():
         self.featType = None
         self.occupiedBy: Player = None
 
+    def __str__(self):
+        return f"Feature: {self.featType.name} on edges {self.edges}"
+
     def getOppositeEdge(self, inEdge: int) -> int:
         pass
 

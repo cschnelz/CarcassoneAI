@@ -1,5 +1,7 @@
 from State import State
 from Render import render3
+from Action import validActions, Action
+from Tile import Tile
 ## game class
 
 ## usage:
@@ -13,6 +15,7 @@ from Render import render3
 class Game:
     def __init__(self):
         self.state = State()
+        self.state.tileList = self.state.tileList[0:15]
 
     def getState(self):
         # get the current game state
@@ -21,17 +24,28 @@ class Game:
     def getActions(self): #-> List[Action]
         # get current valid actions, where each action represents a 
         # tile placement, orientation, and meeple decision
-        pass
+        actions = validActions(self.state.board, self.state.currentTile)
+        return actions
 
-    def applyAction(self, action):
+    def applyAction(self, action: Action):
         # update the state based on the action
+        tile = action.tile
 
-        # get a new tile as currentTile
-        pass
+        if action.meeple:
+            tile.occupied = action.feature
+            tile.occupied.occupiedBy = self.state.players[self.state.currentPlayer]
+            self.state.players[self.state.currentPlayer].meepleCount -= 1
+
+        self.state.board.addTile(action.x,action.y,action.tile)
+        self.state.currentTile = self.state.dispatchTile()
+        self.state.currentPlayer = (self.state.currentPlayer + 1) % 2
+        
+    def currentPlayer(self):
+        return self.state.players[self.state.currentPlayer]
 
     def gameOver(self) -> bool:
         # check for end of game
-        pass
+        return len(self.state.tileList) == 0
 
     def render(self):
         # render the board

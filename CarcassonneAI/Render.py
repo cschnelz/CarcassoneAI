@@ -1,5 +1,3 @@
-from re import M
-from turtle import color
 from Board import Board, Node
 from Feature import *
 from Tile import Tile, rotate
@@ -153,8 +151,12 @@ def destroyFrames():
         widgets.destroy()
     gridFrame.pack_forget()
 
+def rotateAndRedraw(board: Board, currTile: Tile, players: List[Player]):
+    rTile = rotate(currTile, 1)
+    render3(board, rTile, players)
 
-def drawCurrTile(root, currTile: Tile, players: List[Player]):
+
+def drawCurrTile(root, currTile: Tile, players: List[Player], board):
     img = Image.open(rf'Images/tile-{currTile.imgCode}.png')
     imgR = rotateImage(img, currTile.orientation)
     imgTk = ImageTk.PhotoImage(imgR)
@@ -167,6 +169,9 @@ def drawCurrTile(root, currTile: Tile, players: List[Player]):
     labelImg = tk.Label(root, image=imgTk)
     labelImg.img = imgTk
     labelImg.grid(column=0,row=1)
+
+    btn = tk.Button(root, text=f'Orientation: {currTile.orientation}', command= lambda : rotateAndRedraw(board, currTile, players))
+    btn.grid(column=0, row=2)
 
     labelScore = tk.Label(root, text="Current Score:")
     labelScore.grid(column=1,row=0, padx=20)
@@ -269,12 +274,12 @@ def drawTile(canvas: tk.Canvas, board: Board, x, y, node: Node):
 
     #canvas.grid(column= x - board.minX, row= y - board.minY)
 
-def render3(board: Board, currTile:  Tile, players: List[Player]):
-    destroyFrames()
+def render3(board: Board, currTile: Tile, players: List[Player]):
+    #destroyFrames()
 
 
 
-    drawCurrTile(currTileFrame, currTile, players)
+    #drawCurrTile(currTileFrame, currTile, players, board)
     drawCoordsY(gridFrameY, board)
     drawCoords(gridFrame, board)
     #frame.grid(column=3, row=3, rowspan=(board.maxY- board.minY), columnspan=(board.maxX - board.minX))

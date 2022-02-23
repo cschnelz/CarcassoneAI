@@ -29,6 +29,9 @@ class Board:
         self.openLocations = {(0,1), (1, 0), (0, -1), (-1, 0)}
         self.minX = self.minY = -1
         self.maxX = self.maxY = 1
+
+    #def copy(self):
+
     
     def addTile(self, x:int, y: int, tile: Tile):
         if not self.isValid(x, y, tile):

@@ -17,3 +17,7 @@ class State:
         self.currentTile = dispatchTile()
 
         self.board = Board(self.currentTile)
+
+    def apply(self, action):
+        tile = action.tile
+        meeple = action.meeple

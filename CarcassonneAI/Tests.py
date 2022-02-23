@@ -165,6 +165,8 @@ def calculateScoreQuiet(completed: List[combinedFeature]):
                 testPlayers[0].score += c.score
             else:
                 testPlayers[1].score += c.score
+            testPlayers[0].meepleCount += redCount
+            testPlayers[1].meepleCount += blueCount
 
 class testScoring(unittest.TestCase):
 
@@ -278,6 +280,31 @@ class testScoring(unittest.TestCase):
 
         self.assertTrue(testPlayers[0].score == 10 and testPlayers[1].score == 0)
 
+    def testChapelScoring(self):
+        boardC = Board(rotate(tileList[4],1))
+        chapelTile = tileList[35]
+        chapelTile.occupied = chapelTile.features[0]
+        chapelTile.occupied.occupiedBy = testPlayers[1]
+        testPlayers[1].meepleCount -= 1
+
+        boardC.addTile(0,-1,chapelTile)
+        boardC.addTile(0,-2,rotate(tileList[9],1))
+        boardC.addTile(1,-1,tileList[25])
+        boardC.addTile(-1,-1,tileList[34])
+        boardC.addTile(1,-2,tileList[14])
+        boardC.addTile(1,0, rotate(tileList[24],1))
+        boardC.addTile(-1,0, rotate(tileList[28],2))
+        boardC.addTile(-1,-2, rotate(tileList[41],3))
+
+        self.assertTrue(testPlayers[1].meepleCount == 6)
+        completed = checkCompletedFeatures(-1, -2, boardC)
+        self.assertTrue(len(completed) == 2)
+        calculateScoreQuiet(completed)
+        self.assertTrue(testPlayers[0].score == 0 and testPlayers[1].score == 9)
+        self.assertTrue(testPlayers[0].meepleCount == 7 and testPlayers[1].meepleCount == 7)
+
+
+
 class testRotation(unittest.TestCase):
     def testRotateCity(self):
         importTiles(tileFile)
@@ -361,13 +388,20 @@ class testFields(unittest.TestCase):
         board.addTile(-1,0, rotate(tileList[28], 2))
 
         completed = buildFeature(0,0,7,board, FeatType.GRASS)
-        #self.assertEqual(completed.adjacentCities, {c1,c2,c3})
-        adjacentCities(completed)
+        self.assertEqual(adjacentCities(completed), {c1,c2,c3})
+        
 
         completed2 = buildFeature(0,0,6,board, FeatType.GRASS)
-        #self.assertFalse(completed2.adjacentCities)
+        self.assertFalse(adjacentCities(completed2))
 
         completed3 = buildFeature(1,-1,5,board, FeatType.GRASS)
-        #self.assertEqual(completed3.adjacentCities, {c4,c1})
+        self.assertEqual(adjacentCities(completed3), {c4,c1})
+
+class testBoardFuncs(unittest.TestCase):
+
+    def testNeighbor8(self):
+        board = createBoard3()
+        self.assertEqual({31,28,57}, set([node.tile.id for node in board.neighbors8(0,0)]))
+
 if __name__ == '__main__':
     unittest.main()

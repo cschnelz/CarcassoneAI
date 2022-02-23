@@ -3,7 +3,7 @@
 from math import comb
 from random import random
 from Tile import Tile, featureAtEdgeStatic, grassAtEdgeStatic, rotate
-from Board import Board
+from Board import Board, neighborCoordinates8
 from typing import List
 from Feature import *
 from Render import *
@@ -102,7 +102,6 @@ class combinedFeature:
         self.meepled: List[Feature] = []
         self.tiles = []
         self.playersOn = []
-        self.adjacentCities = set()
 
     def __eq__(self, __o: object) -> bool:
         return set(self.features) == set(__o.features)
@@ -113,10 +112,21 @@ def checkCompletedFeatures(x, y, board: Board) -> List[combinedFeature]:
     for i in range(4):
         tile = board.tileAt(x,y)
         combined = buildFeature(x,y,i,board,tile.featureAtEdge(i))
-        if combined.completed:
+        if combined.completed and combined.featType is not None:
             # prevents duping of looped features
             if combined not in completed:
                 completed.append(combined)
+
+    for node in board.neighbors8(x,y):
+        if node.tile.chapel and node.tile.occupied.featType == FeatType.CHAPEL:
+            neigh = board.neighbors8(node.x, node.y)
+            if len(board.neighbors8(node.x,node.y)) == 8:
+                combined = combinedFeature()
+                combined.score = 9
+                combined.playersOn.append(node.tile.features[0].occupiedBy.color)
+                combined.meepled.append(node.tile.features[0]) 
+                completed.append(combined)
+        
     return completed
 
 def shiftCoords(x, y, direction):
@@ -190,7 +200,7 @@ def adjacentCities(completed: combinedFeature):
     cities = set()
     for tf in completed.tileFeat:
         tileCities = tf[0].adjacentCity(tf[1])
-        cities.union(tileCities)
+        cities = cities.union(tileCities)
     return cities
 
 def placeMeeple(x: int, y: int, board: Board):
@@ -203,6 +213,8 @@ def placeMeeple(x: int, y: int, board: Board):
         openFeatures = [feat for feat in tile.features if not(buildFeature(x, y, feat.edges[0], board,tile.features[0].featType).meepled)]
     else:
         openFeatures = [tile.features[0]]
+    
+    openFeatures.extend([grass for grass in tile.grasses if not (buildFeature(x,y,grass.edges[0],board,FeatType.GRASS).meepled)])
 
     meeps = players[current_player].meepleCount
     if len(openFeatures) > 0 and meeps > 0:

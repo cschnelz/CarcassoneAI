@@ -7,6 +7,11 @@ import sys
 def neighborCoordinates(x: int, y: int) -> List[tuple]:
     return [(x, y-1), (x+1, y), (x, y+1), (x-1, y)]
 
+def neighborCoordinates8(x: int, y:int) -> List[tuple]:
+    eight = neighborCoordinates(x,y)
+    eight.extend([(x+1,y+1),(x+1,y-1),(x-1,y+1),(x-1,y-1)])
+    return eight
+
 class Node:
     def __init__(self, x: int, y: int, tile: Tile):
         self.tile = tile
@@ -90,6 +95,9 @@ class Board:
             self.maxX = max(self.maxX, coord[0])
             self.maxY = max(self.maxY, coord[1])
 
+    ## orthogonal and diagonal neighbors 
+    def neighbors8(self, x:int, y:int) -> list[Node]:
+       return [self.board.get(coord) for coord in neighborCoordinates8(x,y) if self.board.get(coord) is not None]
     
 
 

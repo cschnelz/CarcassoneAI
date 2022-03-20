@@ -1,4 +1,11 @@
 from tabnanny import check
+import os
+import sys
+import inspect
+
+currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+parentdir = os.path.dirname(currentdir)
+sys.path.insert(0, parentdir) 
 from Tile import rotate
 from Feature import *
 from Board import Board
@@ -12,7 +19,7 @@ import unittest
 tileFile = 'TileSetSepRoads.json'
 tileList: List[Tile] = importTiles(tileFile)
 
-testPlayers = [Player(0), Player(1)]
+testPlayers = [Player(0, HumanAgent()), Player(1, HumanAgent())]
 
 class testTileConnections(unittest.TestCase):
     ## Test north to non-south connection
@@ -127,7 +134,7 @@ class testMeepleOccupied(unittest.TestCase):
         board = Board(tileList[15])
         tile = rotate(tileList[50], 1)
         tile.occupied = tile.features[0]
-        tile.features[0].occupiedBy = Player(0)
+        tile.features[0].occupiedBy = Player(0, HumanAgent())
         board.addTile(-1, 0, tile)
         board.addTile(-1, -1, tileList[1])
         self.assertTrue(buildFeature(-1,-1,2,board,FeatType.CITY).meepled)
@@ -143,7 +150,7 @@ class testMeepleOccupied(unittest.TestCase):
 
         tile = tileList[46]
         tile.occuped = tile.features[0]
-        tile.features[0].occupiedBy = Player(1)
+        tile.features[0].occupiedBy = Player(1, HumanAgent())
         board.addTile(0, 2, tile)
         self.assertTrue(buildFeature(0,2,2,board,FeatType.ROAD).meepled)
 

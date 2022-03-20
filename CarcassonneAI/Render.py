@@ -127,10 +127,6 @@ def render2(board: Board):
 
 top = tk.Tk()
 top.geometry("800x800")
-currTileFrame = tk.Frame(top)
-gridFrame = tk.Frame(top)
-gridFrameY = tk.Frame(top)
-frame = tk.Frame(top)
 
 MEEPLE_SIZE = 35
 TILE_SIZE = 100
@@ -138,9 +134,6 @@ TILE_SIZE = 100
 images = []
 
 def destroyFrames():
-    for widgets in frame.winfo_children():
-        widgets.destroy()
-    frame.pack_forget()
     for widgets in gridFrameY.winfo_children():
         widgets.destroy()
     gridFrameY.pack_forget()
@@ -155,42 +148,43 @@ def rotateAndRedraw(board: Board, currTile: Tile, players: List[Player]):
     rTile = rotate(currTile, 1)
     render3(board, rTile, players)
 
-
-def drawCurrTile(root, currTile: Tile, players: List[Player], board):
+def drawCurrTileOrient(root, currTile, orient):
     img = Image.open(rf'Images/tile-{currTile.imgCode}.png')
-    imgR = rotateImage(img, currTile.orientation)
+    imgR = rotateImage(img, orient)
     imgTk = ImageTk.PhotoImage(imgR)
     label = tk.Label(root, text="Current Tile:")
-    label.grid(column=0,row=0)
-
-    
+    label.grid(column=orient,row=0)
 
     # create the label for the current tile image
     labelImg = tk.Label(root, image=imgTk)
     labelImg.img = imgTk
-    labelImg.grid(column=0,row=1)
+    labelImg.grid(column=orient,row=1)
 
-    btn = tk.Button(root, text=f'Orientation: {currTile.orientation}', command= lambda : rotateAndRedraw(board, currTile, players))
-    btn.grid(column=0, row=2)
+    labelO = tk.Label(root, text=f"Orientation {orient}")
+    labelO.grid(column=orient, row=2)
+
+def drawCurrTile(root, currTile: Tile, players: List[Player], board):
+    for i in range(4):
+        drawCurrTileOrient(root, currTile, i)
 
     labelScore = tk.Label(root, text="Current Score:")
-    labelScore.grid(column=1,row=0, padx=20)
+    labelScore.grid(column=5,row=0, padx=20)
     labelScore2 = tk.Label(root, text=f"{players[0].color} {players[0].score} | {players[1].color} {players[1].score}")
-    labelScore2.grid(column=1, row=1)
+    labelScore2.grid(column=5, row=1)
 
-    root.grid(column=0,row=1, pady=10)
+    root.grid(column=0,row=1, pady=10, columnspan=5)
 
 def drawCoordsY(root, board: Board):
     for y in range(board.minY, board.maxY + 1):
         label = tk.Label(root, text=f'{y}')
         label.grid(column=0, row=y - board.minY, pady=40, sticky='w')
-    root.grid(column=0, row=2,padx=10, sticky="n")
+    root.grid(column=0, row=3,padx=10, sticky="n")
 
 def drawCoords(root, board: Board):
     for x in range(board.minX, board.maxX+1):
         label = tk.Label(root, text=f'{x}')
         label.grid(row=0, column=x - board.minX, padx=40, sticky='n')
-    root.grid(column=1, row=1,pady=10, sticky="w")
+    root.grid(column=1, row=2,pady=10, sticky="w")
 
 
 def rotateImage(img, orientation):
@@ -274,17 +268,28 @@ def drawTile(canvas: tk.Canvas, board: Board, x, y, node: Node):
 
     #canvas.grid(column= x - board.minX, row= y - board.minY)
 
+currTileFrame = tk.Frame(top)
+gridFrame = tk.Frame(top)
+gridFrameY = tk.Frame(top)
+canvas = tk.Canvas(top, width=1000, height=1000)
+
 def render3(board: Board, currTile: Tile, players: List[Player]):
-    #destroyFrames()
+    destroyFrames()
+    global canvas
+    for widget in canvas.winfo_children():
+        widget.destroy()
+    canvas.pack_forget()
+    canvas.destroy()
+    canvas = tk.Canvas(top, width=1000, height=1000)
+    global images
+    del images
+    images = []
 
-
-
-    #drawCurrTile(currTileFrame, currTile, players, board)
+    drawCurrTile(currTileFrame, currTile, players, board)
     drawCoordsY(gridFrameY, board)
     drawCoords(gridFrame, board)
     #frame.grid(column=3, row=3, rowspan=(board.maxY- board.minY), columnspan=(board.maxX - board.minX))
-    canvas = tk.Canvas(top, width=1000, height=1000)
-    canvas.grid(column=1, row=2, padx=40, pady=50)
+    canvas.grid(column=1, row=3, padx=40, pady=50)
     for item, node in board.board.items():
         drawTile(canvas, board, item[0], item[1], node)
 

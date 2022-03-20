@@ -2,6 +2,7 @@
 
 from math import comb
 from random import random
+from Agents import HumanAgent
 from Tile import Tile, featureAtEdgeStatic, grassAtEdgeStatic, rotate
 from Board import Board, neighborCoordinates8
 from typing import List
@@ -11,12 +12,13 @@ from Import import importTiles
 from Player import Player
 
 # List of player classes that hold score, meeple counts, etc
-players = [Player(0), Player(1)]
-current_player = 0
 
 # Load the tiles from the TileList json and initialize the list of Tile objects
 tileList = importTiles('TileSetSepRoads.json')
 playedTiles = []
+
+players = [Player(0, HumanAgent()), Player(1, HumanAgent())]
+current_player = 0
 
 # get a random tile from the tile list and remove it
 def dispatchTile() -> Tile:
@@ -44,6 +46,25 @@ def initialize(forcedOrder: List):
 
     # begin game loop
     runGame(board, forcedOrder)
+
+def shiftCoords(x, y, direction):
+    if direction == 0:
+        return (x, y-1)
+    if direction == 2:
+        return (x, y+1)
+    if direction == 1:
+        return (x+1, y)
+    return (x-1, y)
+
+def shiftCoordsGrass(x, y, direction):
+    direction = int(direction / 2)
+    if direction == 0:
+        return (x, y-1)
+    if direction == 2:
+        return (x, y+1)
+    if direction == 1:
+        return (x+1, y)
+    return (x-1, y)
 
 # given a tile, report locations and orientations it can be placed
 def printValidLocations(board: Board, tile: Tile):
@@ -291,4 +312,4 @@ def runGame(board: Board, forcedOrder: List):
                 
         
         current_player = (current_player + 1) % 2
-        ## board.test
+        # board.test

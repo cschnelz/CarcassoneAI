@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import List
 import sys
+
+from bleach import clean
 from Player import Player
 
 class FeatType(Enum):
@@ -19,8 +21,8 @@ class Feature():
         self.featType = None
         self.occupiedBy: Player = None
 
-    def __str__(self):
-        return f"Feature: {self.featType.name} on edges {self.edges}"
+    # def __str__(self):
+    #     return f"Feature: {self.featType.name} on edges {self.edges}"
 
     def getOppositeEdge(self, inEdge: int) -> int:
         pass
@@ -67,6 +69,14 @@ class Grass(Feature):
 
     def score(self):
         return 0
+
+    def cleanEdges(self):
+        cleanEdges = self.edges.copy()
+        for i in range(4):
+            if i*2 in cleanEdges and i*2+1 in cleanEdges:
+                cleanEdges.remove(i*2+1)
+        return cleanEdges
+
 
 class Chapel(Feature):
     def __init__(self, edges: List[int], info: bool):

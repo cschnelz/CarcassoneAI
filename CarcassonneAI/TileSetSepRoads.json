@@ -76,10 +76,10 @@
         "img-code" : "w",
         "features" : [
             {
-                "Road" : {"Edges" : [1]}
+                "Road" : {"Edges":[1]}
             },
             {
-                "Road" : {"Edges" :[2]}
+                "Road" : {"Edges":[2]}
             },
             {
                 "Road" : {"Edges":[3]}
@@ -262,10 +262,10 @@
                 "Road" : {"Edges":[1]}
             },
             {
-                "Road" : {"Edges" : [2] }
+                "Road" : {"Edges":[2]}
             },
             {
-                "Road" : {"Edges" : [3] }
+                "Road" : {"Edges":[3]}
             },
             {
                 "Grass":{"Edges":[7,0,1,2]}
@@ -394,13 +394,13 @@
         "img-code" : "w",
         "features" : [
             {
-                "Road":{"Edges":[1]}
+                "Road" : {"Edges":[1]}
             },
             {
-                "Road" : {"Edges" : [2] }
+                "Road" : {"Edges":[2]}
             },
             {
-                "Road" : {"Edges" : [3] }
+                "Road" : {"Edges":[3]}
             },
             {
                 "Grass":{"Edges":[7,0,1,2]}
@@ -644,13 +644,13 @@
         "img-code" : "w",
         "features" : [
             {
-                "Road":{"Edges":[1]}
+                "Road" : {"Edges":[1]}
             },
             {
-                "Road" : {"Edges" : [2] }
+                "Road" : {"Edges":[2]}
             },
             {
-                "Road" : {"Edges" : [3] }
+                "Road" : {"Edges":[3]}
             },
             {
                 "Grass":{"Edges":[7,0,1,2]}

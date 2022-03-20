@@ -51,16 +51,16 @@ class Tile:
         for edge in grass.edges:
             if edge == 2 or edge == 7:
                 if self.edges[0] == FeatType.CITY:
-                    cities.append(self.featureAtEdge(0))
+                    cities.append(0)
             elif edge == 1 or edge == 4:
                 if self.edges[1] == FeatType.CITY:
-                    cities.append(self.featureAtEdge(1))
+                    cities.append(1)
             elif edge == 3 or edge == 6:
                 if self.edges[2] == FeatType.CITY:
-                    cities.append(self.featureAtEdge(2))
+                    cities.append(2)
             else: # 0 or 5
                 if self.edges[3] == FeatType.CITY:
-                    cities.append(self.featureAtEdge(3))
+                    cities.append(3)
 
         ## REWRITE this so that it passes the edge-finding stuff to the grass class
         # div 2
@@ -81,6 +81,8 @@ def rotate(tile: Tile, i: int) -> Tile:
         elif feat.featType == FeatType.ROAD:
             newEdges = [(e + i) % 4 for e in feat.edges]
             newFeatures.append(Road(newEdges, feat.terminated))
+        elif feat.featType == FeatType.CHAPEL:
+            newFeatures.append(Chapel(None,None))
     for grass in tile.grasses:
         newEdges = [(e + (i * 2)) % 8 for e in grass.edges]
         newGrass.append(Grass(newEdges, False))

@@ -1,7 +1,7 @@
-from Agents import HumanAgent
+from Agents import *
 
 class Player:
-    def __init__(self, id):
+    def __init__(self, id, agent: Agent):
         self.id = id
         if id == 0:
             self.color = 'red'
@@ -11,4 +11,5 @@ class Player:
         self.meepleCount = 7
         self.score = 0
 
-        self.agent = HumanAgent()
+        self.agent = agent
+        self.meepled = []

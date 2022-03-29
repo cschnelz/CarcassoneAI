@@ -2,7 +2,6 @@ from enum import Enum
 from typing import List
 import sys
 
-from bleach import clean
 from Player import Player
 
 class FeatType(Enum):

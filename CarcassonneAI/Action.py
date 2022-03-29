@@ -42,6 +42,7 @@ def validActions(board: Board, currTile: Tile, meepleAvailable: Boolean) -> List
                 board.openLocations = backupBoard.openLocations.copy()
                 board.trackedFeatures = backupBoard.trackedFeatures.copy()
                 board.trackedFields = backupBoard.trackedFields.copy()
+                board.meepled = backupBoard.meepled.copy()
     #tuples.sort(key=lambda x: (x[0], x[1]))
     actions.sort(key=lambda action: (action.x, action.y))
     return actions
@@ -57,10 +58,10 @@ def validMeeples(board: Board, tile: Tile, location: Tuple[int]) -> List[Action]
         openFeatures = [tile.features[0]]
     else:
         openFeatures = [feat for feat in tile.features if 
-            not(board.featureMeepled(location[0], location[1], feat.edges[0], tile.features[0].featType))]
+            not(board.buildFeature(location[0], location[1], feat.edges[0], tile.features[0].featType)).meepled]
 
     openFeatures.extend([grass for grass in tile.grasses if 
-        not (board.featureMeepled(location[0],location[1],grass.edges[0],FeatType.GRASS))])
+        not (board.buildFeature(location[0],location[1],grass.edges[0],FeatType.GRASS)).meepled])
 
     actions.extend([Action(location[0], location[1], tile, True, feat) for feat in openFeatures])
     return actions

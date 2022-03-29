@@ -34,6 +34,7 @@ class testEvaluate(unittest.TestCase):
         game,tileList = reset()
         tile = rotate(tileList[19], 1)
         game.applyAction(Action(1,0,tile,True,tile.features[0]))
+        
         tile = tileList[17]
         game.applyAction(Action(1,-1,tile,True,tile.features[0]))
         game.applyAction(Action(2,-1,rotate(tileList[56],1),False,None))
@@ -56,9 +57,9 @@ class testFinalScore(unittest.TestCase):
         game.applyAction(Action(-1, 0, tile,True,tile.grasses[0]))
         game.applyAction(Action(-2, 0, rotate(tileList[27], 0),False,None))
 
-        score0_1 = game.state.scoreGrass(game.state.board.board.get((0,-1)))
+        score0_1 = game.state.scoreGrass(game.state.board.board.get((0,-1)),game.state.board.meepled.get((0,-1)))
         self.assertEqual(score0_1,3)
-        score_10 = game.state.scoreGrass(game.state.board.board.get((-1,0)))
+        score_10 = game.state.scoreGrass(game.state.board.board.get((-1,0)),game.state.board.meepled.get((-1,0)))
         self.assertEqual(score_10,3)
        
     def testChapelScoring(self):
@@ -167,7 +168,7 @@ class testOccupiedFeature(unittest.TestCase):
         game.applyAction(Action(1,0,tile,True,tile.features[2]))
         tile = tileList[28]
         game.applyAction(Action(2,0,tile,True,tile.features[0]))
-
+        
         self.assertTrue(game.state.board.buildFeature(0,0,1,FeatType.ROAD).meepled)
         self.assertTrue(game.state.board.buildFeature(1,0,1,FeatType.ROAD).meepled)
         self.assertFalse(game.state.board.buildFeature(1,0,2,FeatType.ROAD).meepled)

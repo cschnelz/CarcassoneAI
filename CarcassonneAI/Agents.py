@@ -10,11 +10,11 @@ import math
 
 class Agent(ABC):
     @abstractmethod
-    def getResponse(self, validActions, board=None, maxPlayer=None):
+    def getResponse(self, validActions, game=None, maxPlayer=None):
         pass
 
 class HumanAgent(Agent):
-    def getResponse(self, validActions, board=None, maxPlayer=None):
+    def getResponse(self, validActions, game=None, maxPlayer=None):
         os.system('cls' if os.name == 'nt' else 'clear')
         
         while True:
@@ -41,14 +41,20 @@ class GreedyAgent(Agent):
         bestAction = validActions[0]
         bestDelta = -math.inf
 
+        ## Starts a simulation, required before simulating
+        simState = game.startSim()
+
         for action in validActions:
-            state = game.simulate(action)
+            game.simApply(simState, action)
 
             ## if maxPlayer == 0 we want delta to be positive because its P0 - P1
-            lead = state.scoreDelta() if maxPlayer == 0 else -1 * state.scoreDelta()
+            lead = simState.scoreDelta() if maxPlayer == 0 else -1 * simState.scoreDelta()
             if lead > bestDelta:
                 bestDelta = lead
                 bestAction = action
+
+            game.refresh(simState)
+        
 
         return bestAction
         

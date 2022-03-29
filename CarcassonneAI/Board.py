@@ -61,6 +61,7 @@ class combinedFeature:
         self.playersOn = []
         self.nodes: List[Node] = []
         self.nodeEdges = []
+        self.meepleRecords: List[(int,int)] = []
 
     def __eq__(self, __o: object) -> bool:
         return set(self.features) == set(__o.features)
@@ -70,6 +71,14 @@ class builtFeature:
         self.featType = featType
         self.tracked = tracked
         self.meepled = []
+        
+class meepleInfo:
+    def __init__(self, player: Player, feature: Feature):
+        self.feature = feature.featType != FeatType.GRASS # false -> field
+        self.edge = -1 if feature.featType == FeatType.CHAPEL else feature.edges[0]
+        self.featureObject: Feature = feature
+        self.color = player.color
+        self.id = player.id
 
 class Board:
     def __init__(self, startingTile: Tile):
@@ -81,6 +90,9 @@ class Board:
 
         self.trackedFeatures: List[builtFeature] = [builtFeature(feat.featType, {startingNode.id: feat.edges}) for feat in startingTile.features]
         self.trackedFields: List[builtFeature] = [builtFeature(FeatType.GRASS, {startingNode.id: grass.edges}) for grass in startingTile.grasses]
+        
+        ## { (x, y) : meepleInfo }
+        self.meepled: Dict[tuple, meepleInfo] = {}
 
     #def copy(self):
 
@@ -225,24 +237,40 @@ class Board:
         if featType is FeatType.GRASS:
             if tile.grasses is not []:
                 combined.featType = FeatType.GRASS
-                self.finishedRecursive(x, y, featEdge, combined, grassAtEdgeStatic, shiftCoordsGrass)
+                self.finishedRecursive(x, y, featEdge, combined, grassAtEdgeStatic, shiftCoordsGrass, False)
         else:
             if tile.featureAtEdge(featEdge) is not None:
                 combined.featType = tile.featureAtEdge(featEdge).featType
-                self.finishedRecursive(x, y, featEdge, combined, featureAtEdgeStatic, shiftCoords)
+                self.finishedRecursive(x, y, featEdge, combined, featureAtEdgeStatic, shiftCoords, True)
 
         return combined
 
      
-    def finishedRecursive(self, x: int, y: int, inEdge: int, combined: combinedFeature, featureFunc, shiftFunc):
+    def finishedRecursive(self, x: int, y: int, inEdge: int, combined: combinedFeature, featureFunc, shiftFunc, feature):
         tile = self.tileAt(x,y)
         inFeature: Feature = featureFunc(tile, inEdge)
         
-        # add info about meeples on this feature    
-        if inFeature.occupiedBy is not None:
-            if inFeature not in combined.meepled:
-                combined.meepled.append(inFeature)
-                combined.playersOn.append(inFeature.occupiedBy.color)
+        # add info about meeples on this feature
+         
+        if (x, y) in self.meepled.keys() and (x,y) not in combined.meepleRecords:
+            meepled = self.meepled.get((x,y))
+            if feature:
+                if meepled.feature:
+                    if inEdge in self.meepled.get((x,y)).featureObject.edges:
+                        combined.meepled.append(inFeature)
+                        combined.playersOn.append(self.meepled.get((x,y)).color)
+                        combined.meepleRecords.append((x,y))
+            else:
+                if not meepled.feature:
+                    if inEdge in self.meepled.get((x,y)).featureObject.edges:
+                        combined.meepled.append(inFeature)
+                        combined.playersOn.append(self.meepled.get((x,y)).color)
+                        combined.meepleRecords.append((x,y))
+
+        # if inFeature.occupiedBy is not None:
+        #     if inFeature not in combined.meepled:
+        #         combined.meepled.append(inFeature)
+        #         combined.playersOn.append(inFeature.occupiedBy.color)
         
         # check that the tile hasn't been scored yet, and add the score for the feature
         if tile.id not in combined.tiles:
@@ -257,12 +285,11 @@ class Board:
             if (tile.id, edge) not in combined.features:
                 # if there's more edges to this feature, add them
                 combined.features.append((tile.id, edge))
-                
-
+  
                 # shift to the next tile and recurse
                 nextEdge = inFeature.getOppositeEdge(edge)
                 nextX, nextY = shiftFunc(x, y, edge)
                 if self.tileAt(nextX, nextY) is not None:
-                    self.finishedRecursive(nextX, nextY, nextEdge, combined, featureFunc, shiftFunc)
+                    self.finishedRecursive(nextX, nextY, nextEdge, combined, featureFunc, shiftFunc, feature)
                 else:
                     combined.completed = False

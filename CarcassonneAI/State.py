@@ -2,13 +2,13 @@
 
 from typing import List
 
-from Board import Board, combinedFeature, Node
+from Board import Board, combinedFeature, Node, meepleInfo
 from Feature import *
 from Player import Player
 from Import import importTiles
 from Action import Action
 from random import random
-
+import copy
 
 
 class State:
@@ -59,17 +59,33 @@ class State:
             if combined.completed and combined.featType is not None:
                 # prevents duping of looped features
                 if combined not in completed:
+                    for record in set(combined.meepleRecords):
+                        self.board.meepled.pop(record)
                     completed.append(combined)
 
+        ## check each neighbor to see if a chapel has been finished
         for node in self.board.neighbors8(x,y):
-            if node.tile.occupied is not None and node.tile.occupied.featType == FeatType.CHAPEL:
-                if len(self.board.neighbors8(node.x,node.y)) == 8:
-                    combined = combinedFeature()
-                    combined.score = 9
-                    combined.playersOn.append(node.tile.features[0].occupiedBy.color)
-                    combined.meepled.append(node.tile.features[0]) 
-                    completed.append(combined)
-            dispatchId = int(random() * len(self.tileList))
+            # if the neighbor coords are in our meepled dictioanry
+            if (x,y) in self.board.meepled.keys():
+                meepled = self.board.meepled.get((x,y))
+                # and that meepled record is of the feature on a chapel tile
+                if meepled.feature and node.tile.chapel:
+                    # check if it has tiles in all 8 neighbor spots
+                    if len(self.board.neighbors8(node.x,node.y)) == 8:
+                        combined = combinedFeature()
+                        combined.score = 9
+                        combined.playersOn.append(meepled.color)
+                        combined.meepled.append(node.tile.features[0]) 
+                        completed.append(combined)
+
+            # if node.tile.occupied is not None and node.tile.occupied.featType == FeatType.CHAPEL:
+            #     if len(self.board.neighbors8(node.x,node.y)) == 8:
+            #         combined = combinedFeature()
+            #         combined.score = 9
+            #         combined.playersOn.append(node.tile.features[0].occupiedBy.color)
+            #         combined.meepled.append(node.tile.features[0]) 
+            #         completed.append(combined)
+            # dispatchId = int(random() * len(self.tileList))
         return completed
 
      
@@ -99,28 +115,44 @@ class State:
                     print(f"Current score: Red {self.players[0].score} - Blue {self.players[1].score}")
                 self.players[0].meepleCount += redCount
                 self.players[1].meepleCount += blueCount
+                if not quiet:
+                    print(f"Meeple Counts: Red {self.players[0].meepleCount} - Blue {self.players[1].meepleCount}")
+
 
     def finalScore(self):
         finalScore = [0,0]
         for loc,node in self.board.board.items():
             tile = node.tile
-            if tile.occupied is not None and tile.occupied.occupiedBy is not None:
-                if tile.occupied.featType == FeatType.CHAPEL:
-                    finalScore[tile.occupied.occupiedBy.id] += self.scoreChapel(node)
-                elif tile.occupied.featType == FeatType.GRASS:
-                    finalScore[tile.occupied.occupiedBy.id] += self.scoreGrass(node)
+
+            # if we have a record of that location being meepled
+            if loc in self.board.meepled.keys():
+                meepled = self.board.meepled.get(loc)
+
+                if meepled.feature and tile.chapel:
+                    finalScore[meepled.id] += self.scoreChapel(node)
+                elif not meepled.feature:
+                    finalScore[meepled.id] += self.scoreGrass(node, meepled)
                 else:
-                    finalScore[tile.occupied.occupiedBy.id] += self.scoreFeature(node) 
+                    finalScore[meepled.id] += self.scoreFeature(node, meepled)
+
+
+            # if tile.occupied is not None and tile.occupied.occupiedBy is not None:
+            #     if tile.occupied.featType == FeatType.CHAPEL:
+            #         finalScore[tile.occupied.occupiedBy.id] += self.scoreChapel(node)
+            #     elif tile.occupied.featType == FeatType.GRASS:
+            #         finalScore[tile.occupied.occupiedBy.id] += self.scoreGrass(node)
+            #     else:
+            #         finalScore[tile.occupied.occupiedBy.id] += self.scoreFeature(node) 
         return tuple(finalScore)
 
-    def scoreFeature(self, node: Node):
-        combined = self.board.buildFeature(node.x,node.y,node.tile.occupied.edges[0],node.tile.occupied.featType)
+    def scoreFeature(self, node: Node, meepled: meepleInfo):
+        combined = self.board.buildFeature(node.x,node.y,meepled.edge,meepled.featureObject.featType)
         if combined.meepled:
             return combined.score if combined.featType == FeatType.ROAD else int(combined.score / 2)
         return 0
 
-    def scoreGrass(self, node: Node):
-        field = self.board.buildFeature(node.x,node.y,node.tile.occupied.edges[0],FeatType.GRASS)
+    def scoreGrass(self, node: Node, meepled: meepleInfo):
+        field = self.board.buildFeature(node.x,node.y,meepled.edge,FeatType.GRASS)
         if field.meepled:
             score = self.scoreAdjacentCities(field)
             return score
@@ -151,10 +183,6 @@ class State:
                         score += 3
 
         return score
-        
-
-        
-
 
     def scoreChapel(self, node: Node):
         return len(self.board.neighbors8(node.x, node.y)) + 1

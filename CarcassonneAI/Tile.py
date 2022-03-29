@@ -15,8 +15,6 @@ class Tile:
         self.edges: List[FeatType] = [None] * 4
 
         self.orientation = orientation
-
-        self.occupied: Feature = None
         
         self.chapel = False
         self.imgCode: str = imgCode

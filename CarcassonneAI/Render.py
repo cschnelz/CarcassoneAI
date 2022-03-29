@@ -1,4 +1,4 @@
-from Board import Board, Node
+from Board import Board, Node, meepleInfo
 from Feature import *
 from Tile import Tile, rotate
 from Player import Player
@@ -197,46 +197,45 @@ def rotateImage(img, orientation):
     if orientation == 3:
         return img.rotate(90)
 
-def meepleOffset(board: Board, x: int, y: int, t: Tile):
+def meepleOffset(board: Board, x: int, y: int, meeple: meepleInfo, t: Tile):
     xCoord = (x - board.minX) * TILE_SIZE
     yCoord = (y - board.minY)* TILE_SIZE
 
-    feat = t.occupied
-    if feat.featType is FeatType.CHAPEL:
+    if t.chapel:
         return xCoord, yCoord
 
-    if feat.featType is FeatType.ROAD or feat.featType is FeatType.CITY:
-        if feat.edges[0] == 0:
+    if meeple.feature:
+        if meeple.edge == 0:
             yCoord -= MEEPLE_SIZE
-        elif feat.edges[0] == 1:
+        elif meeple.edge == 1:
             xCoord += MEEPLE_SIZE
-        elif feat.edges[0] == 2:
+        elif meeple.edge == 2:
             yCoord += MEEPLE_SIZE
         else:
             xCoord -= MEEPLE_SIZE
-    elif feat.featType is FeatType.GRASS:
-        if feat.edges[0] == 0:
+    else:
+        if meeple.edge == 0:
             yCoord -= (MEEPLE_SIZE - 10)
             xCoord -= (MEEPLE_SIZE - 15)
-        elif feat.edges[0] == 1:
+        elif meeple.edge == 1:
             yCoord -= (MEEPLE_SIZE - 10)
             xCoord += (MEEPLE_SIZE - 15)
-        elif feat.edges[0] == 2:
+        elif meeple.edge == 2:
             yCoord -= (MEEPLE_SIZE - 15)
             xCoord += (MEEPLE_SIZE - 10)
-        elif feat.edges[0] == 3:
+        elif meeple.edge == 3:
             yCoord += (MEEPLE_SIZE - 15)
             xCoord += (MEEPLE_SIZE - 10)
-        elif feat.edges[0] == 4:
+        elif meeple.edge == 4:
             yCoord += (MEEPLE_SIZE - 10)
             xCoord += (MEEPLE_SIZE - 15)
-        elif feat.edges[0] == 5:
+        elif meeple.edge == 5:
             yCoord -= (MEEPLE_SIZE - 10)
             xCoord -= (MEEPLE_SIZE - 15)
-        elif feat.edges[0] == 6:
+        elif meeple.edge == 6:
             yCoord -= (MEEPLE_SIZE - 15)
             xCoord -= (MEEPLE_SIZE - 10)
-        elif feat.edges[0] == 7:
+        elif meeple.edge == 7:
             yCoord -= (MEEPLE_SIZE - 15)
             xCoord -= (MEEPLE_SIZE - 10)
 
@@ -244,15 +243,24 @@ def meepleOffset(board: Board, x: int, y: int, t: Tile):
     return xCoord, yCoord
 
 def drawMeeple(canvas: tk.Canvas, board: Board, x, y, node: Node):
-    t = node.tile
-    if t.occupied is not None and t.occupied.occupiedBy is not None:
-        color = t.occupied.occupiedBy.color
+    coords = (node.x, node.y)
+    
+    if coords in board.meepled.keys():
+        meeple: meepleInfo = board.meepled.get(coords)
+        meepleImage = ImageTk.PhotoImage(Image.open(rf'Images/{meeple.color}.png').resize((MEEPLE_SIZE,MEEPLE_SIZE)))
+        images.append(meepleImage)
+
+        xCoord, yCoord = meepleOffset(board, x, y, meeple, node.tile)
+        canvas.create_image(xCoord,yCoord, image=meepleImage)
+
+    # if t.occupied is not None and t.occupied.occupiedBy is not None:
+    #     color = t.occupied.occupiedBy.color
         
-        meeple = ImageTk.PhotoImage(Image.open(rf'Images/{color}.png').resize((MEEPLE_SIZE,MEEPLE_SIZE)))
-        images.append(meeple)
+    #     meeple = ImageTk.PhotoImage(Image.open(rf'Images/{color}.png').resize((MEEPLE_SIZE,MEEPLE_SIZE)))
+    #     images.append(meeple)
         
-        xCoord, yCoord = meepleOffset(board, x, y, t)
-        canvas.create_image(xCoord,yCoord, image=meeple)
+    #     xCoord, yCoord = meepleOffset(board, x, y, t)
+    #     canvas.create_image(xCoord,yCoord, image=meeple)
 
 def drawTile(canvas: tk.Canvas, board: Board, x, y, node: Node):
     img = Image.open(rf'Images/tile-{node.tile.imgCode}.png')

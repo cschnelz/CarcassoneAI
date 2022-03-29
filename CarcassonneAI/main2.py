@@ -9,6 +9,7 @@ def launch():
     players=[GreedyAgent(), GreedyAgent()]
     carcassonne = Game(players,order=[int(x) for x in sys.argv[1:len(sys.argv)]]) if len(sys.argv) > 1 else Game(players)
     carcassonne.render()
+    #input()
     while carcassonne.gameOver() is False:
         actions = carcassonne.getActions()
 
@@ -17,8 +18,8 @@ def launch():
             
         else:
             carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(actions,game=carcassonne,maxPlayer=1))
-        # carcassonne.render()
-        # input()
+        #carcassonne.render()
+        #input(".")
         
         #carcassonne.applyAction(random.choice(actions))
     print(carcassonne.finalScore())
@@ -26,11 +27,11 @@ def launch():
     # input() 
 
 if __name__ == '__main__':
+    #launch()
+    import cProfile, pstats
+    profiler = cProfile.Profile()
+    profiler.enable()
     launch()
-    # import cProfile, pstats
-    # profiler = cProfile.Profile()
-    # profiler.enable()
-    # launch()
-    # profiler.disable()
-    # stats = pstats.Stats(profiler).sort_stats('ncalls')
-    # stats.print_stats()
+    profiler.disable()
+    stats = pstats.Stats(profiler).sort_stats('cumtime')
+    stats.print_stats()

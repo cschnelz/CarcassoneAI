@@ -1,4 +1,6 @@
 from Agents import *
+from Board import meepleInfo
+from Feature import FeatType
 from Player import Player
 from State import State
 from Render import render3
@@ -36,8 +38,13 @@ class Game:
         # update the state based on the action
 
         if action.meeple:
-            action.tile.occupied = action.feature
-            action.tile.occupied.occupiedBy = self.state.players[self.state.currentPlayer]
+
+            
+            meeple = meepleInfo(self.currentPlayer(),action.feature)
+            self.state.board.meepled[(action.x, action.y)] = meeple
+        
+            # action.tile.occupied = action.feature
+            # action.tile.occupied.occupiedBy = self.state.players[self.state.currentPlayer]
             self.state.players[self.state.currentPlayer].meepleCount -= 1
 
         self.state.playTile(action)
@@ -93,6 +100,37 @@ class Game:
 
     def board(self):
         return self.state.board
+
+
+    ## Creates a simulation state that is independent of the real state
+    def startSim(self) -> State:
+        return copy.deepcopy(self.state)
+
+    ## Applies an action to an independent state
+    def simApply(self, simState: State, action: Action):
+        #action.tile = copy.deepcopy(action.tile)
+        simAction = copy.deepcopy(action)
+        if simAction.meeple:
+            meeple = meepleInfo(self.currentPlayer(),action.feature)
+            simState.board.meepled[(action.x, action.y)] = meeple
+            simState.players[simState.currentPlayer].meepleCount -= 1
+        simState.playTile(simAction, quiet=True)
+        simState.currentPlayer = (simState.currentPlayer + 1) % 2
+        
+    
+    def refresh(self, simState: State):
+        simState.players = copy.deepcopy(self.state.players)
+        simState.currentPlayer = self.state.currentPlayer
+        simState.order = self.state.order.copy()
+
+        simState.tileList = self.state.tileList.copy()
+        simState.currentTile = copy.deepcopy(self.state.currentTile)
+
+        simState.board.board = self.state.board.board.copy()
+        simState.board.openLocations = self.state.board.openLocations.copy()
+        simState.board.trackedFeatures = self.state.board.trackedFeatures.copy()
+        simState.board.trackedFields = self.state.board.trackedFields.copy()
+        simState.board.meepled = self.state.board.meepled.copy()
 
 
     ## cache partially made features

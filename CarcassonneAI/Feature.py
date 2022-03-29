@@ -2,7 +2,6 @@ from enum import Enum
 from typing import List
 import sys
 
-from bleach import clean
 from Player import Player
 
 class FeatType(Enum):
@@ -19,7 +18,6 @@ class Feature():
             sys.exit("bad info")
         self.edges = edges
         self.featType = None
-        self.occupiedBy: Player = None
 
     # def __str__(self):
     #     return f"Feature: {self.featType.name} on edges {self.edges}"

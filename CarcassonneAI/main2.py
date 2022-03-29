@@ -6,7 +6,7 @@ from Game import Game
 from Agents import *
 
 def launch():
-    players=[GreedyAgent(), GreedyAgent()]
+    players=[RandomAgent(), RandomAgent()]
     carcassonne = Game(players,order=[int(x) for x in sys.argv[1:len(sys.argv)]]) if len(sys.argv) > 1 else Game(players)
     carcassonne.render()
     #input()

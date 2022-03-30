@@ -36,20 +36,8 @@ class Game:
 
     def applyAction(self, action: Action):
         # update the state based on the action
+        self.state.applyAction(action)
 
-        if action.meeple:
-
-            
-            meeple = meepleInfo(self.currentPlayer(),action.feature)
-            self.state.board.meepled[(action.x, action.y)] = meeple
-        
-            # action.tile.occupied = action.feature
-            # action.tile.occupied.occupiedBy = self.state.players[self.state.currentPlayer]
-            self.state.players[self.state.currentPlayer].meepleCount -= 1
-
-        self.state.playTile(action)
-        self.state.currentPlayer = (self.state.currentPlayer + 1) % 2
-        
     def currentPlayer(self):
         return self.state.players[self.state.currentPlayer]
 
@@ -58,7 +46,7 @@ class Game:
 
     def gameOver(self) -> bool:
         # check for end of game
-        return len(self.state.tileList) == 0
+        return self.state.turn >= 72
 
     def finalScore(self):
         if not self.gameOver():
@@ -75,19 +63,6 @@ class Game:
     def copyState(self):
         # get a deep copy of the state
         pass
-
-    def simulate(self, action: Action) -> State:
-        # apply an action to a copy of the state and get the result state
-        simState = copy.deepcopy(self.state)
-        simAction = copy.deepcopy(action)
-
-        if simAction.meeple:
-            simAction.tile.occupied = simAction.feature
-            simAction.tile.occupied.occupiedBy = simState.players[simState.currentPlayer]
-            simState.players[simState.currentPlayer].meepleCount -= 1
-        simState.playTile(simAction, quiet=True)
-        simState.currentPlayer = (simState.currentPlayer + 1) % 2
-        return simState
 
     def evaluate(self):
         # evaluate the position, to some positive or negative numeric score
@@ -108,23 +83,27 @@ class Game:
 
     ## Applies an action to an independent state
     def simApply(self, simState: State, action: Action):
-        #action.tile = copy.deepcopy(action.tile)
-        simAction = copy.deepcopy(action)
-        if simAction.meeple:
-            meeple = meepleInfo(self.currentPlayer(),action.feature)
-            simState.board.meepled[(action.x, action.y)] = meeple
-            simState.players[simState.currentPlayer].meepleCount -= 1
-        simState.playTile(simAction, quiet=True)
-        simState.currentPlayer = (simState.currentPlayer + 1) % 2
+        simState.applyAction(action,quiet=True)
+
+        # if action.meeple:
+        #     meeple = meepleInfo(self.currentPlayer(),action.feature)
+        #     simState.board.meepled[(action.x, action.y)] = meeple
+        #     simState.players[simState.currentPlayer].meepleCount -= 1
+        # simState.playTile(action, quiet=True)
+        # simState.currentPlayer = (simState.currentPlayer + 1) % 2
         
     
     def refresh(self, simState: State):
-        simState.players = copy.deepcopy(self.state.players)
+        simState.players[0].meepleCount = self.state.players[0].meepleCount
+        simState.players[1].meepleCount = self.state.players[1].meepleCount
+        simState.players[0].score = self.state.players[0].score
+        simState.players[1].score = self.state.players[1].score
+
         simState.currentPlayer = self.state.currentPlayer
         simState.order = self.state.order.copy()
 
         simState.tileList = self.state.tileList.copy()
-        simState.currentTile = copy.deepcopy(self.state.currentTile)
+        simState.currentTile = self.state.currentTile
 
         simState.board.board = self.state.board.board.copy()
         simState.board.openLocations = self.state.board.openLocations.copy()
@@ -147,3 +126,4 @@ class Game:
     # interstitial nodes representing the random tile being handed out
     ## node owned by p1
     # random deal node
+

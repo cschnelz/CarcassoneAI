@@ -24,6 +24,23 @@ class Action:
             string+= f"Meeple: {self.feature}"
         return string
 
+    def __hash__(self) -> int:
+        return hash(str(self))
+
+    def __eq__(self, __o: object) -> bool:
+        if (self.feature is None) != (__o.feature is None):
+            return False
+
+        if self.feature is not None:    
+            return self.tile == __o.tile and \
+            self.x == __o.x and self.y == __o.y and \
+            self.meeple == __o.meeple and \
+            self.feature.featType == __o.feature.featType and \
+            self.feature.edges == __o.feature.edges
+
+        return self.tile == __o.tile and \
+            self.x == __o.x and self.y == __o.y and \
+            self.meeple == __o.meeple
  
 def validActions(board: Board, currTile: Tile, meepleAvailable: Boolean) -> List[Action]:
     actions = []
@@ -58,10 +75,10 @@ def validMeeples(board: Board, tile: Tile, location: Tuple[int]) -> List[Action]
         openFeatures = [tile.features[0]]
     else:
         openFeatures = [feat for feat in tile.features if 
-            not(board.buildFeature(location[0], location[1], feat.edges[0], tile.features[0].featType)).meepled]
+            not(board.featureMeepled(location[0], location[1], feat.edges[0], tile.features[0].featType))]
 
     openFeatures.extend([grass for grass in tile.grasses if 
-        not (board.buildFeature(location[0],location[1],grass.edges[0],FeatType.GRASS)).meepled])
+        not (board.featureMeepled(location[0],location[1],grass.edges[0],FeatType.GRASS))])
 
     actions.extend([Action(location[0], location[1], tile, True, feat) for feat in openFeatures])
     return actions

@@ -11,6 +11,9 @@ class FeatType(Enum):
     CHAPEL = 4
 
 class Feature():
+
+    _frozen = False
+
     def __init__(self, edges: List[int], info: bool):
         if not isinstance(edges, List):
             sys.exit("bad edges")
@@ -19,8 +22,13 @@ class Feature():
         self.edges = edges
         self.featType = None
 
-    # def __str__(self):
-    #     return f"Feature: {self.featType.name} on edges {self.edges}"
+    def __str__(self):
+        return f"Feature: {self.featType.name} on edges {self.edges}"
+
+    def __setattr__(self, *args, **kwargs) -> None:
+        if self._frozen:
+            raise AttributeError("Frozen!")
+        object.__setattr__(self, *args, **kwargs)
 
     def getOppositeEdge(self, inEdge: int) -> int:
         pass
@@ -34,6 +42,7 @@ class City(Feature):
         self.shield = info
         self.featType = FeatType.CITY
         self.scorePer = 2
+        self._frozen = True
 
     def getOppositeEdge(self, inEdge: int) -> int:
         return (inEdge + 2) % 4
@@ -47,6 +56,7 @@ class Road(Feature):
         self.terminated = info
         self.featType = FeatType.ROAD
         self.scorePer = 1
+        self._frozen = True
 
     def getOppositeEdge(self, inEdge: int) -> int:
         return (inEdge + 2) % 4 
@@ -59,6 +69,7 @@ class Grass(Feature):
         super().__init__(edges, info)
         self.featType = FeatType.GRASS
         self.scorePer = 0    
+        self._frozen = True
 
     def getOppositeEdge(self, inEdge: int) -> int:
         if inEdge % 2 == 0:
@@ -81,6 +92,7 @@ class Chapel(Feature):
         self.edges = []
         self.featType = FeatType.CHAPEL
         self.scorePer = 9
+        self._frozen = True
 
     def getOppositeEdge(self, inEdge: int) -> int:
         pass

@@ -1,26 +1,30 @@
 import sys
 import random
+from Agents import GreedyAgent, MCTS_Agent, RandomAgent
 
 from Game import Game
 from Action import *
 
-if __name__ == '__main__':
-    carcassonne = Game(order=[52,53,1,1,1,1,1,1,1,1,1,1,1,1])
+def launch():
+    carcassonne = Game([MCTS_Agent(), RandomAgent()],order=[52,53,1,1,1,1,1,1,1,1,1,1,1,1])
     state = carcassonne.state
     tiles = state.tileList
         
-    #carcassonne.applyAction(random.choice(validActions(state.board,state.currentTile)))
-    #carcassonne.applyAction(random.choice(validActions(state.board,state.currentTile)))
 
     tile = rotate(tiles[53],1)
     carcassonne.applyAction(Action(0,-1,tile,True,tile.features[0]))
     #carcassonne.applyAction(Action(-1,-1,rotate(tiles[4],0),False,None))
    
-    state.currentTile = tiles[54]
-    carcassonne.render()
-    carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(carcassonne.getActions()))
-    # tile = rotate(tiles[9],0)
-    # carcassonne.applyAction(Action(-1,-2,tile,True,tile.grasses[1]))
+    
+    tile = rotate(tiles[19],0)
+    carcassonne.applyAction(Action(1,0,tile,True,tile.features[0]))
+    
+    state.currentTile = tiles[3]
+    state.turn = 2
+
+    # while carcassonne.gameOver() is False:
+    carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(carcassonne.getActions(), carcassonne, carcassonne.currentPlayerId()))
+    carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(carcassonne.getActions(), carcassonne, carcassonne.currentPlayerId()))
 
     # carcassonne.applyAction(Action(1,-1,rotate(tiles[35],0),False,None))
     # carcassonne.applyAction(Action(1,-2,rotate(tiles[26],3),False,None))
@@ -31,5 +35,17 @@ if __name__ == '__main__':
 
         #carcassonne.applyAction(random.choice(actions))
         
-    carcassonne.render()
-    input()
+        
+    print(carcassonne.evaluate())
+    # carcassonne.render()
+    # input()
+
+if __name__ == '__main__':
+    launch()
+    # import cProfile, pstats
+    # profiler = cProfile.Profile()
+    # profiler.enable()
+    # launch()
+    # profiler.disable()
+    # stats = pstats.Stats(profiler).sort_stats('tottime')
+    # stats.print_stats()

@@ -69,6 +69,7 @@ class combinedFeature:
 class builtFeature:
     def __init__(self, featType, tracked):
         self.featType = featType
+        ## { node id : edge feature occupies }
         self.tracked = tracked
         self.meepled = []
         

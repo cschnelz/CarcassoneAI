@@ -6,7 +6,7 @@ from Game import Game
 from Agents import *
 
 def launch():
-    players=[RandomAgent(), RandomAgent()]
+    players=[GreedyAgent(), GreedyAgent()]
     carcassonne = Game(players,order=[int(x) for x in sys.argv[1:len(sys.argv)]]) if len(sys.argv) > 1 else Game(players)
     carcassonne.render()
     #input()
@@ -27,11 +27,11 @@ def launch():
     # input() 
 
 if __name__ == '__main__':
-    #launch()
+    # launch()
     import cProfile, pstats
     profiler = cProfile.Profile()
     profiler.enable()
     launch()
     profiler.disable()
-    stats = pstats.Stats(profiler).sort_stats('cumtime')
+    stats = pstats.Stats(profiler).sort_stats('tottime')
     stats.print_stats()

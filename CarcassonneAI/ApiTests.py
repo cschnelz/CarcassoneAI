@@ -29,6 +29,22 @@ class testApplyAction(unittest.TestCase):
 class testGameOver(unittest.TestCase):
     pass
 
+class testEquality(unittest.TestCase):
+    def testEquality(self):
+        game, tileList = reset()
+        tile = tileList[16]
+
+        a1 = Action(1,0,tile,True,tile.features[0])
+
+        tile2 = rotate(tile,0)
+        a2 = Action(1,0,tile2,True,tile2.features[0])
+
+        tile3 = rotate(tile,1)
+        a3 = Action(1,0,tile3,True,tile3.features[0])
+
+        self.assertEqual(a1,a2)
+        self.assertNotEqual(a2,a3)
+
 class testEvaluate(unittest.TestCase):
     def testEvaluate1(self):
         game,tileList = reset()

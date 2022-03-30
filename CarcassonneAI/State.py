@@ -6,8 +6,8 @@ from Board import Board, combinedFeature, Node, meepleInfo
 from Feature import *
 from Player import Player
 from Import import importTiles
-from Action import Action
-from random import random
+from Action import Action, validActions
+from random import random, choice
 import copy
 
 
@@ -17,25 +17,54 @@ class State:
         self.currentPlayer = 0
         self.order = order
         
+        self.turn = 1
         self.tileList = importTiles('TileSetSepRoads.json')
-        self.currentTile = self.dispatchTile() if len(self.order) == 0 else self.dispatchTile(self.order.pop(0))
+        self.currentTile = choice(self.tileList) if len(self.order) == 0 else self.tileList[self.order.pop(0)]
 
         self.board = Board(self.currentTile)
         self.currentTile = self.dispatchTile() if len(self.order) == 0 else self.dispatchTile(self.order.pop(0))
     
+        self.hash = "" 
+        ## a unique hash string, representing actions in order
+        ## 'id xCoord yCoord Meepled Feat/Grass Edge'
+
     # Get a new tile for current tile
     def dispatchTile(self, index=None):
         if index is None:
             dispatchId = int(random() * len(self.tileList))
-            tile = self.tileList[dispatchId]
-            del self.tileList[dispatchId]
-        
+                 
         else:
             dispatchId = index
-            tile = self.tileList[dispatchId]
-        
-        return tile
+
+        tile = self.tileList[dispatchId]
+        if len(validActions(self.board,tile,False)) == 0:
+            return self.dispatchTile()
+        else:
+            return tile
+
+    def getActions(self) -> List[Action]:
+        return validActions(self.board, self.currentTile, self.players[self.currentPlayer].meepleCount > 0)
     
+    def gameOver(self) -> bool:
+        # check for end of game
+        return self.turn >= 72
+
+    def applyAction(self, action: Action, quiet=False):
+        # update the state based on the action
+
+        if action.meeple:     
+            meeple = meepleInfo(self.players[self.currentPlayer],action.feature)
+            self.board.meepled[(action.x, action.y)] = meeple
+        
+            # action.tile.occupied = action.feature
+            # action.tile.occupied.occupiedBy = self.state.players[self.state.currentPlayer]
+            self.players[self.currentPlayer].meepleCount -= 1
+
+        self.playTile(action,quiet)
+        self.currentPlayer = (self.currentPlayer + 1) % 2
+        self.turn += 1
+        #print(self.turn)
+
     def playTile(self, action: Action, quiet=False):
         node = self.board.addTile(action.x, action.y, action.tile)
         self.board.connectFeatures(node, action.feature, self.players[self.currentPlayer].color)
@@ -91,8 +120,6 @@ class State:
      
     def calculateScore(self, completed: List[combinedFeature], quiet):
         for c in completed:
-            for feat in c.meepled:
-                feat.occupiedBy = None
             if len(c.playersOn) > 0:
                 redCount = c.playersOn.count('red')
                 blueCount = c.playersOn.count('blue')

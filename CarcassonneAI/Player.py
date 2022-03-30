@@ -12,4 +12,3 @@ class Player:
         self.score = 0
 
         self.agent = agent
-        self.meepled = []

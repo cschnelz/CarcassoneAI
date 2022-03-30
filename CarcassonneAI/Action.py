@@ -24,6 +24,23 @@ class Action:
             string+= f"Meeple: {self.feature}"
         return string
 
+    def __hash__(self) -> int:
+        return hash(str(self))
+
+    def __eq__(self, __o: object) -> bool:
+        if (self.feature is None) != (__o.feature is None):
+            return False
+
+        if self.feature is not None:    
+            return self.tile == __o.tile and \
+            self.x == __o.x and self.y == __o.y and \
+            self.meeple == __o.meeple and \
+            self.feature.featType == __o.feature.featType and \
+            self.feature.edges == __o.feature.edges
+
+        return self.tile == __o.tile and \
+            self.x == __o.x and self.y == __o.y and \
+            self.meeple == __o.meeple
  
 def validActions(board: Board, currTile: Tile, meepleAvailable: Boolean) -> List[Action]:
     actions = []
@@ -42,6 +59,7 @@ def validActions(board: Board, currTile: Tile, meepleAvailable: Boolean) -> List
                 board.openLocations = backupBoard.openLocations.copy()
                 board.trackedFeatures = backupBoard.trackedFeatures.copy()
                 board.trackedFields = backupBoard.trackedFields.copy()
+                board.meepled = backupBoard.meepled.copy()
     #tuples.sort(key=lambda x: (x[0], x[1]))
     actions.sort(key=lambda action: (action.x, action.y))
     return actions

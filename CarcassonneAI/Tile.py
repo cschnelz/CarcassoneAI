@@ -3,6 +3,8 @@ from typing import List
 from Feature import *
 
 class Tile:
+    _frozen = False
+
     def __init__(self, id: int, features: List[Feature], grasses: List[Grass], imgCode: str, orientation: int):
         if not isinstance(features, List):
             sys.exit("bad features")
@@ -15,8 +17,6 @@ class Tile:
         self.edges: List[FeatType] = [None] * 4
 
         self.orientation = orientation
-
-        self.occupied: Feature = None
         
         self.chapel = False
         self.imgCode: str = imgCode
@@ -27,6 +27,15 @@ class Tile:
             for edge in feature.edges:
                 self.edges[edge] = feature.featType
 
+        self._frozen = True
+
+    def __setattr__(self, *args, **kwargs) -> None:
+        if self._frozen:
+            raise AttributeError("Frozen!")
+        object.__setattr__(self, *args, **kwargs)
+
+    def __eq__(self, __o: object) -> bool:
+        return self.id == __o.id and self.orientation == __o.orientation
 
     ## Checks if some otherTile can connect to this tile on given edge
     def canConnectTo(self, otherTile, edge: int) -> bool:

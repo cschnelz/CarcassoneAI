@@ -7,7 +7,7 @@ from Action import *
 
 def launch():
     for i in range(100):
-        carcassonne = Game([RandomAgent(), RandomAgent()],order=[52,53,10,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1])
+        carcassonne = Game([RandomAgent(), RandomAgent()])
         state = carcassonne.state
         tiles = state.tileList
             
@@ -34,11 +34,11 @@ def launch():
     # input()
 
 if __name__ == '__main__':
+    #launch()
+    import cProfile, pstats
+    profiler = cProfile.Profile()
+    profiler.enable()
     launch()
-    # import cProfile, pstats
-    # profiler = cProfile.Profile()
-    # profiler.enable()
-    # launch()
-    # profiler.disable()
-    # stats = pstats.Stats(profiler).sort_stats('tottime')
-    # stats.print_stats()
+    profiler.disable()
+    stats = pstats.Stats(profiler).sort_stats('tottime')
+    stats.print_stats()

@@ -6,25 +6,18 @@ from Game import Game
 from Action import *
 
 def launch():
-    carcassonne = Game([MCTS_Agent(), RandomAgent()],order=[52,53,1,1,1,1,1,1,1,1,1,1,1,1])
-    state = carcassonne.state
-    tiles = state.tileList
-        
+    for i in range(100):
+        carcassonne = Game([RandomAgent(), RandomAgent()],order=[52,53,10,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1])
+        state = carcassonne.state
+        tiles = state.tileList
+            
+        while(carcassonne.gameOver() is False):
+            carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(carcassonne.getActions(),game=carcassonne,maxPlayer=carcassonne.currentPlayerId()))
 
-    tile = rotate(tiles[53],1)
-    carcassonne.applyAction(Action(0,-1,tile,True,tile.features[0]))
-    #carcassonne.applyAction(Action(-1,-1,rotate(tiles[4],0),False,None))
-   
-    
-    tile = rotate(tiles[19],0)
-    carcassonne.applyAction(Action(1,0,tile,True,tile.features[0]))
-    
-    state.currentTile = tiles[3]
-    state.turn = 2
 
     # while carcassonne.gameOver() is False:
-    carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(carcassonne.getActions(), carcassonne, carcassonne.currentPlayerId()))
-    carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(carcassonne.getActions(), carcassonne, carcassonne.currentPlayerId()))
+    # carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(carcassonne.getActions(), carcassonne, carcassonne.currentPlayerId()))
+    # carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(carcassonne.getActions(), carcassonne, carcassonne.currentPlayerId()))
 
     # carcassonne.applyAction(Action(1,-1,rotate(tiles[35],0),False,None))
     # carcassonne.applyAction(Action(1,-2,rotate(tiles[26],3),False,None))

@@ -66,12 +66,25 @@ class combinedFeature:
     def __eq__(self, __o: object) -> bool:
         return set(self.features) == set(__o.features)
 
+
+## might split this into a bF for fields if it gets too unwieldy
 class builtFeature:
-    def __init__(self, featType, tracked):
+    def __init__(self, featType, tracked, coord, info, holes):
         self.featType = featType
         ## { node id : edge feature occupies }
         self.tracked = tracked
-        self.meepled = []
+        self.locs = [coord]
+        
+        self.meepled = [] # list of colors on it
+        self.coordsMeepled: List[tuple[int]] = [] # list of tiles meepled
+
+        self.score = info if self.featType != FeatType.GRASS else 0
+        self.adjacentCities: Dict[Node,int] = info if self.featType == FeatType.GRASS else {}
+
+        ## track empty locations for the feature
+        # update it when tiles are added, and if a tile closes all the holes the feat is completed
+        self.holes = holes
+        self.completed = False
         
 class meepleInfo:
     def __init__(self, player: Player, feature: Feature):
@@ -89,9 +102,10 @@ class Board:
         self.minX = self.minY = -1
         self.maxX = self.maxY = 1
 
-        self.trackedFeatures: List[builtFeature] = [builtFeature(feat.featType, {startingNode.id: feat.edges}) for feat in startingTile.features]
-        self.trackedFields: List[builtFeature] = [builtFeature(FeatType.GRASS, {startingNode.id: grass.edges}) for grass in startingTile.grasses]
+        self.trackedFeatures: List[builtFeature] = [builtFeature(feat.featType, {startingNode.id: feat.edges},(0,0),feat.score(),feat.getHoles((0,0))) for feat in startingTile.features]
+        self.trackedFields: List[builtFeature] = [builtFeature(FeatType.GRASS, {startingNode.id: grass.edges},(0,0),{self.nodeAt(0,0):grass.edges[0]},set()) for grass in startingTile.grasses]
         
+
         ## { (x, y) : meepleInfo }
         self.meepled: Dict[tuple, meepleInfo] = {}
 
@@ -119,7 +133,6 @@ class Board:
                 # add the coords as a new open location for tiles
                 self.openLocations.add(coord)
 
-
         self.board[(x, y)] = node
         self.openLocations.remove((x, y))
         self.expandBounds(neighbors)
@@ -130,12 +143,11 @@ class Board:
             if node.id in built.tracked and edge in built.tracked[node.id]:
                 return built
         return None
-
-     
+ 
     def connectFeatures(self, node: Node, meepled: Feature, color: str):
         # find the built features that the new tile connects to and merge them
         for feat in node.tile.features:
-            foundFeats = set()
+            foundFeats: set[builtFeature] = set()
             for edge in feat.edges:
                 if shiftCoords(node.x,node.y,edge) in self.board:
                     neighborNode = self.board[shiftCoords(node.x,node.y,edge)]
@@ -143,20 +155,36 @@ class Board:
                     if tracked is not None:
                         foundFeats.add(tracked)
 
-            newFeat = builtFeature(feat.featType,{node.id : feat.edges})
+            ## make a new bF that represents the current feat of the tile being added
+            newFeat = builtFeature(feat.featType,{node.id : feat.edges},(node.x,node.y),feat.score(),feat.getHoles((node.x,node.y)))
+            ## if the tile being played has been meepled on this feat, add color to list
             if meepled == feat:
                 newFeat.meepled = [color]
+                newFeat.coordsMeepled.append((node.x,node.y))
 
+            ## for each nearby feature
             for feat in foundFeats:
+                ## extend color list if needed
                 if feat.meepled:
                     newFeat.meepled.extend(feat.meepled)
+                    newFeat.coordsMeepled.extend(feat.coordsMeepled)
+                ## merge the tracked dictionaries
                 newFeat.tracked.update(feat.tracked)
+                ## union holes
+                newFeat.holes = newFeat.holes.union(feat.holes)
+                ## extend locations
+                newFeat.locs.extend(feat.locs)
+                ## accrue score
+                newFeat.score += feat.score
+                ## remove old bF
                 self.trackedFeatures.remove(feat)
+            ## add new bF
             self.trackedFeatures.append(newFeat)
+            self.checkCompleted(newFeat)
         
         # same operation but intending to do fields
         for grass in node.tile.grasses:
-            foundFields = set()
+            foundFields: set[builtFeature] = set()
             for edge in grass.edges:
                 if shiftCoordsGrass(node.x, node.y, edge) in self.board:
                     neighborNode = self.board[shiftCoordsGrass(node.x, node.y, edge)]
@@ -164,17 +192,36 @@ class Board:
                     if tracked is not None:
                         foundFields.add(tracked)
 
-            newField = builtFeature(FeatType.GRASS,{node.id: grass.edges})
+            newField = builtFeature(FeatType.GRASS,{node.id: grass.edges},(node.x,node.y),{node:grass.edges[0]},set())
             if meepled == grass:
                 newField.meepled = [color]
+                newField.coordsMeepled.append((node.x,node.y))
 
             for field in foundFields:
                 if field.meepled:
                     newField.meepled.extend(field.meepled) 
+                    newField.coordsMeepled.extend(field.coordsMeepled)
                 newField.tracked.update(field.tracked)
+                newField.holes = newField.holes.union(field.holes)
+                newField.locs.extend(field.locs)
+                newField.adjacentCities.update(field.adjacentCities)
+
+                ## keep track of adjacent cities for fields maybe?
                 self.trackedFields.remove(field)
             self.trackedFields.append(newField)
+            #self.checkCompleted(newField) ## DONT TRY TO COMPLETE FIELDS OR COULD INTRODUCE BUGG WITH REMOVING FROM FIELDS
 
+    ## Checks if an updated bF is now "complete" by removing filled holes
+    def checkCompleted(self, bF: builtFeature):
+        toRemove = set()
+        for hole in bF.holes:
+            if hole in bF.locs:
+                toRemove.add(hole)
+        bF.holes = bF.holes - toRemove
+        bF.completed = len(bF.holes) == 0
+
+
+    ## Given coordinates, an edge, and feature or grass, returns if that builtFeature is meeepled
     def featureMeepled(self, x:int, y:int, edge:int, featType: FeatType) -> bool:
         node = self.board.get((x,y))
         search = self.trackedFields if featType == FeatType.GRASS else self.trackedFeatures
@@ -213,7 +260,7 @@ class Board:
         node = self.board.get((x,y))
         return node.tile if node is not None else None
 
-    def nodeAt(self, x: int, y: int) -> Tile:
+    def nodeAt(self, x: int, y: int) -> Node:
         return self.board.get((x,y))
 
     # track the bounding coords of the game board
@@ -267,11 +314,6 @@ class Board:
                         combined.meepled.append(inFeature)
                         combined.playersOn.append(self.meepled.get((x,y)).color)
                         combined.meepleRecords.append((x,y))
-
-        # if inFeature.occupiedBy is not None:
-        #     if inFeature not in combined.meepled:
-        #         combined.meepled.append(inFeature)
-        #         combined.playersOn.append(inFeature.occupiedBy.color)
         
         # check that the tile hasn't been scored yet, and add the score for the feature
         if tile.id not in combined.tiles:

@@ -42,6 +42,7 @@ class Action:
             self.x == __o.x and self.y == __o.y and \
             self.meeple == __o.meeple
  
+######## NEXT GOAL: GET RID OF DEEP COPY DEPENDENCY
 def validActions(board: Board, currTile: Tile, meepleAvailable: Boolean) -> List[Action]:
     actions = []
     orientations = [rotate(currTile,i) for i in range(4)]

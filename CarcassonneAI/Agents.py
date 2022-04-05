@@ -73,6 +73,10 @@ class MCTS_Agent(Agent):
        from Game import Game
        from Action import Action
        from State import State
+
+    def __init__(self) -> None:
+        # A list of rollback states 
+        self.headStates = []
     
     def getLegalMoves(state:State) -> List[Action]:
         return state.getActions()
@@ -166,7 +170,11 @@ class MCTS_Agent(Agent):
         return MCTS_Agent.getResult(current_state)
 
 
-
+######################
+#  Save a head state copy for the mcts search
+#  when you get to default policy instead of copying the current node's state
+#  create a new state by applying actions from the original state
+#  when done, shallow-copy-restore the head state copy
 
 
 class MCTS_Node:
@@ -191,7 +199,7 @@ class MCTS_Node:
 
         ## will be a dict of {action : childNode } where childnode state is the result of applying action to this node state
         self.children: Dict['Action','MCTS_Node'] = {}
-        self.player = maxPlayer
+        self.player = maxPlayer # needs to be changed to "zero" "one" and "random"
 
     def __str__(self) -> str:
         if self.parent is None:

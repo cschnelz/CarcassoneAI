@@ -8,7 +8,8 @@
             "name": "Python: Current File",
             "type": "python",
             "request": "launch",
-            "program": "main.py",
+            "program": "ApiTests.py",
+            //"program": "main.py",
             "console": "integratedTerminal",
             //"args": ["19", "43", "25","34","14","24","28","41"]
         }

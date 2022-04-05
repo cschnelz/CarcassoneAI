@@ -8,7 +8,7 @@ from Agents import *
 def launch():
     players=[GreedyAgent(), GreedyAgent()]
     carcassonne = Game(players,order=[int(x) for x in sys.argv[1:len(sys.argv)]]) if len(sys.argv) > 1 else Game(players)
-    carcassonne.render()
+    #carcassonne.render()
     #input()
     while carcassonne.gameOver() is False:
         actions = carcassonne.getActions()
@@ -23,7 +23,7 @@ def launch():
         
         #carcassonne.applyAction(random.choice(actions))
     print(carcassonne.finalScore())
-    # carcassonne.render()
+    #carcassonne.render()
     # input() 
 
 if __name__ == '__main__':

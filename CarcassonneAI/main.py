@@ -7,6 +7,8 @@ from Action import *
 
 from tqdm import tqdm
 
+##refact
+
 def launch():
     for i in tqdm(range(100)):
         carcassonne = Game([RandomAgent(), RandomAgent()])

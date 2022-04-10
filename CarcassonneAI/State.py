@@ -17,6 +17,7 @@ class State:
         self.currentPlayer = 0
         self.order = order
         self.tileHist = []
+        self.currentActions: List[Action] = []
         
         self.turn = 2
         self.tileList = importTiles('TileSetSepRoads.json')
@@ -31,15 +32,25 @@ class State:
 
     # Get a new tile for current tile
     def dispatchTile(self, index=None) -> Tile:
+        if len(self.tileList) == 0:
+            return None
         if index is None:
-            dispatchId = int(random() * len(self.tileList))
-            tile = self.tileList[dispatchId]
-            del self.tileList[dispatchId]
+            if len(self.tileList) == 1:
+                tile = self.tileList[0]
+                del self.tileList[0]
+            else:
+                dispatchId = int(random() * len(self.tileList))
+                try:
+                    tile = self.tileList[dispatchId]
+                    del self.tileList[dispatchId]
+                except:
+                    print('oof')
         else:
             dispatchId = index
             tile = self.tileList[dispatchId]
 
-        if len(validActions(self.board,tile,False)) == 0:
+        self.currentActions = validActions(self.board, tile, self.players[self.currentPlayer].meepleCount > 0)
+        if len(self.currentActions) == 0:
             return self.dispatchTile()
         else:
             self.tileHist.append(tile.id)

@@ -139,6 +139,9 @@ class Board:
         return node
 
     def findTracked(self, node: Node, edge: int, trackedList : List[builtFeature]) -> builtFeature:
+        if node is None:
+            return None
+            
         for built in trackedList:
             if node.id in built.tracked and edge in built.tracked[node.id]:
                 return built

@@ -6,10 +6,9 @@ from Game import Game
 from Agents import *
 
 def launch():
-    players=[GreedyAgent(), GreedyAgent()]
+    players=[HumanAgent(), HumanAgent()]
     carcassonne = Game(players,order=[int(x) for x in sys.argv[1:len(sys.argv)]]) if len(sys.argv) > 1 else Game(players)
-    #carcassonne.render()
-    #input()
+    carcassonne.render()
     while carcassonne.gameOver() is False:
         actions = carcassonne.getActions()
 
@@ -18,7 +17,7 @@ def launch():
             
         else:
             carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(actions,game=carcassonne,maxPlayer=1))
-        #carcassonne.render()
+        carcassonne.render()
         #input(".")
         
         #carcassonne.applyAction(random.choice(actions))

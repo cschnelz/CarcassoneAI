@@ -19,8 +19,7 @@ class Game:
 
     # get current valid actions, where each action represents a tile placement, orientation, and meeple decision
     def getActions(self) -> List[Action]:
-        actions = validActions(self.state.board, self.state.currentTile, self.state.players[self.state.currentPlayer].meepleCount > 0)
-        return actions
+        return self.state.currentActions
 
     # update the state based on the action
     def applyAction(self, action: Action) -> None: 

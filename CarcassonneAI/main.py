@@ -7,7 +7,7 @@ from Action import *
 
 def launch():
     for i in range(100):
-        carcassonne = Game([RandomAgent(), RandomAgent()],order=[52,53,10,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1])
+        carcassonne = Game([RandomAgent(), RandomAgent()])
         state = carcassonne.state
         tiles = state.tileList
             

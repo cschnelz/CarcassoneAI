@@ -97,7 +97,7 @@ class MCTS_Agent(Agent):
 
     def getResponse(self, validActions: List[Action], game:Game=None, maxPlayer:int=None) -> Action:
         root = MCTS_Node(game.state,None,None,maxPlayer)
-        for iteration in range(50):
+        for iteration in range(60):
             v = MCTS_Agent.tree_policy(root, maxPlayer)
             score = MCTS_Agent.default_policy(v, game)
             MCTS_Agent.backProp(v, score)

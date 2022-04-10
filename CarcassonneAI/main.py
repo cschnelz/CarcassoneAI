@@ -5,8 +5,10 @@ from Agents import GreedyAgent, MCTS_Agent, RandomAgent
 from Game import Game
 from Action import *
 
+from tqdm import tqdm
+
 def launch():
-    for i in range(100):
+    for i in tqdm(range(100)):
         carcassonne = Game([RandomAgent(), RandomAgent()])
         state = carcassonne.state
         tiles = state.tileList

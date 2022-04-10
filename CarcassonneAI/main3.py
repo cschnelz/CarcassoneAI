@@ -25,11 +25,11 @@ def launch():
     # input() 
 
 if __name__ == '__main__':
+    #launch()
+    import cProfile, pstats
+    profiler = cProfile.Profile()
+    profiler.enable()
     launch()
-    # import cProfile, pstats
-    # profiler = cProfile.Profile()
-    # profiler.enable()
-    # launch()
-    # profiler.disable()
-    # stats = pstats.Stats(profiler).sort_stats('tottime')
-    # stats.print_stats()
+    profiler.disable()
+    stats = pstats.Stats(profiler).sort_stats('tottime')
+    stats.print_stats()

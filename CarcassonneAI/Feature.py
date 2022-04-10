@@ -36,6 +36,10 @@ class Feature():
     def score(self):
         pass
 
+    ## returns coordinates of where a feature opens to
+    def getHoles(self, coordinate: tuple[int]) -> set[tuple[int]]:
+        return set()
+
 class City(Feature):
     def __init__(self, edges: List[int], info: bool):
         super().__init__(edges, info)
@@ -49,6 +53,19 @@ class City(Feature):
  
     def score(self):
         return 2 + (2 if self.shield else 0)
+    
+    def getHoles(self, coordinate: tuple[int]) -> set[tuple[int]]:
+        holes = set()
+        for edge in self.edges:
+            if edge == 0:
+                holes = holes.union({(coordinate[0],coordinate[1]-1)})
+            elif edge == 1:
+                holes = holes.union({(coordinate[0]+1,coordinate[1])})
+            elif edge == 2:
+                holes = holes.union({(coordinate[0],coordinate[1]+1)})
+            else: # == 3
+                holes = holes.union({(coordinate[0]-1,coordinate[1])})
+        return holes
 
 class Road(Feature):
     def __init__(self, edges: List[int], info: bool):
@@ -63,6 +80,19 @@ class Road(Feature):
 
     def score(self):
         return 1
+
+    def getHoles(self, coordinate: tuple[int]) -> set[tuple[int]]:
+        holes = set()
+        for edge in self.edges:
+            if edge == 0:
+                holes = holes.union({(coordinate[0],coordinate[1]-1)})
+            elif edge == 1:
+                holes = holes.union({(coordinate[0]+1,coordinate[1])})
+            elif edge == 2:
+                holes = holes.union({(coordinate[0],coordinate[1]+1)})
+            else: # == 3
+                holes = holes.union({(coordinate[0]-1,coordinate[1])})
+        return holes
 
 class Grass(Feature):
     def __init__(self, edges: List[int], info: bool):

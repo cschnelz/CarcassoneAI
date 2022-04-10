@@ -2,7 +2,7 @@ import json
 from Tile import Tile
 from Feature import *
 
-def importTiles(fpath):
+def importTiles(fpath) -> List[Tile]:
     tileList = []
     f = open(fpath)
     tiles = json.load(f)

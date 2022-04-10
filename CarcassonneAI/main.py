@@ -38,7 +38,11 @@ def launch():
     # input()
 
 if __name__ == '__main__':
+<<<<<<< HEAD
 #    launch()
+=======
+    #launch()
+>>>>>>> fastGreedy
     import cProfile, pstats
     profiler = cProfile.Profile()
     profiler.enable()

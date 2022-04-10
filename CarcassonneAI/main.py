@@ -6,14 +6,13 @@ from Game import Game
 from Action import *
 
 def launch():
-    for i in range(10):
+    for i in range(100):
         carcassonne = Game([RandomAgent(), RandomAgent()])
         state = carcassonne.state
         tiles = state.tileList
             
         while(carcassonne.gameOver() is False):
-            actions = carcassonne.getActions()
-            carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(actions,game=carcassonne,maxPlayer=carcassonne.currentPlayerId()))
+            carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(carcassonne.getActions(),game=carcassonne,maxPlayer=carcassonne.currentPlayerId()))
 
 
     # while carcassonne.gameOver() is False:

@@ -13,7 +13,7 @@ def launch():
 
 
     carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(carcassonne.getActions(),game=carcassonne,maxPlayer=carcassonne.currentPlayerId()))
-    carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(carcassonne.getActions(),game=carcassonne,maxPlayer=carcassonne.currentPlayerId()))
+    #carcassonne.applyAction(carcassonne.currentPlayer().agent.getResponse(carcassonne.getActions(),game=carcassonne,maxPlayer=carcassonne.currentPlayerId()))
         
   
         #carcassonne.render()

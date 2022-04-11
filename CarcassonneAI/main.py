@@ -10,7 +10,7 @@ from tqdm import tqdm
 ##refact
 
 def launch():
-    for i in tqdm(range(100)):
+    for i in range(100):
         carcassonne = Game([RandomAgent(), RandomAgent()])
         state = carcassonne.state
         tiles = state.tileList
@@ -38,15 +38,11 @@ def launch():
     # input()
 
 if __name__ == '__main__':
-<<<<<<< HEAD
-#    launch()
-=======
-    #launch()
->>>>>>> fastGreedy
-    import cProfile, pstats
-    profiler = cProfile.Profile()
-    profiler.enable()
     launch()
-    profiler.disable()
-    stats = pstats.Stats(profiler).sort_stats('tottime')
-    stats.print_stats()
+    # import cProfile, pstats
+    # profiler = cProfile.Profile()
+    # profiler.enable()
+    # launch()
+    # profiler.disable()
+    # stats = pstats.Stats(profiler).sort_stats('tottime')
+    # stats.print_stats()

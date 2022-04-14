@@ -45,7 +45,7 @@ class Action:
 
 def validActions(board: Board, currTile: Tile, meepleAvailable: Boolean) -> List[Action]:
     actions = set()
-    orientations = [rotate(currTile,i) for i in range(4)]
+    orientations = [rotate(currTile,i) for i in currTile.unique_rotations]
 
     for tile in orientations:
         for location in board.openLocations:

@@ -10,8 +10,8 @@ from Import import importTiles
 from Board import *
 from Feature import *
 
-def reset(forced=[]):
-    game = Game(order=forced)
+def reset(forced=None):
+    game = Game(order=list(range(0,72))) if forced is None else Game(order=forced)
     tileList = importTiles('TileSetSepRoads.json')
     return game, tileList
 
@@ -31,7 +31,7 @@ class testGameOver(unittest.TestCase):
 
 class testEquality(unittest.TestCase):
     def testEquality(self):
-        game, tileList = reset([0])
+        game, tileList = reset()
         tile = tileList[16]
 
         a1 = Action(1,0,tile,True,tile.features[0])
@@ -47,7 +47,7 @@ class testEquality(unittest.TestCase):
 
 class testEvaluate(unittest.TestCase):
     def testEvaluate1(self):
-        game,tileList = reset([0])
+        game,tileList = reset()
         tile = rotate(tileList[19], 1)
         game.applyAction(Action(1,0,tile,True,tile.features[0]))
         
@@ -65,7 +65,7 @@ class testEvaluate(unittest.TestCase):
 
 class testFinalScore(unittest.TestCase):
     def testFieldScoring(self):
-        game,tileList = reset([0])
+        game,tileList = reset()
         tile = rotate(tileList[15],2)
         game.applyAction(Action(0,-1,tile,True,tile.grasses[0]))
         game.applyAction(Action(1,-1,rotate(tileList[3], 3), False, None))
@@ -80,7 +80,7 @@ class testFinalScore(unittest.TestCase):
 
        
     def testChapelScoring(self):
-        game,tileList = reset([0])
+        game,tileList = reset()
 
         tile = rotate(tileList[19], 1)
         game.applyAction(Action(1,0,tile,True,tile.features[0]))
@@ -91,7 +91,7 @@ class testFinalScore(unittest.TestCase):
     
 
     def testFinalScore(self):
-        game,tileList = reset([0])
+        game,tileList = reset()
         tile = rotate(tileList[19], 1)
         game.applyAction(Action(1,0,tile,True,tile.features[0]))
         tile = tileList[17]
@@ -111,7 +111,7 @@ class testFinalScore(unittest.TestCase):
 ## Refactors of the old tests into the new format
 class testFinishedFeatures(unittest.TestCase):
     def testSmallCities(self):
-        game,tileList = reset([0])
+        game,tileList = reset()
         game.applyAction(Action(-1,0,tileList[21],False,None))
         game.applyAction(Action(-2,0,rotate(tileList[3],1),False,None))
         game.applyAction(Action(0,-1,rotate(tileList[61],1),False,None))
@@ -121,7 +121,7 @@ class testFinishedFeatures(unittest.TestCase):
         self.assertFalse(game.board().findTracked(game.board().nodeAt(0,-1),0,game.board().trackedFeatures).completed)
 
     def testMultiCity(self):
-        game, tileList = reset([0])
+        game, tileList = reset()
         game.applyAction(Action(0,-1,rotate(tileList[15],2),False,None))
         game.applyAction(Action(1,-1,rotate(tileList[3], 3), False, None))
         game.applyAction(Action(-1, 0, rotate(tileList[21], 0),False,None))
@@ -131,11 +131,11 @@ class testFinishedFeatures(unittest.TestCase):
         self.assertFalse(game.board().findTracked(game.board().nodeAt(-1, 0), 3, game.board().trackedFeatures).completed)
 
     def testUnfinishedCornerCity(self):
-        game, tileList = reset([0])
+        game, tileList = reset()
         self.assertFalse(game.board().findTracked(game.board().nodeAt(0,0),0,game.board().trackedFeatures).completed)
 
     def testLoopedCity(self):
-        game, tileList = reset([0])
+        game, tileList = reset()
         game.applyAction(Action(0, -1, rotate(tileList[30], 3),False,None))
         game.applyAction(Action(-1, -1, rotate(tileList[27], 0),False,None))
         game.applyAction(Action(-1, 0, rotate(tileList[56], 1),False,None))
@@ -145,7 +145,7 @@ class testFinishedFeatures(unittest.TestCase):
         self.assertTrue(game.board().findTracked(game.board().nodeAt(0, 0), 0, game.board().trackedFeatures).completed)
 
     def testBranchingUnfinished(self):
-        game, tileList = reset([0])
+        game, tileList = reset()
         game.applyAction(Action(0, -1, rotate(tileList[30], 3),False,None))
         game.applyAction(Action(-1, -1, rotate(tileList[27], 0),False,None))
         game.applyAction(Action(-1, 0, rotate(tileList[56], 1),False,None))
@@ -153,7 +153,7 @@ class testFinishedFeatures(unittest.TestCase):
         self.assertFalse(game.board().findTracked(game.board().nodeAt(0, 0), 0, game.board().trackedFeatures).completed)
 
     def testRoads(self):
-        game, tileList = reset([0])
+        game, tileList = reset()
         game.applyAction(Action(1, 0, rotate(tileList[34], 1),False,None))
         game.applyAction(Action(2, 0, rotate(tileList[43], 1),False,None))
         game.applyAction(Action(0, 1, rotate(tileList[16], 2),False,None))
@@ -162,7 +162,7 @@ class testFinishedFeatures(unittest.TestCase):
         self.assertFalse(game.board().findTracked(game.board().nodeAt(0,1),1,game.board().trackedFeatures).completed)
 
     def testLoopRoad(self):
-        game,tileList = reset([0])
+        game,tileList = reset()
         game.applyAction(Action(1, 0, rotate(tileList[16], 0),False,None))
         game.applyAction(Action(0,1,rotate(tileList[14],2),False,None))
         game.applyAction(Action(1,1,rotate(tileList[24],1),False,None))
@@ -173,7 +173,7 @@ class testFinishedFeatures(unittest.TestCase):
 class testOccupiedFeature(unittest.TestCase):
     
     def testCityMeepled(self):
-        game,tileList = reset([0])
+        game,tileList = reset()
         tile = rotate(tileList[61],1)
         game.applyAction(Action(0,-1,tile,True,tile.features[0]))
 
@@ -181,7 +181,7 @@ class testOccupiedFeature(unittest.TestCase):
         self.assertFalse(game.state.board.featureMeepled(0,-1,0,FeatType.CITY))
 
     def testRoadMeepled(self):
-        game,tileList = reset([0])
+        game,tileList = reset()
         tile = tileList[16]
         game.applyAction(Action(1,0,tile,True,tile.features[2]))
         tile = tileList[28]
@@ -198,7 +198,7 @@ class testOccupiedFeature(unittest.TestCase):
 class testScoring(unittest.TestCase):
     
     def testFinishAndScore(self):
-        game,tileList = reset([0,61,3])
+        game,tileList = reset([0,61,3,10])
         self.assertEqual(game.getScore(),(0,0))
 
         tile = rotate(game.state.currentTile,1)

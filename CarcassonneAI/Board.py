@@ -239,6 +239,7 @@ class Board:
             # can the tile link to that neighbor in that direction
         if (x, y) not in self.openLocations:
             return False
+            
         neighbors = neighborCoordinates(x, y)
 
         # for all adjacent coords

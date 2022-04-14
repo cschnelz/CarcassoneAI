@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 from re import L
+import string
 from tempfile import TemporaryFile
 from typing import List, Dict, TYPE_CHECKING
 from abc import ABC, abstractmethod
+
 
 import random
 import os
@@ -63,10 +65,137 @@ class GreedyAgent(Agent):
             game.refresh(simState)
         return bestAction
         
-## A greedy agent that prioritizes completing features to return meeples
-class Greedy2(Agent):
-    def getResponse(self, validActions, game=None, maxPlayer=None):
-        pass
+## A greedy agent with a 3 depth exhaustive search of all follow up tile possibilities
+class Greedy3(Agent):
+    if TYPE_CHECKING:
+        from Game import Game
+        from Action import Action
+        from State import State
+
+    def getResponse(self, validActions: List[Action], game:Game=None, maxPlayer:int=None):
+        order = game.state.order.copy()
+
+        res = self.getScoreRandomEntry(game,3,'zero')
+        return res[1]
+
+
+    def getScore(self, game:Game, sim:State, action:Action, depth, player):
+        if depth == 0: ## or game is over
+            return sim.scoreDelta(), action #<< - evaluate the state HUERISTIC
+
+        bestAction = None
+        level_save = copy.deepcopy(sim)
+        
+        if player == 'zero':
+            maxEval = -math.inf
+            for action in level_save.getActions():
+                game.simApply(sim, action)
+                res = self.getScore(game, sim, action, depth-1, 'one')
+                eval = res[0]
+                if eval > maxEval:
+                    maxEval = eval
+                    bestAction = action
+                game.refreshSpecific(sim, level_save)
+            
+            return maxEval, bestAction
+
+        if player == 'one':
+            minEval = math.inf
+
+            for action in level_save.getActions():
+                game.simApply(sim, action)
+                res = self.getScore(game, sim, action, depth-1, 'zero')
+                eval = res[0]
+                if eval < minEval:
+                    minEval = eval
+                    bestAction = action
+                game.refreshSpecific(sim, level_save)
+
+            return minEval, bestAction
+
+   
+   
+    def randomLayer(self,game:Game,sim:State,action:Action,depth:int,nextPlayer):
+        possible_tiles = sim.order.copy()
+        cumulative = 0.0
+        tiles_dispatched = 0.0
+        if depth == 0:
+            return sim.scoreDelta(), action
+
+        for index in possible_tiles:
+            if sim.dispatchSpecific(index):
+                cumulative += self.getScoreRandom(game,sim,action,depth,nextPlayer)[0]
+                tiles_dispatched += 1
+        return cumulative / tiles_dispatched, action
+    
+    def getScoreRandom(self, game:Game, sim:State, action:Action, depth, player):
+        if depth == 0:
+            return sim.scoreDelta(), action
+
+
+        bestAction = None
+        depth_save = copy.deepcopy(sim)
+
+        if player == 'zero':
+            maxEval = -math.inf
+            for action in depth_save.getActions():
+                sim.applyAction(action,quiet=True) ## <-- deliberately not dispatching new tile yet
+                res = self.randomLayer(game,sim,action,depth-1,'one')
+                if res[0] > maxEval:
+                    maxEval = res[0]
+                    bestAction = action
+                game.refreshSpecific(sim, depth_save)
+
+            return maxEval, bestAction
+
+        if player == 'one':
+            minEval = math.inf
+            for action in depth_save.getActions():
+                sim.applyAction(action,quiet=True)
+                res = self.randomLayer(game,sim,action,depth-1,'zero')
+                if res[0] < minEval:
+                    minEval = res[0]
+                    bestAction = action
+                game.refreshSpecific(sim, depth_save)
+            
+            return minEval, bestAction
+
+
+    ## Save node at depth
+
+
+    def getScoreRandomEntry(self,game:Game,depth,player):
+
+        saveState = game.startSim()
+        muteState = game.startSim()
+        self.getScoreRandomAction(game,saveState,muteState,depth,player)
+
+    def getScoreRandomAction(self,game:Game,backup:State,muteState:State,depth:int,player:string):
+        if depth == 0:
+            return backup.scoreDelta(),action
+
+        bestAction = None 
+        if player == 'zero':
+            maxEval = -math.inf
+            for action in backup.getActions():
+                game.simApply(muteState, action)
+                eval = self.getScoreRandomAction(game,backup,muteState,depth-1,'one')[0]
+                if eval > maxEval:
+                    maxEval = eval
+                    bestAction = action
+                game.refreshSpecific(muteState,backup)
+            return maxEval,bestAction
+
+        if player == 'one':
+            minEval = math.inf
+            for action in backup.getActions():
+                game.simApply(muteState,action)
+                eval = self.getScoreRandomAction(game,backup,muteState,depth-1,'zero')[0]
+                if eval < minEval:
+                    minEval = eval
+                    bestAction = action
+                game.refreshSpecific(muteState,backup)
+            return minEval,bestAction
 
 class MCTS_Agent(Agent):
     if TYPE_CHECKING:
@@ -79,7 +208,7 @@ class MCTS_Agent(Agent):
         self.headStates = []
     
     def getLegalMoves(state:State) -> List[Action]:
-        return state.getActions()
+        return state.currentActions
 
     def nextPlayer(currentPlayer:int) -> int:
         return (currentPlayer + 1) % 2
@@ -97,7 +226,7 @@ class MCTS_Agent(Agent):
 
     def getResponse(self, validActions: List[Action], game:Game=None, maxPlayer:int=None) -> Action:
         root = MCTS_Node(game.state,None,None,maxPlayer)
-        for iteration in range(60):
+        for iteration in range(600):
             v = MCTS_Agent.tree_policy(root, maxPlayer)
             score = MCTS_Agent.default_policy(v, game)
             MCTS_Agent.backProp(v, score)
@@ -136,6 +265,7 @@ class MCTS_Agent(Agent):
             if action not in node.children.keys():
                 nextState = copy.deepcopy(node.state)
                 nextState.applyAction(action,quiet=True)
+                nextState.dispatchTile()
                 child = node.add_child(nextState,action,MCTS_Agent.nextPlayer(player))
                 return child
         raise ValueError("Ran out of children when we shouldn't")
@@ -155,7 +285,7 @@ class MCTS_Agent(Agent):
             if score > 0:
                 node.zero_wins += score
             elif score < 0:
-                node.one_wins += score
+                node.one_wins += (-1 * score)
             node = node.parent
 
     ## Rollout randomly from a gamestate to game end
@@ -166,15 +296,10 @@ class MCTS_Agent(Agent):
         while(current_state.gameOver() is False):
             moves = MCTS_Agent.getLegalMoves(current_state)
             current_state.applyAction(random.choice(moves), quiet=True)
+            current_state.dispatchTile()
             #game.simApply(current_state, random.choice(moves))
         return MCTS_Agent.getResult(current_state)
 
-
-######################
-#  Save a head state copy for the mcts search
-#  when you get to default policy instead of copying the current node's state
-#  create a new state by applying actions from the original state
-#  when done, shallow-copy-restore the head state copy
 
 
 class MCTS_Node:
@@ -268,3 +393,220 @@ class MCTS_Node:
             print()
             for key in n.children.keys():
                 q.put(n.children[key])
+
+
+
+
+## Performance enhacement idea 1
+
+class Saver_Node:
+    if TYPE_CHECKING:
+       from Game import Game
+       from Action import Action
+       from State import State
+
+    ## Node for MCTS_saver, uses action history to recreate states rather than storing each one
+    def __init__(self, action:Action, parent:'Saver_Node', maxPlayer: int):
+        self.zero_wins = 0
+        self.one_wins = 0
+        self.visits = 0
+
+        if parent is None:
+            self.num_parents = 0
+        else:
+            self.num_parents = parent.num_parents + 1
+
+        self.terminal = False
+
+        #self.state = state ## The state we are in
+        self.action = action ## The action that got us here
+        self.parent = parent ## The parent node we are descendent from
+
+        ## will be a dict of {action : childNode } where childnode state is the result of applying action to this node state
+        self.children: Dict['Action','Saver_Node'] = {}
+        self.player = maxPlayer # needs to be changed to "zero" "one" and "random"
+
+    def __str__(self) -> str:
+        if self.parent is None:
+            p = "None"
+        else:
+            p = "TODO: Hash"
+            ## p = get_hash(self.parent.state)
+        try:
+            expected_value = self.get_expected_value()
+        except ValueError:
+            expected_value = 0
+        spacer = "   " * self.num_parents
+        return spacer + f'Action {self.action}\n' + spacer + f' Visits={self.visits} Zero Wins={self.zero_wins} One Wins={self.one_wins}\n' + spacer + f' Expected Value={expected_value} UCB={self.get_ucb()}'
+
+    ## given a mutable rootState, reconstructs the state associated with this node
+    def construct_state(self, rootState: State) -> State:
+        action_hist = []
+        curr = self
+        while curr.parent is not None:
+            action_hist.insert(0,curr.action)
+            curr = curr.parent
+        
+        for action in action_hist:
+            rootState.applyAction(action,quiet=True)
+            rootState.dispatchTile()
+        return rootState
+
+    ## MAKE SURE TO FLIP PLAYER BEFORE CALLING
+    def add_child(self, action:Action, player:int) -> 'Saver_Node':
+        if action in self.children.keys():
+            raise ValueError('dupe child')
+        else:
+            self.children[action] = Saver_Node(action, self, player)
+            return self.children[action]
+
+    def get_p_win(self, player:int):
+        try:
+            if player == 0:
+                return self.zero_wins / self.visits
+            elif player == 1:
+                return self.one_wins / self.visits
+            else:
+                raise ValueError(f'Given {player} for player, need 1 or 0')
+        except ZeroDivisionError:
+            raise ValueError('need atleast one visit before getting pwin')
+
+    def get_expected_value(self) -> float:
+        try:
+            return (self.zero_wins - self.one_wins) / self.visits
+        except ZeroDivisionError:
+            raise ValueError('need atleast one visit before getting expected value')
+
+    def get_explore_term(self, parent:'Saver_Node', c=1) -> float:
+        if self.parent is not None:
+            return c * (2*math.log(parent.visits) / self.visits) ** (1/2)
+        return 0
+    
+    def get_ucb(self, c=1, default=6) -> float:
+        if self.visits:
+            p_win = self.get_expected_value()
+            if self.player == 0:
+                p_win *= -1
+            explore_term = self.get_explore_term(self.parent,c)
+            return p_win + explore_term
+        return default
+
+    def print_tree(self, max_nodes = 50):
+        if max_nodes is None:
+            max_nodes = len(self.children)+1
+        print(f"Printing from node TODO: Hash {self}")
+        q = queue.Queue()
+        q.put(self)
+        node_count = 0
+        while not q.empty() and node_count < max_nodes:
+            node_count += 1
+            n = q.get()
+            print(n)
+            print()
+            for key in n.children.keys():
+                q.put(n.children[key])     
+
+class MCTS_Saver(Agent):
+    if TYPE_CHECKING:
+       from Game import Game
+       from Action import Action
+       from State import State
+    
+    def getLegalMoves(state: State) -> List[Action]:
+        return state.currentActions
+
+    def nextPlayer(currentPlayer:int) -> int:
+        return (currentPlayer + 1) % 2
+
+    def getResult(state: State) -> int:
+        if state.gameOver() is False:
+            return None
+        return state.scoreDelta()
+
+    ####*******####
+    #             #  
+    # ENTRY POINT #
+    #             #
+    ####*******####
+
+    def getResponse(self, validActions: List[Action], game=None, maxPlayer:int=None) -> Action:
+
+        
+        self.headState = game.state      ## <- a reference of the root state for rollback
+        self.muteState = game.startSim() ## <- make a deepcopy of the headstate that we can play around with
+
+        root = Saver_Node(None,None,maxPlayer)
+        for iteration in range(500):
+            v = MCTS_Saver.tree_policy(root, maxPlayer, self.muteState)
+            game.refresh(self.muteState) ## refresh the state to where it was before TP
+            score = MCTS_Saver.default_policy(v, game, self.muteState)
+            game.refresh(self.muteState)
+            MCTS_Saver.backProp(v, score)
+        move = MCTS_Saver.bestChild(root, 0)
+
+        root.print_tree()
+        print(f"\n\nBEST NODE: {move.action} Ev: {move.get_expected_value()}")
+
+        return move.action
+
+
+    ####*******####
+    #             #  
+    # POLICYFUNCS #
+    #             #
+    ####*******####
+
+    ## MCTS tree policy (selects child node to examine)
+    def tree_policy(node: Saver_Node, player:int, muteState: State) -> Saver_Node:
+        ## return the node if its a terminal
+        if node.terminal:
+            return node 
+        
+        ## otherwise expand a new possible childNode <--- This is where the random will come in but for now its deterministic
+        if node.action is not None:
+            muteState.applyAction(node.action,quiet=True)
+            muteState.dispatchTile()
+        moves = MCTS_Saver.getLegalMoves(muteState)
+        if len(moves) > len(node.children):
+            return MCTS_Saver.expand(node, player, moves)
+        
+        ## if all children have been expanded, go down the tree by what we think is the best candidate and recurs
+        return MCTS_Saver.tree_policy(MCTS_Saver.bestChild(node), MCTS_Saver.nextPlayer(player), muteState)
+
+    ## Adds a random successor node
+    def expand(node:Saver_Node, player:int, actions: List[Action]) -> Saver_Node:
+        child = None
+        for action in actions:
+            if action not in node.children.keys():
+                child = node.add_child(action,MCTS_Saver.nextPlayer(player))
+                return child
+        raise ValueError("Ran out of children when we shouldn't")
+
+    ## Selection heuristic for following tree and finally move choice
+    def bestChild(node:Saver_Node, c=1) -> Saver_Node:
+        bestNode = list(node.children.values())[0]
+        for action, node in node.children.items():
+            if node.get_ucb(c) > bestNode.get_ucb(c):
+                bestNode = node
+        return bestNode
+
+    ## Recurse up the tree now, incrementing vists and accumulating score
+    def backProp(node:Saver_Node,score:int) -> None:
+        while node is not None:
+            node.visits += 1
+            if score > 0:
+                node.zero_wins += score
+            elif score < 0:
+                node.one_wins += (-1 * score)
+            node = node.parent
+
+    ## Rollout randomly from a gamestate to game end
+    def default_policy(node:Saver_Node,game, muteState: State, print_final=False) -> int:
+        current_state = node.construct_state(muteState)
+
+        while(current_state.gameOver() is False):
+            moves = MCTS_Saver.getLegalMoves(current_state)
+            current_state.applyAction(random.choice(moves), quiet=True)
+            current_state.dispatchTile()
+        return MCTS_Saver.getResult(current_state)
+

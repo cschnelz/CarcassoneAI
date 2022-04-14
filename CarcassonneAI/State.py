@@ -1,5 +1,6 @@
 ## Holds all information about the current game state
 
+from os import execv
 from typing import List
 
 from Board import Board, combinedFeature, Node, meepleInfo, builtFeature
@@ -8,56 +9,62 @@ from Tile import Tile
 from Player import Player
 from Import import importTiles
 from Action import Action, validActions
-from random import random, choice
+from random import random, choice, shuffle
 import copy
 
 class State:
     def __init__(self, players: List[Player], order):
         self.players = players
         self.currentPlayer = 0
-        self.order = order
         self.tileHist = []
         self.currentActions: List[Action] = []
         
         self.turn = 2
         self.tileList = importTiles('TileSetSepRoads.json')
         
-        self.currentTile = self.tileList.pop(int(random()*len(self.tileList))) if len(self.order) == 0 else self.tileList[self.order.pop(0)]
-        self.board = Board(self.currentTile)
-        self.currentTile = self.dispatchTile() if len(self.order) == 0 else self.dispatchTile(self.order.pop(0))
+        if len(order) == 0:
+            self.order = list(range(0,72))
+            shuffle(self.order)
+        else:
+            self.order = order
+
+        self.board = Board(self.tileList[self.order.pop(0)])
+        self.dispatchTile()
 
         self.hash = "" 
         ## a unique hash string, representing actions in order
         ## 'id xCoord yCoord Meepled Feat/Grass Edge'
 
     # Get a new tile for current tile
-    def dispatchTile(self, index=None) -> Tile:
-        if len(self.tileList) == 0:
-            return None
-        if index is None:
-            if len(self.tileList) == 1:
-                tile = self.tileList[0]
-                del self.tileList[0]
-            else:
-                dispatchId = int(random() * len(self.tileList))
-                try:
-                    tile = self.tileList[dispatchId]
-                    del self.tileList[dispatchId]
-                except:
-                    print('oof')
-        else:
-            dispatchId = index
-            tile = self.tileList[dispatchId]
+    def dispatchTile(self):
+        if len(self.order) == 0:
+            self.currentTile = None
+            return
+
+        tile = None
+        try:
+            index = self.order.pop(0)
+            tile = self.tileList[index]
+        except:
+            print('oop')
 
         self.currentActions = validActions(self.board, tile, self.players[self.currentPlayer].meepleCount > 0)
         if len(self.currentActions) == 0:
-            return self.dispatchTile()
+            self.currentTile = self.dispatchTile()
         else:
             self.tileHist.append(tile.id)
-            return tile
+            self.currentTile = tile
+
+    def dispatchSpecific(self, index):
+        tile = self.tileList[index]
+        self.currentActions = validActions(self.board,tile,self.players[self.currentPlayer].meepleCount > 0)
+        if len(self.currentActions) == 0:
+            return False
+        self.currentTile = tile
+        return True
 
     def getActions(self) -> List[Action]:
-        return validActions(self.board, self.currentTile, self.players[self.currentPlayer].meepleCount > 0)
+        return self.currentActions
     
     def gameOver(self) -> bool:
         # check for end of game
@@ -80,7 +87,6 @@ class State:
         self.playTile(action,quiet)
         self.currentPlayer = (self.currentPlayer + 1) % 2
         self.turn += 1
-        self.currentTile = self.dispatchTile() if len(self.order) == 0 else self.dispatchTile(self.order.pop(0))
 
     def playTile(self, action: Action, quiet=False):
         ## Add the tile to the board

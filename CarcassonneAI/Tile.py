@@ -1,6 +1,9 @@
 import sys
 from typing import List
+
+from pyparsing import originalTextFor
 from Feature import *
+
 
 class Tile:
     _frozen = False
@@ -26,6 +29,14 @@ class Tile:
                 self.chapel = True
             for edge in feature.edges:
                 self.edges[edge] = feature.featType
+
+        
+        if self.edges[0] == self.edges[1] == self.edges[2] == self.edges[3]:
+            self.unique_rotations = [(0+orientation) % 4]
+        elif self.edges[0] == self.edges[2] and self.edges[1] == self.edges[3]:
+            self.unique_rotations = [(0+orientation) % 4,(1+orientation) % 4]
+        else:
+            self.unique_rotations = [(0+orientation) % 4,(1+orientation) % 4,(2+orientation) % 4,(3+orientation) % 4]
 
         self._frozen = True
 
@@ -95,6 +106,7 @@ def rotate(tile: Tile, i: int) -> Tile:
     for grass in tile.grasses:
         newEdges = [(e + (i * 2)) % 8 for e in grass.edges]
         newGrass.append(Grass(newEdges, False))
+
     return Tile(tile.id, newFeatures, newGrass, tile.imgCode, (tile.orientation + i)%4)
 
 def featureAtEdgeStatic(tile: Tile, edge: int) -> Feature:
@@ -108,3 +120,12 @@ def grassAtEdgeStatic(tile: Tile, edge: int) -> Grass:
             if edge in grass.edges:
                 return grass
         return None
+
+
+
+
+# class TileOrientations:
+#     _frozen = False
+
+#     def __init__(self, tile: Tile):
+#         self.ori

@@ -24,6 +24,7 @@ class Game:
     # update the state based on the action
     def applyAction(self, action: Action) -> None: 
         self.state.applyAction(action)
+        self.state.dispatchTile()
 
     def currentPlayer(self) -> Player:
         return self.state.players[self.state.currentPlayer]
@@ -71,6 +72,7 @@ class Game:
     ## Applies an action to an independent state
     def simApply(self, simState: State, action: Action):
         simState.applyAction(action,quiet=True)        
+        simState.dispatchTile()
     
     def refresh(self, simState: State):
         simState.players[0].meepleCount = self.state.players[0].meepleCount
@@ -78,8 +80,10 @@ class Game:
         simState.players[0].score = self.state.players[0].score
         simState.players[1].score = self.state.players[1].score
 
+        simState.currentActions = self.state.currentActions.copy()
         simState.currentPlayer = self.state.currentPlayer
         simState.order = self.state.order.copy()
+        simState.turn = self.state.turn
 
         simState.tileList = self.state.tileList.copy()
         simState.currentTile = self.state.currentTile
@@ -90,6 +94,25 @@ class Game:
         simState.board.trackedFields = self.state.board.trackedFields.copy()
         simState.board.meepled = self.state.board.meepled.copy()
 
+    def refreshSpecific(self,mutatedState:State, backupState:State):
+        mutatedState.players[0].meepleCount = backupState.players[0].meepleCount
+        mutatedState.players[1].meepleCount = backupState.players[1].meepleCount
+        mutatedState.players[0].score = backupState.players[0].score
+        mutatedState.players[1].score = backupState.players[1].score
+
+        mutatedState.currentActions = backupState.currentActions.copy()
+        mutatedState.currentPlayer = backupState.currentPlayer
+        mutatedState.order = backupState.order.copy()
+        mutatedState.turn = backupState.turn
+
+        mutatedState.tileList = backupState.tileList.copy()
+        mutatedState.currentTile = backupState.currentTile
+
+        mutatedState.board.board = backupState.board.board.copy()
+        mutatedState.board.openLocations = backupState.board.openLocations.copy()
+        mutatedState.board.trackedFeatures = backupState.board.trackedFeatures.copy()
+        mutatedState.board.trackedFields = backupState.board.trackedFields.copy()
+        mutatedState.board.meepled = backupState.board.meepled.copy()
 
     ## cache partially made features
     # when adding tiles, check if the tile's feature link to a previous feature

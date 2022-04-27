@@ -1,7 +1,7 @@
-from Agents import *
+from Agents import Agent
 
 class Player:
-    def __init__(self, id, agent: Agent):
+    def __init__(self, id:int, agent: Agent):
         self.id = id
         if id == 0:
             self.color = 'red'

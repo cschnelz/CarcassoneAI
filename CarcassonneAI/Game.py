@@ -1,4 +1,4 @@
-from Agents import *
+from Agents.Agent import RandomAgent
 from Board import meepleInfo
 from Feature import FeatType
 from Player import Player
@@ -6,6 +6,8 @@ from State import State
 from Render import render3
 from Action import validActions, Action
 
+from typing import List
+import copy
 
 class Game:
     def __init__(self, players=[RandomAgent(), RandomAgent()], order=[]):
@@ -67,7 +69,10 @@ class Game:
 
     ## Creates a simulation state that is independent of the real state
     def startSim(self) -> State:
-        return copy.deepcopy(self.state)
+        simState = State([Player(0, RandomAgent()), Player(1,RandomAgent())], self.state.order.copy())
+        self.refresh(simState)
+
+        return simState
 
     ## Applies an action to an independent state
     def simApply(self, simState: State, action: Action):
@@ -80,6 +85,7 @@ class Game:
         simState.players[0].score = self.state.players[0].score
         simState.players[1].score = self.state.players[1].score
 
+        simState.tileHist = self.state.tileHist.copy()
         simState.currentActions = self.state.currentActions.copy()
         simState.currentPlayer = self.state.currentPlayer
         simState.order = self.state.order.copy()
@@ -100,6 +106,7 @@ class Game:
         mutatedState.players[0].score = backupState.players[0].score
         mutatedState.players[1].score = backupState.players[1].score
 
+        mutatedState.tileHist = mutatedState.tileHist.copy()
         mutatedState.currentActions = backupState.currentActions.copy()
         mutatedState.currentPlayer = backupState.currentPlayer
         mutatedState.order = backupState.order.copy()

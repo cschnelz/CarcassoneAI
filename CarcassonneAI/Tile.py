@@ -45,6 +45,9 @@ class Tile:
             raise AttributeError("Frozen!")
         object.__setattr__(self, *args, **kwargs)
 
+    def __str__(self) -> str:
+        return f'Tile: {self.id}, Code: {self.imgCode}, with edges [0 - {self.edges[0]}] [1 - {self.edges[1]}] [2 - {self.edges[2]}] [3 - {self.edges[3]}]'
+
     def __eq__(self, __o: object) -> bool:
         return self.id == __o.id and self.orientation == __o.orientation
 

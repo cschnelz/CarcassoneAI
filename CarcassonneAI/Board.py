@@ -246,9 +246,10 @@ class Board:
         for i in range(4):
             coord = neighbors[i]
             # if there is a tile there
-            if self.board.get(coord) is not None:
+            neighborNode = self.board.get(coord)
+            if neighborNode is not None:
                 # test if the new tile is valid in that direction
-                if not tile.canConnectTo(self.board.get(coord).tile, i):
+                if not tile.canConnectTo(neighborNode.tile, i):
                     return False
 
         # if we get through all directions, the tile can fit

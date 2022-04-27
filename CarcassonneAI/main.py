@@ -1,6 +1,6 @@
 import sys
 import random
-from Agents import GreedyAgent, MCTS_Agent, RandomAgent
+from Agents import *
 
 from Game import Game
 from Action import *

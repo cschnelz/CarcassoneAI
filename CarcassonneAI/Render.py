@@ -149,7 +149,7 @@ def rotateAndRedraw(board: Board, currTile: Tile, players: List[Player]):
     render3(board, rTile, players)
 
 def drawCurrTileOrient(root, currTile, orient):
-    img = Image.open(rf'Images/tile-{currTile.imgCode}.png')
+    img = Image.open(rf'Images/tile-{currTile[0].imgCode}.png')
     imgR = rotateImage(img, orient)
     imgTk = ImageTk.PhotoImage(imgR)
     label = tk.Label(root, text="Current Tile:")

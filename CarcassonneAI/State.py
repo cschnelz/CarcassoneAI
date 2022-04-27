@@ -8,9 +8,10 @@ from Feature import *
 from Tile import Tile
 from Player import Player
 from Import import importTiles
-from Action import Action, validActions
+from Action import Action, validActions, validActionsLocation
 from random import random, choice, shuffle
 import copy
+import string
 
 class State:
     def __init__(self, players: List[Player], order):
@@ -27,8 +28,11 @@ class State:
             shuffle(self.order)
         else:
             self.order = order
+            remaining_tiles = list(set(range(0,72)) - set(order))
+            shuffle(remaining_tiles)
+            self.order.extend(remaining_tiles)
 
-        self.board = Board(self.tileList[self.order.pop(0)])
+        self.board = Board(self.tileList[self.order.pop(0)][0])
         self.dispatchTile()
 
         self.hash = "" 
@@ -41,26 +45,28 @@ class State:
             self.currentTile = None
             return
 
-        tile = None
+        tile_orienations = None
         try:
             index = self.order.pop(0)
-            tile = self.tileList[index]
+            tile_orienations = self.tileList[index]
         except:
             print('oop')
 
-        self.currentActions = validActions(self.board, tile, self.players[self.currentPlayer].meepleCount > 0)
+        self.currentActions = validActions(self.board, tile_orienations, self.players[self.currentPlayer].meepleCount > 0)
         if len(self.currentActions) == 0:
-            self.currentTile = self.dispatchTile()
+            self.order.append(index)
+            self.dispatchTile()
         else:
-            self.tileHist.append(tile.id)
-            self.currentTile = tile
+            self.tileHist.append(tile_orienations[0].id)
+            self.currentTile = tile_orienations
 
     def dispatchSpecific(self, index):
-        tile = self.tileList[index]
-        self.currentActions = validActions(self.board,tile,self.players[self.currentPlayer].meepleCount > 0)
+        tile_orientations = self.tileList[index]
+        self.currentActions = validActions(self.board,tile_orientations,self.players[self.currentPlayer].meepleCount > 0)
         if len(self.currentActions) == 0:
             return False
-        self.currentTile = tile
+        self.currentTile = tile_orientations
+        self.tileHist.append(tile_orientations[0].id)
         return True
 
     def getActions(self) -> List[Action]:
@@ -87,6 +93,7 @@ class State:
         self.playTile(action,quiet)
         self.currentPlayer = (self.currentPlayer + 1) % 2
         self.turn += 1
+        self.currentTile = None
 
     def playTile(self, action: Action, quiet=False):
         ## Add the tile to the board
@@ -97,6 +104,26 @@ class State:
         ## Calculate and update scores
         completed = self.checkCompletedFeatures(action.x, action.y)
         self.calculateScore(completed, quiet)
+
+    ## dispatches the next tile but picks a random valid location first
+    ##   and then only calculates actions for that location
+    def dispatchTileOptimized(self):
+        index = self.order.pop(0)
+        tile_orientations = self.tileList[index]
+        shuffle(tile_orientations)
+        for i in range(len(tile_orientations)):
+            tile_orientation = tile_orientations[i]
+            locs = [loc for loc in self.board.openLocations if self.board.isValid(loc[0],loc[1],tile_orientation)]
+            
+            if len(locs) > 0:
+                loc = choice(locs)
+                self.currentActions = validActionsLocation(self.board,loc,tile_orientation,self.players[self.currentPlayer].meepleCount > 0)
+                self.currentTile = tile_orientations
+            
+            elif i == len(tile_orientations) - 1:
+                self.order.append(index)
+                self.dispatchTileOptimized()
+           
 
     ## Called in PlayTile
     def checkCompletedFeatures(self, x, y) -> List[builtFeature]:
@@ -116,7 +143,8 @@ class State:
                     try:
                         self.board.meepled.pop(coord)
                     except:
-                        print(self.tileHist)
+                        #print(self.tileHist)
+                        pass
 
         # for i in range(4):
         #     tile = self.board.tileAt(x,y)
@@ -146,6 +174,15 @@ class State:
         return completed
 
      
+    def uniqueRemainingTiles(self) -> List[int]:
+        found = set()
+        remaining = []
+        for index in self.order:
+            if self.tileList[index][0].imgCode not in found:
+                found.add(self.tileList[index][0].imgCode)
+                remaining.append(index)
+        return remaining
+
     def calculateScore(self, completed: List[builtFeature], quiet):
         for bF in completed:
             if len(bF.meepled) > 0:
@@ -219,8 +256,6 @@ class State:
     def scoreAdjacentCities(self, completed: builtFeature):
         citiesChecked = []
         score = 0
-
-
         
         for node,edge in completed.adjacentCities.items():
             
@@ -233,21 +268,25 @@ class State:
                     citiesChecked.append(builtCity)
                     if builtCity.completed:
                         score += 3
-            
-            # for cityEdge in adjacent:
-            #     city = node.tile.featureAtEdge(cityEdge)
-            #     ## if we havent explored it yet
-            #     if city not in citiesChecked:
-            #         # explore it
-            #         combinedCity = self.board.buildFeature(node.x, node.y,cityEdge,FeatType.CITY)
-            #         # add the cities we've seen to our checked list so we don't double score
-            #         for tf in combinedCity.tileFeat:
-            #             citiesChecked.append(tf[1])
-            #         # add score if the city is completed (carcassone field rules)
-            #         if combinedCity.completed:
-            #             score += 3
 
         return score
 
     def scoreChapel(self, node: Node):
         return len(self.board.neighbors8(node.x, node.y)) + 1
+
+
+
+    ## get a list of scores of actively meepled cities and the amount of open edges
+    def activeCities(self):
+        scores_holes = ([],[])
+        for loc, node in self.board.board.items():
+            tile = node.tile
+            for loc in self.board.meepled.keys():
+                meepled = self.board.meepled.get(loc)
+
+                if meepled.feature and meepled.featureObject.featType == FeatType.CITY:
+                    bF = self.board.findTracked(node,meepled.edge,self.board.trackedFeatures)
+                    if bF is not None and bF.meepled and len(bF.holes) >0:    
+                        scores_holes[meepled.id].append((bF.score,len(bF.holes)))
+        
+        return scores_holes

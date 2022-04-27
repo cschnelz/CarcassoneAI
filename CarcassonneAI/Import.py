@@ -1,8 +1,8 @@
 import json
-from Tile import Tile
+from Tile import Tile, rotate
 from Feature import *
 
-def importTiles(fpath) -> List[Tile]:
+def importTiles(fpath) -> List[List[Tile]]:
     tileList = []
     f = open(fpath)
     tiles = json.load(f)
@@ -19,6 +19,7 @@ def importTiles(fpath) -> List[Tile]:
             elif feat.get('Grass') is not None:
                 grass.append(Grass(feat.get('Grass').get('Edges'), False))
         t = Tile(tile.get('id'), features, grass, tile.get('img-code'), 0)
-        tileList.append(t)
+
+        tileList.append([rotate(t, r) for r in t.unique_rotations])
     f.close()
     return tileList

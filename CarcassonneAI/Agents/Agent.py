@@ -14,7 +14,6 @@ import copy
 import math
 import queue
 
-from attr import mutable
 
 class Agent(ABC):
     @abstractmethod

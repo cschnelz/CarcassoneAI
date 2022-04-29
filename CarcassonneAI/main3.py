@@ -6,7 +6,7 @@ from Agents import *
 from Game import Game
 
 def launch():
-    players=[GreedyDeterminized(), GreedyAgent()]
+    players=[MCTS_Saver(), GreedyAgent()]
     carcassonne = Game(players,order=list(range(72)))
 
     actions = carcassonne.getActions()

@@ -306,7 +306,7 @@ class Saver_Node:
             return c * ((2*math.log(parent.visits) / self.visits) ** (1/2))
         return 0
     
-    def get_ucb(self, c=10, default=6) -> float:
+    def get_ucb(self, c=3, default=6) -> float:
         if self.visits:
             p_win = self.get_expected_value()
             if self.player == 0:
@@ -369,6 +369,8 @@ class MCTS_Saver(Agent):
 
     DET = 100
     ITER = 100
+
+    C = 3
 
     # DET = 10
     # ITER = 40
@@ -444,18 +446,19 @@ class MCTS_Saver(Agent):
             MCTS_Saver.backProp(v, score)
 
         self.game.refreshSpecific(self.muteStates[i],self.backups[i])
-        return [node.get_ucb() for action, node in root.get_first_nodes()]
+        return [node.get_ucb(c=0) for action, node in root.get_first_nodes()]
 
+    CORES = 8
     def determinizedMP(self, validActions, game:Game=None, maxPlayer=None):
         ## setup
         self.determinization = game.state.order.copy()
-        self.backups = [game.startSim() for i in range(8)]
-        self.muteStates = [game.startSim() for i in range(8)]
+        self.backups = [game.startSim() for i in range(self.CORES)]
+        self.muteStates = [game.startSim() for i in range(self.CORES)]
         self.game = game
 
         ## pool and call mcts func for each determinization
-        determinization_pool = mp.Pool(8)
-        dets = list(range(8)) * int(self.DET / 8)
+        determinization_pool = mp.Pool(self.CORES)
+        dets = list(range(self.CORES)) * int(self.DET / self.CORES)
         stats = determinization_pool.map(self.MpSub, dets)
 
         
@@ -521,7 +524,7 @@ class MCTS_Saver(Agent):
         raise ValueError("Ran out of children when we shouldn't")
 
     ## Selection heuristic for following tree and finally move choice
-    def bestChild(node:Saver_Node, c=10) -> Saver_Node:
+    def bestChild(node:Saver_Node, c=3) -> Saver_Node:
         max = float("-inf")
         best_child_key = None
         for key in node.children.keys():
@@ -602,3 +605,13 @@ class MCTS_Saver(Agent):
             combinedScore[1] += (score * (diminisher / holes)) / 2.0
         
         return combinedScore[0] - combinedScore[1]
+
+
+    def heuristic_2(node:Saver_Node,game:Game,muteState:State,print_final=False) -> int:
+        muteState.applyAction(node.action,quiet=True)
+
+        ## start with base score
+        base = muteState.players[0].score
+
+        ## get currently meepled features
+        feats = [meepleInfo for loc, meepleInfo in muteState.board.meepled.items()]

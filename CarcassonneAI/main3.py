@@ -6,7 +6,7 @@ from Agents import *
 from Game import Game
 
 def launch():
-    players=[MCTS_Saver(), GreedyAgent()]
+    players=[GreedyDeterminized(), GreedyAgent()]
     carcassonne = Game(players,order=list(range(72)))
 
     actions = carcassonne.getActions()
@@ -21,6 +21,7 @@ def launch():
 
 def launch2():
     carcassonne = Game(players=[MCTS_Saver(), GreedyAgent()])
+    print(f'tile order: {carcassonne.state.order}')
     #carcassonne.render()
     while(carcassonne.gameOver() is False):
         #print(f'Current tile: {carcassonne.state.currentTile[0]}')
@@ -37,7 +38,7 @@ def launch2():
     
 
 if __name__ == '__main__':
-    launch2()
+    launch()
     #launch()
     # import cProfile, pstats
     # profiler = cProfile.Profile()

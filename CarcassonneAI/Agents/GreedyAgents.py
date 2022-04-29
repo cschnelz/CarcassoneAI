@@ -147,7 +147,7 @@ class GreedyDeterminized(Agent):
         from Action import Action
         from State import State
 
-    DETERMINZATIONS = 10
+    DETERMINZATIONS = 100
     action_stack = []
 
     def getResponse(self, validActions, game:Game=None, maxPlayer=None):

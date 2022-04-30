@@ -1,7 +1,6 @@
 import sys
 from typing import List
 
-from pyparsing import originalTextFor
 from Feature import *
 
 

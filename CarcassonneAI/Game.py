@@ -3,7 +3,7 @@ from Board import meepleInfo
 from Feature import FeatType
 from Player import Player
 from State import State
-#from Render import render3
+from Render import render3
 from Action import validActions, Action
 
 from typing import List

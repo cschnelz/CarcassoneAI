@@ -101,7 +101,7 @@ class Saver_Node:
         except ZeroDivisionError:
             raise ValueError('need atleast one visit before getting expected value')
 
-    def get_explore_term(self, parent:'Saver_Node', c=1) -> float:
+    def get_explore_term(self, parent:'Saver_Node', c) -> float:
         if self.parent is not None:
             return c * ((2*math.log(parent.visits) / self.visits) ** (1/2))
         return 0
@@ -223,8 +223,45 @@ class MCTS_Saver(Agent):
             
         #print(f"\n\nBEST AVG Action: {best_avg_action} AvgUcb: {best_avg_ucb}")
         return best_avg_action
+    
+    def determinizedMP(self, validActions, game:Game=None, maxPlayer=None):
+        ## setup
+        self.determinization = game.state.order.copy()
+        self.backups = [game.startSim() for i in range(self.CORES)]
+        self.muteStates = [game.startSim() for i in range(self.CORES)]
+        self.game = game
 
+        ## pool and call mcts func for each determinization
+        determinization_pool = mp.Pool(self.CORES)
+        dets = list(range(self.CORES)) * int(self.DET / self.CORES)
+        stats = determinization_pool.map(self.MpSub, dets)
 
+        ## collect stats        
+        actions = MCTS_Saver.getLegalMoves(game.state)
+
+        ## make a list of all first level nodes for each determinzation
+        best_avg_ucb = -math.inf
+        best_avg_action = None
+        ## we want to compare average performace of actions across deterinzations
+        ## so outer loop has a range of the number of possible actions
+        for i in range(len(stats[0])):
+            avg_ucb = 0.0
+            ## and the inner loop ranges the number of determinzations
+            for det in range(len(stats)):
+                ## add the ucb of this determinzations ith action
+                avg_ucb += stats[det][i]
+                
+            avg_ucb = avg_ucb / self.DET
+            ## if its better, we have a new candidate action
+            if avg_ucb > best_avg_ucb:
+                best_avg_ucb = avg_ucb
+                ## we can use the nth determinization bc all the actions are equal
+                best_avg_action = actions[i]
+            
+        #print(f"\n\nBEST AVG Action: {best_avg_action} AvgUcb: {best_avg_ucb}")
+        return best_avg_action
+
+    
     ## inner routine for the multiprocessing, runs the MCTS search for a tile order shuffle and returns the top level UCBs
     def MpSub(self, i):
         random.shuffle(self.determinization)
@@ -244,49 +281,9 @@ class MCTS_Saver(Agent):
             MCTS_Saver.backProp(v, score)
 
         self.game.refreshSpecific(self.muteStates[i],self.backups[i])
-        return [node.get_ucb(0) for action, node in root.get_first_nodes()]
 
-    
-    def determinizedMP(self, validActions, game:Game=None, maxPlayer=None):
-        ## setup
-        self.determinization = game.state.order.copy()
-        self.backups = [game.startSim() for i in range(self.CORES)]
-        self.muteStates = [game.startSim() for i in range(self.CORES)]
-        self.game = game
-
-        ## pool and call mcts func for each determinization
-        determinization_pool = mp.Pool(self.CORES)
-        dets = list(range(self.CORES)) * int(self.DET / self.CORES)
-        stats = determinization_pool.map(self.MpSub, dets)
-
-        
-        ## collect stats        
-        actions = MCTS_Saver.getLegalMoves(game.state)
-
-        ## make a list of all first level nodes for each determinzation
-        best_avg_ucb = -math.inf
-        best_avg_action = None
-        ## we want to compare average performace of actions across deterinzations
-        ## so outer loop has a range of the number of possible actions
-        for i in range(len(stats[0])):
-            avg_ucb = 0.0
-            ## and the inner loop ranges the number of determinzations
-            for det in range(len(stats)):
-                ## add the ucb of this determinzations ith action
-                try:
-                    avg_ucb += stats[det][i]
-                except:
-                    print(det)
-                    print(i)
-            avg_ucb = avg_ucb / self.DET
-            ## if its better, we have a new candidate action
-            if avg_ucb > best_avg_ucb:
-                best_avg_ucb = avg_ucb
-                ## we can use the nth determinization bc all the actions are equal
-                best_avg_action = actions[i]
-            
-        #print(f"\n\nBEST AVG Action: {best_avg_action} AvgUcb: {best_avg_ucb}")
-        return best_avg_action
+        ## FINAL BEST CHILD POLICY -- MOST VISITED
+        return [node.visits for action, node in root.get_first_nodes()]
 
 
     ####*******####
@@ -343,17 +340,6 @@ class MCTS_Saver(Agent):
             elif score < 0:
                 node.one_wins += (-1 * score)
             node = node.parent
-
-    ## Rollout randomly from a gamestate to game end
-    # def default_policy(node:Saver_Node,game, muteState: State, print_final=False) -> int:
-    #     current_state = node.construct_state(muteState)
-
-    #     while(current_state.gameOver() is False):
-    #         moves = MCTS_Saver.getLegalMoves(current_state)
-    #         current_state.applyAction(random.choice(moves), quiet=True)
-    #         current_state.dispatchTile()
-    #     return MCTS_Saver.getResult(current_state)
-
 
 
     def default_fast(node:Saver_Node,game:Game,muteState:State,print_final=False) -> int:

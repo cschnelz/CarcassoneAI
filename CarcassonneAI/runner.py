@@ -4,7 +4,7 @@ from tqdm import tqdm
 
 script_name = 'main3.py'
 output_prefix = 'MCTS100c3vsGreedy'
-n_iter = 6
+n_iter = 25
 
 for i in tqdm(range(n_iter)):
     output_file = output_prefix + '_' + str(i) + '.txt'

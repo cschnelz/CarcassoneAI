@@ -145,6 +145,7 @@ class MCTS_Saver(Agent):
        from Game import Game
        from Action import Action
        from State import State
+       from Board import Board, builtFeature
     
     def getLegalMoves(state: State) -> list[Action]:
         return state.currentActions
@@ -167,62 +168,62 @@ class MCTS_Saver(Agent):
         #return self.determinizedMCTS(validActions,game,maxPlayer)
         return self.determinizedMP(validActions,game,maxPlayer)
 
-    DET = 100
-    ITER = 100
+    DET = 200
+    ITER = 500
 
     C = 3
     CORES = 8
 
-    def determinizedMCTS(self, vA, game:Game=None, maxPlayer:int=None) -> Action:
-        determinzation = game.state.order.copy()       
+    # def determinizedMCTS(self, vA,  game:Game=None, maxPlayer:int=None) -> Action:
+    #     determinzation = game.state.order.copy()       
         
-        stats = []
-        self.backup = game.startSim()
-        self.muteState = game.startSim()
+    #     stats = []
+    #     self.backup = game.startSim()
+    #     self.muteState = game.startSim()
 
-        for i in range(self.DET):
-            random.shuffle(determinzation)
-            self.backup.order = determinzation.copy()
-            self.muteState.order = determinzation.copy()
-            root = Saver_Node(None, None, maxPlayer)
-            curr_stats = []
+    #     for i in range(self.DET):
+    #         random.shuffle(determinzation)
+    #         self.backup.order = determinzation.copy()
+    #         self.muteState.order = determinzation.copy()
+    #         root = Saver_Node(None, None, maxPlayer)
+    #         curr_stats = []
 
-            for iteration in range(self.ITER):
-                v = MCTS_Saver.tree_policy(root, maxPlayer, self.muteState)
-                #score = MCTS_Saver.heuristic_policy(v,game,self.muteState)                
-                score = MCTS_Saver.default_fast(v,game,self.muteState)
+    #         for iteration in range(self.ITER):
+    #             v = MCTS_Saver.tree_policy(root, maxPlayer, self.muteState)
+    #             #score = MCTS_Saver.heuristic_policy(v,game,self.muteState)                
+    #             score = MCTS_Saver.default_fast(v,game,self.muteState)
 
-                game.refreshSpecific(self.muteState,self.backup)
-                MCTS_Saver.backProp(v, score)
+    #             game.refreshSpecific(self.muteState,self.backup)
+    #             MCTS_Saver.backProp(v, score)
 
-            for action, node in root.get_first_nodes():
-               curr_stats.append(node.get_ucb(0))
+    #         for action, node in root.get_first_nodes():
+    #            curr_stats.append(node.get_ucb(0))
             
-            stats.append(curr_stats)
-            game.refreshSpecific(self.muteState,self.backup)
+    #         stats.append(curr_stats)
+    #         game.refreshSpecific(self.muteState,self.backup)
         
-        actions = root.get_first_actions()
+    #     actions = root.get_first_actions()
 
-        ## make a list of all first level nodes for each determinzation
-        best_avg_ucb = -math.inf
-        best_avg_action = None
-        ## we want to compare average performace of actions across deterinzations
-        ## so outer loop has a range of the number of possible actions
-        for i in range(len(actions)):
-            avg_ucb = 0.0
-            ## and the inner loop ranges the number of determinzations
-            for det in range(self.DET):
-                ## add the ucb of this determinzations ith action
-                avg_ucb += stats[det][i]
-            avg_ucb = avg_ucb / self.DET
-            ## if its better, we have a new candidate action
-            if avg_ucb > best_avg_ucb:
-                best_avg_ucb = avg_ucb
-                ## we can use the nth determinization bc all the actions are equal
-                best_avg_action = actions[i]
+    #     ## make a list of all first level nodes for each determinzation
+    #     best_avg_ucb = -math.inf
+    #     best_avg_action = None
+    #     ## we want to compare average performace of actions across deterinzations
+    #     ## so outer loop has a range of the number of possible actions
+    #     for i in range(len(actions)):
+    #         avg_ucb = 0.0
+    #         ## and the inner loop ranges the number of determinzations
+    #         for det in range(self.DET):
+    #             ## add the ucb of this determinzations ith action
+    #             avg_ucb += stats[det][i]
+    #         avg_ucb = avg_ucb / self.DET
+    #         ## if its better, we have a new candidate action
+    #         if avg_ucb > best_avg_ucb:
+    #             best_avg_ucb = avg_ucb
+    #             ## we can use the nth determinization bc all the actions are equal
+    #             best_avg_action = actions[i]
             
-        #print(f"\n\nBEST AVG Action: {best_avg_action} AvgUcb: {best_avg_ucb}")
-        return best_avg_action
+    #     #print(f"\n\nBEST AVG Action: {best_avg_action} AvgUcb: {best_avg_ucb}")
+    #     return best_avg_action
     
     def determinizedMP(self, validActions, game:Game=None, maxPlayer=None):
         ## setup
@@ -276,7 +277,9 @@ class MCTS_Saver(Agent):
         root = Saver_Node(None, None, 0)
         for iteration in range(self.ITER):
             v = MCTS_Saver.tree_policy(root, 0, self.muteStates[i], self.C)
-            score = MCTS_Saver.default_fast(v, self.game, self.muteStates[i])
+
+            #score = MCTS_Saver.default_fast(v, self.game, self.muteStates[i])
+            score = MCTS_Saver.hueristic_evaluation(v, self.game, self.muteStates[i])
             self.game.refreshSpecific(self.muteStates[i],self.backups[i])
             MCTS_Saver.backProp(v, score)
 
@@ -309,7 +312,7 @@ class MCTS_Saver(Agent):
         ## if all children have been expanded, go down the tree by what we think is the best candidate and recurs
         return MCTS_Saver.tree_policy(MCTS_Saver.bestChild(node, explore), MCTS_Saver.nextPlayer(player), muteState, explore)
 
-    ## Adds a random successor node
+    ## Adds a random splayersuccessor node
     def expand(node:Saver_Node, player:int, actions: list[Action]) -> Saver_Node:
         child = None
         for action in actions:
@@ -362,35 +365,124 @@ class MCTS_Saver(Agent):
     ##
     ##
     
-    def heuristic_policy(node:Saver_Node,game:Game,muteState:State,print_final=False) -> int:
-        muteState.applyAction(node.action,quiet=True)
-        muteState.dispatchTileOptimized()
+    def hueristic_evaluation(node:Saver_Node,game:Game,muteState:State,print_final=False):
+        from Board import Board, builtFeature
+        from Feature import FeatType
 
-        ## current score
-        baseScore = (muteState.players[0].score, muteState.players[1].score)
-        ## score if game ended right now
-        finScore = muteState.finalScore()
-        ## active city scores and open edges
-        cities = muteState.activeCities()
+        muteState.applyAction(node.action, quiet=True)
+        state = muteState
+        board = state.board
 
-        ## add to the current game end score an bonus based on some odds
-            ## of active cities being completed before the game is over
-        combinedScore = [baseScore[0]+finScore[0],baseScore[1]+finScore[1]]
-        diminisher = (72.0 - muteState.turn) / 72.0
+        ## RED
+        baseRed = state.players[0].score
+        meeplesRed = [(loc,info) for loc,info in board.meepled.items() if info.color == 'red']
+        featsRed: list[builtFeature] = []
+        for loc, info in meeplesRed:
+            node = board.nodeAt(loc[0],loc[1])
+            if info.featureObject.featType == FeatType.CHAPEL:
+                featsRed.append(builtFeature(FeatType.CHAPEL,None,loc,None,None))
+            elif info.feature:
+                featsRed.append(board.findTracked(node,info.edge,board.trackedFeatures))
+            else:
+                featsRed.append(board.findTracked(node,info.edge,board.trackedFields))
+        featsRed = [feat for feat in featsRed if feat is not None]
 
-        for score, holes in cities[0]:
-            combinedScore[0] += (score * (diminisher / holes)) / 2.0
-        for score, holes in cities[1]:
-            combinedScore[1] += (score * (diminisher / holes)) / 2.0
+        meepleCountRed = state.players[0].meepleCount
+        baseRed += MCTS_Saver.heuristic_roads(state, [feat for feat in featsRed if feat.featType == FeatType.ROAD], meepleCountRed)
+        baseRed += MCTS_Saver.heuristic_city(state, [feat for feat in featsRed if feat.featType == FeatType.CITY], meepleCountRed)
+        baseRed += MCTS_Saver.heuristic_chapel(state, [feat for feat in featsRed if feat.featType == FeatType.CHAPEL], meepleCountRed)
+        baseRed += MCTS_Saver.heuristic_field(state, [feat for feat in featsRed if feat.featType == FeatType.GRASS], meepleCountRed)
+        baseRed += MCTS_Saver.hueristic_meeples(meepleCountRed)
+
+        ## BLUE
+        baseBlue = state.players[1].score
+        meeplesBlue = [(loc,info) for loc,info in board.meepled.items() if info.color == 'blue']
+        featsBlue: list[builtFeature] = []
+        for loc, info in meeplesBlue:
+            node = board.nodeAt(loc[0],loc[1])
+            if info.featureObject.featType == FeatType.CHAPEL:
+                featsBlue.append(builtFeature(FeatType.CHAPEL,None,loc,None,None))
+            elif info.feature:
+                featsBlue.append(board.findTracked(node,info.edge,board.trackedFeatures))
+            else:
+                featsBlue.append(board.findTracked(node,info.edge,board.trackedFields))
+        featsBlue = [feat for feat in featsBlue if feat is not None]
+
+        meepleCountBlue = state.players[1].meepleCount
+        baseBlue += MCTS_Saver.heuristic_roads(state, [feat for feat in featsBlue if feat.featType == FeatType.ROAD], meepleCountBlue)
+        baseBlue += MCTS_Saver.heuristic_city(state, [feat for feat in featsBlue if feat.featType == FeatType.CITY], meepleCountBlue)
+        baseBlue += MCTS_Saver.heuristic_chapel(state, [feat for feat in featsBlue if feat.featType == FeatType.CHAPEL], meepleCountBlue)
+        baseBlue += MCTS_Saver.heuristic_field(state, [feat for feat in featsBlue if feat.featType == FeatType.GRASS], meepleCountBlue)
+        baseBlue += MCTS_Saver.hueristic_meeples(meepleCountBlue)
+
+        return baseRed - baseBlue
+
+
+
+
+    TOTAL_TURNS = 72.0
+    ROAD_BIAS = 0.025
+    ROAD_CAPPED_BONUS = 1.25
+
+    CITY_BIAS = 0.075
+
+    def heuristic_roads(state:State, roads:list[builtFeature], meeples_left:int):
+        total_road_score = 0.0
+        for road in roads:
+            base = road.score   # start with the road score
+            bias = MCTS_Saver.ROAD_BIAS * ((MCTS_Saver.TOTAL_TURNS - state.turn) / 2.0) # add an amount representing future additions
+            if len(road.holes) == 1:
+                bias *= MCTS_Saver.ROAD_CAPPED_BONUS  # give a bonus to half-ended roads over no-ended roads
+            
+            road_score = base + bias
+            total_road_score += road_score
+
+        return total_road_score
+
+    def heuristic_city(state:State, cities:list[builtFeature], meeples_left:int):
+        total_city_score = 0.0
+        for city in cities:
+            base = city.score / 2  # start with city score
+            odds = MCTS_Saver.CITY_BIAS * (((MCTS_Saver.TOTAL_TURNS - state.turn) / 2.0) / len(city.holes)) # add a bias for finishing city divided by edges left open
+            
+            city_score = base * odds
+            total_city_score += city_score
         
-        return combinedScore[0] - combinedScore[1]
+        return total_city_score
+
+    def heuristic_chapel(state:State, chapels:list[builtFeature], meeples_left:int):
+        chapel_score = 0.0
+        for chapel in chapels:
+            chapel_neighbors = len(state.board.neighbors8(chapel.locs[0][0], chapel.locs[0][1]))
+            chapel_score += min(9, (9 - chapel_neighbors) - ((MCTS_Saver.TOTAL_TURNS - state.turn) / 2))
+        
+        return chapel_score
+
+    def heuristic_field(state:State, fields:list[builtFeature], meeples_left:int):
+        field_score = 0.0
+        for field in fields:
+            adjacent_cities = set()
+            for node,edge in field.adjacentCities.items():
+
+                adjacent = list(set(node.tile.adjacentCity(node.tile.grassAtEdge(edge))))
+                
+                for cityEdge in adjacent:
+                    builtCity = state.board.findTracked(node,cityEdge,state.board.trackedFeatures)
+                    if builtCity is not None: #and builtCity not in citiesChecked:
+                        adjacent_cities.add(builtCity)
+
+            for city in adjacent_cities:
+                field_score += (2.5 - len(city.holes))
+
+        return field_score
 
 
-    def heuristic_2(node:Saver_Node,game:Game,muteState:State,print_final=False) -> int:
-        muteState.applyAction(node.action,quiet=True)
-
-        ## start with base score
-        base = muteState.players[0].score
-
-        ## get currently meepled features
-        feats = [meepleInfo for loc, meepleInfo in muteState.board.meepled.items()]
+    def hueristic_meeples(meeples_left:int):
+        if meeples_left == 0:
+            return 0
+        elif meeples_left == 1:
+            return 4
+        elif meeples_left == 2:
+            return 6
+        else:
+            return 4 + meeples_left

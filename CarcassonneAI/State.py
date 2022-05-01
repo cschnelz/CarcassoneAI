@@ -89,6 +89,7 @@ class State:
             self.board.meepled[(action.x, action.y)] = meeple
         
             self.players[self.currentPlayer].meepleCount -= 1
+            self.players[self.currentPlayer].meeplesPlaced += 1
 
         self.playTile(action,quiet)
         self.currentPlayer = (self.currentPlayer + 1) % 2

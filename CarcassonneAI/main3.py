@@ -14,7 +14,8 @@ def launch():
     currPlayer = carcassonne.currentPlayer()
     response = currPlayer.agent.getResponse(actions,game=carcassonne,maxPlayer=currPlayer.id)
     carcassonne.applyAction(response)
-    #carcassonne.render()
+    carcassonne.render()
+    input()
 
     actions = carcassonne.getActions()
     currPlayer = carcassonne.currentPlayer()
@@ -26,7 +27,7 @@ def launch():
 
 
 def launch2():
-    carcassonne = Game(players=[MCTS_Saver(), GreedyDeterminized()])
+    carcassonne = Game(players=[MCTS_Saver(), GreedyAgent()])
     #carcassonne.render()
 
     # carcassonne.state.turn = 68
@@ -52,11 +53,12 @@ def launch2():
         # input()
         
     print(carcassonne.finalScore())
+    print((carcassonne.state.players[0].meeplesPlaced,carcassonne.state.players[1].meeplesPlaced))
     
 
 if __name__ == '__main__':
     #launch()
-    launch()
+    launch2()
     # import cProfile, pstats
     # profiler = cProfile.Profile()
     # profiler.enable()

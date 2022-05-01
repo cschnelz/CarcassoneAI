@@ -10,5 +10,6 @@ class Player:
 
         self.meepleCount = 7
         self.score = 0
+        self.meeplesPlaced = 0
 
         self.agent = agent

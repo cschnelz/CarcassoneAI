@@ -214,11 +214,19 @@ class State:
 
     def finalScore(self):
         finalScore = [0,0]
+
+        cleansedRecords = {}
+        ## remove duplicate meepled records for final scoring
+        self.cleanser(cleansedRecords, self.board.trackedFeatures)
+        self.cleanser(cleansedRecords, self.board.trackedFields)
+
+
+
         for loc,node in self.board.board.items():
             tile = node.tile
 
             # if we have a record of that location being meepled
-            if loc in self.board.meepled.keys():
+            if loc in cleansedRecords.keys():
                 meepled = self.board.meepled.get(loc)
 
                 if meepled.feature and tile.chapel:
@@ -227,17 +235,24 @@ class State:
                     finalScore[meepled.id] += self.scoreGrass(node, meepled)
                 else:
                     finalScore[meepled.id] += self.scoreFeature(node, meepled)
-
-
-            # if tile.occupied is not None and tile.occupied.occupiedBy is not None:
-            #     if tile.occupied.featType == FeatType.CHAPEL:
-            #         finalScore[tile.occupied.occupiedBy.id] += self.scoreChapel(node)
-            #     elif tile.occupied.featType == FeatType.GRASS:
-            #         finalScore[tile.occupied.occupiedBy.id] += self.scoreGrass(node)
-            #     else:
-            #         finalScore[tile.occupied.occupiedBy.id] += self.scoreFeature(node) 
         
         return tuple(finalScore)
+
+    def cleanser(self, cleansedRecords, tracked: list[builtFeature]):
+        for feat in tracked:
+            redMeepleRecords = {loc: self.board.meepled.get(loc) for loc in feat.coordsMeepled if self.board.meepled.get(loc) is not None and self.board.meepled.get(loc).color == 'red'}
+            blueMeepleRecords = {loc: self.board.meepled.get(loc) for loc in feat.coordsMeepled if self.board.meepled.get(loc) is not None and self.board.meepled.get(loc).color == 'blue'}
+            if len(redMeepleRecords) > len(blueMeepleRecords):  ## if red outnumbers - add one record for red on this feature
+                loc,record = next(iter(redMeepleRecords.items()))
+                cleansedRecords[loc] = record
+            elif len(redMeepleRecords) < len(blueMeepleRecords):
+                loc,record = next(iter(blueMeepleRecords.items()))
+                cleansedRecords[loc] = record
+            elif len(redMeepleRecords) > 0:                         ## non zero tie = share so add one for red and one for blue
+                loc,record = next(iter(redMeepleRecords.items()))
+                cleansedRecords[loc] = record
+                loc,record = next(iter(blueMeepleRecords.items()))
+                cleansedRecords[loc] = record
 
     def scoreFeature(self, node: Node, meepled: meepleInfo):
         bF = self.board.findTracked(node,meepled.edge,self.board.trackedFeatures)
@@ -250,6 +265,7 @@ class State:
         bF = self.board.findTracked(node,meepled.edge,self.board.trackedFields)
         #field = self.board.buildFeature(node.x,node.y,meepled.edge,FeatType.GRASS)
         if bF is not None and bF.meepled:
+            #fieldsChecked.append(bF)
             score = self.scoreAdjacentCities(bF)
             return score
         return 0

@@ -15,12 +15,12 @@ def launch():
     response = currPlayer.agent.getResponse(actions,game=carcassonne,maxPlayer=currPlayer.id)
     carcassonne.applyAction(response)
     carcassonne.render()
-    input()
+    #input()
 
-    actions = carcassonne.getActions()
-    currPlayer = carcassonne.currentPlayer()
-    response = currPlayer.agent.getResponse(actions,game=carcassonne,maxPlayer=currPlayer.id)
-    carcassonne.applyAction(response)
+    # actions = carcassonne.getActions()
+    # currPlayer = carcassonne.currentPlayer()
+    # response = currPlayer.agent.getResponse(actions,game=carcassonne,maxPlayer=currPlayer.id)
+    # carcassonne.applyAction(response)
 
     #carcassonne.render()
     # input()
@@ -52,13 +52,13 @@ def launch2():
         # carcassonne.render()
         # input()
         
-    print(carcassonne.finalScore())
-    print((carcassonne.state.players[0].meeplesPlaced,carcassonne.state.players[1].meeplesPlaced))
+    print(f'score: {carcassonne.finalScore()}')
+    print(f'meeples placed: {(carcassonne.state.players[0].meeplesPlaced,carcassonne.state.players[1].meeplesPlaced)}')
     
 
 if __name__ == '__main__':
     #launch()
-    launch2()
+    launch()
     # import cProfile, pstats
     # profiler = cProfile.Profile()
     # profiler.enable()

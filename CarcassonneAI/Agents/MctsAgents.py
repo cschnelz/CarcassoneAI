@@ -286,7 +286,7 @@ class MCTS_Saver(Agent):
         self.game.refreshSpecific(self.muteStates[i],self.backups[i])
 
         ## FINAL BEST CHILD POLICY -- MOST VISITED
-        return [node.visits for action, node in root.get_first_nodes()]
+        return [node.get_ucb(0) for action, node in root.get_first_nodes()]
 
 
     ####*******####

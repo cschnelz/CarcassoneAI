@@ -95,9 +95,9 @@ class testFinalScore(unittest.TestCase):
         game.applyAction(Action(-1, 0, tile,True,tile.grasses[0]))
         game.applyAction(Action(-2, 0, tileList[27][0],False,None))
 
-        score0_1 = game.state.scoreGrass(game.state.board.board.get((0,-1)),game.state.board.meepled.get((0,-1)))
+        score0_1 = game.state.scoreGrass(game.state.board.board.get((0,-1)),game.state.board.meepled.get((0,-1)), list(game.state.board.meepled.keys()))[1]
         self.assertEqual(score0_1,3)
-        score_10 = game.state.scoreGrass(game.state.board.board.get((-1,0)),game.state.board.meepled.get((-1,0)))
+        score_10 = game.state.scoreGrass(game.state.board.board.get((-1,0)),game.state.board.meepled.get((-1,0)), list(game.state.board.meepled.keys()))[1]
         self.assertEqual(score_10,3)
 
        

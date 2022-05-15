@@ -108,6 +108,7 @@ class State:
 
     ## dispatches the next tile but picks a random valid location first
     ##   and then only calculates actions for that location
+    ## for random policy rollout only
     def dispatchTileOptimized(self):
         index = self.order.pop(0)
         tile_orientations = self.tileList[index]
@@ -217,24 +218,29 @@ class State:
 
         cleansedRecords = {}
         ## remove duplicate meepled records for final scoring
-        self.cleanser(cleansedRecords, self.board.trackedFeatures)
-        self.cleanser(cleansedRecords, self.board.trackedFields)
+        ##self.cleanser(cleansedRecords, self.board.trackedFeatures)
+        ##self.cleanser(cleansedRecords, self.board.trackedFields)
 
 
 
+        meepledLocs = list(self.board.meepled.keys())
         for loc,node in self.board.board.items():
             tile = node.tile
 
             # if we have a record of that location being meepled
-            if loc in cleansedRecords.keys():
+            if loc in meepledLocs:
                 meepled = self.board.meepled.get(loc)
 
                 if meepled.feature and tile.chapel:
-                    finalScore[meepled.id] += self.scoreChapel(node)
+                    score = self.scoreChapel(node)
+                    player = [meepled.id]
                 elif not meepled.feature:
-                    finalScore[meepled.id] += self.scoreGrass(node, meepled)
+                    player, score = self.scoreGrass(node, meepled, meepledLocs)
                 else:
-                    finalScore[meepled.id] += self.scoreFeature(node, meepled)
+                    player, score = self.scoreFeature(node, meepled, meepledLocs)
+
+                for id in player:
+                    finalScore[id] += score
         
         return tuple(finalScore)
 
@@ -254,21 +260,40 @@ class State:
                 loc,record = next(iter(blueMeepleRecords.items()))
                 cleansedRecords[loc] = record
 
-    def scoreFeature(self, node: Node, meepled: meepleInfo):
+    def scoreFeature(self, node: Node, meepled: meepleInfo, meepledLocs: list[tuple[int]]):
         bF = self.board.findTracked(node,meepled.edge,self.board.trackedFeatures)
+
         #combined = self.board.buildFeature(node.x,node.y,meepled.edge,meepled.featureObject.featType)
         if bF is not None and bF.meepled:
-            return bF.score if bF.featType == FeatType.ROAD else int(bF.score / 2)
-        return 0
+            countRed = bF.meepled.count('red')
+            countBlue = len(bF.meepled) - countRed
+            colorWinner = [0] if countRed > countBlue else [1] if countRed < countBlue else [0,1]
+            score = bF.score if bF.featType == FeatType.ROAD else int(bF.score / 2)
 
-    def scoreGrass(self, node: Node, meepled: meepleInfo):
+            # remove records
+            for loc in bF.coordsMeepled:
+                meepledLocs.remove(loc)
+
+
+            return colorWinner, score
+        return [0], 0
+
+    def scoreGrass(self, node: Node, meepled: meepleInfo, meepledLocs: list[tuple[int]]):
         bF = self.board.findTracked(node,meepled.edge,self.board.trackedFields)
         #field = self.board.buildFeature(node.x,node.y,meepled.edge,FeatType.GRASS)
         if bF is not None and bF.meepled:
-            #fieldsChecked.append(bF)
+
+            # find winner and score
+            countRed = bF.meepled.count('red')
+            countBlue = len(bF.meepled) - countRed
+            colorWinner = [0] if countRed > countBlue else [1] if countRed < countBlue else [0,1]
             score = self.scoreAdjacentCities(bF)
-            return score
-        return 0
+
+            # remove records
+            for loc in bF.coordsMeepled:
+                meepledLocs.remove(loc)
+            return colorWinner, score
+        return [0], 0
 
     def scoreAdjacentCities(self, completed: builtFeature):
         citiesChecked = []

@@ -7,28 +7,32 @@ from Agents import *
 from Game import Game
 
 def launch():
-    players=[MCTS_Saver(), RandomAgent()]
+    players=[RandomAgent(), GreedyDeterminized()]
     carcassonne = Game(players,order=list(range(72)))
+
+    for i in range(20):
+        actions = carcassonne.getActions()
+        carcassonne.applyAction(actions[0])
+
+    actions = carcassonne.getActions()
+    #currPlayer = carcassonne.currentPlayer()
+    #response = currPlayer.agent.getResponse(actions,game=carcassonne,maxPlayer=currPlayer.id)
+    carcassonne.applyAction(actions[0])
+    # carcassonne.render()
+    # input()
 
     actions = carcassonne.getActions()
     currPlayer = carcassonne.currentPlayer()
     response = currPlayer.agent.getResponse(actions,game=carcassonne,maxPlayer=currPlayer.id)
     carcassonne.applyAction(response)
-    carcassonne.render()
-    #input()
-
-    # actions = carcassonne.getActions()
-    # currPlayer = carcassonne.currentPlayer()
-    # response = currPlayer.agent.getResponse(actions,game=carcassonne,maxPlayer=currPlayer.id)
-    # carcassonne.applyAction(response)
 
     #carcassonne.render()
     # input()
 
 
 def launch2():
-    carcassonne = Game(players=[MCTS_Saver(), GreedyAgent()])
-    #carcassonne.render()
+    carcassonne = Game(players=[HumanAgent(), HumanAgent()])
+    carcassonne.render()
 
     # carcassonne.state.turn = 68
     # carcassonne.state.order = carcassonne.state.order[66:70]
@@ -49,20 +53,30 @@ def launch2():
         if carcassonne.state.turn %2 == 0:
             print()
 
-        # carcassonne.render()
+        carcassonne.render()
         # input()
         
     print(f'score: {carcassonne.finalScore()}')
     print(f'meeples placed: {(carcassonne.state.players[0].meeplesPlaced,carcassonne.state.players[1].meeplesPlaced)}')
     
 
+def launchX():
+    players=[RandomAgent(), GreedyDeterminized()]
+    carcassonne = Game(players,order=list(range(72)))
+
+    for i in range(60):
+        while carcassonne.gameOver() is False:
+            carcassonne.applyAction(carcassonne.getActions()[0])
+        carcassonne = Game(players, order=list(range(72)))
+
+
 if __name__ == '__main__':
     #launch()
-    launch()
-    # import cProfile, pstats
-    # profiler = cProfile.Profile()
-    # profiler.enable()
-    # launch()
-    # profiler.disable()
-    # stats = pstats.Stats(profiler).sort_stats('cumtime')
-    # stats.print_stats()
+    #launch2()
+    import cProfile, pstats
+    profiler = cProfile.Profile()
+    profiler.enable()
+    launchX()
+    profiler.disable()
+    stats = pstats.Stats(profiler).sort_stats('cumtime')
+    stats.print_stats()

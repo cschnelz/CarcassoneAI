@@ -20,7 +20,7 @@ def launch():
     carcassonne.applyAction(actions[0])
     # carcassonne.render()
     # input()
-
+    carcassonne.render()
     actions = carcassonne.getActions()
     currPlayer = carcassonne.currentPlayer()
     response = currPlayer.agent.getResponse(actions,game=carcassonne,maxPlayer=currPlayer.id)
@@ -76,7 +76,7 @@ if __name__ == '__main__':
     import cProfile, pstats
     profiler = cProfile.Profile()
     profiler.enable()
-    launchX()
+    launch()
     profiler.disable()
     stats = pstats.Stats(profiler).sort_stats('cumtime')
     stats.print_stats()

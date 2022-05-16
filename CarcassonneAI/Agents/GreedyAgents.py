@@ -354,7 +354,7 @@ class GreedyDeterminized(Agent):
     #             game.refreshSpecific(mutable, self.backupInner)
     #             #[mutable.applyAction(a, quiet=True) for a in self.action_stack]
             
-    #         return minEval, bestAction
+        #         return minEval, bestAction
 
 
 
@@ -364,6 +364,7 @@ class GreedyDeterminized(Agent):
         ## generate a sample of random shuffles of possible next tiles - "determinzations"
         self.action_stack = []    
         determinzations = [game.state.order.copy() for i in range(self.DETERMINZATIONS)]
+        self.misses = 0
         
         #[random.shuffle(d) for d in determinzations]
         
@@ -377,7 +378,7 @@ class GreedyDeterminized(Agent):
 
         depth = min(2, 71 - game.state.turn)
 
-        for action in mutable.getActions(): ## if a.meeple and a.feature.featType is not FeatType.GRASS]:
+        for action in [a for a in mutable.getActions()]: ## if a.meeple and a.feature.featType is not FeatType.GRASS]:
             len_outer = len(mutable.getActions())
             avg_eval = 0.0
             examined = 0.0
@@ -396,6 +397,8 @@ class GreedyDeterminized(Agent):
                     ## accrue stats
                     avg_eval += curr_eval
                     examined += 1.0
+                else:
+                    self.misses += 1
                     
             ## find average after examining the determinzations and compare it to current best
             avg_eval = avg_eval / examined
@@ -403,18 +406,19 @@ class GreedyDeterminized(Agent):
                 best_avg_eval = avg_eval
                 best_avg_action = action
 
-            self.action_stack.pop() 
+            self.action_stack.pop()  
             game.refresh(mutable)
             game.refresh(self.backup)
             game.refresh(self.backupInner)
 
         ## finally, return the action that we found to be the best across the sampled determinzations
+        print(self.misses)
         return best_avg_action
 
     def search2(self, mutable:State, game:Game, order:List[int], depth:int, maximizing:string) -> tuple(int, Action):
         bestAction = None
         maxEval = -math.inf
-        for action in mutable.getActions():
+        for action in [a for a in mutable.getActions()]:
             len_inner_z = len(mutable.getActions())
             ## apply action and save it to stack
             mutable.applyAction(action, quiet=True)
@@ -427,6 +431,8 @@ class GreedyDeterminized(Agent):
                 if res[0] > maxEval:
                     maxEval = res[0]
                     bestAction = action
+                else:
+                    self.misses += 1
 
                 ## pop action, rollback mutable state for next action
                 self.action_stack.pop()
@@ -440,7 +446,8 @@ class GreedyDeterminized(Agent):
         bestAction = None
                 
         minEval = math.inf
-        for action in mutable.getActions():
+
+        for action in [a for a in mutable.getActions()]:
             len_inner_o = len(mutable.getActions())
             mutable.applyAction(action, quiet=True)
 
@@ -448,6 +455,8 @@ class GreedyDeterminized(Agent):
             if res[0] < minEval:
                 minEval = res[0]
                 bestAction = action
+            else:
+                self.misses += 1
 
             game.refreshSpecific(mutable, self.backupInner)
             #[mutable.applyAction(a, quiet=True) for a in self.action_stack]

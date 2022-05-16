@@ -100,6 +100,10 @@ class Game:
         simState.board.trackedFields = self.state.board.trackedFields.copy()
         simState.board.meepled = self.state.board.meepled.copy()
 
+        simState.board.cityEdges = self.state.board.cityEdges.copy()
+        simState.board.roadEdges = self.state.board.roadEdges.copy()
+        simState.board.grassEdges = self.state.board.grassEdges.copy()
+
     def refreshSpecific(self,mutatedState:State, backupState:State):
         mutatedState.players[0].meepleCount = backupState.players[0].meepleCount
         mutatedState.players[1].meepleCount = backupState.players[1].meepleCount
@@ -120,6 +124,10 @@ class Game:
         mutatedState.board.trackedFeatures = backupState.board.trackedFeatures.copy()
         mutatedState.board.trackedFields = backupState.board.trackedFields.copy()
         mutatedState.board.meepled = backupState.board.meepled.copy()
+
+        mutatedState.board.cityEdges = backupState.board.cityEdges.copy()
+        mutatedState.board.roadEdges = backupState.board.roadEdges.copy()
+        mutatedState.board.grassEdges = backupState.board.grassEdges.copy()
 
     ## cache partially made features
     # when adding tiles, check if the tile's feature link to a previous feature

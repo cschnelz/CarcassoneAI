@@ -215,14 +215,7 @@ class State:
 
     def finalScore(self):
         finalScore = [0,0]
-
-        cleansedRecords = {}
-        ## remove duplicate meepled records for final scoring
-        ##self.cleanser(cleansedRecords, self.board.trackedFeatures)
-        ##self.cleanser(cleansedRecords, self.board.trackedFields)
-
-
-
+        
         meepledLocs = list(self.board.meepled.keys())
         for loc,node in self.board.board.items():
             tile = node.tile
@@ -244,21 +237,6 @@ class State:
         
         return tuple(finalScore)
 
-    def cleanser(self, cleansedRecords, tracked: list[builtFeature]):
-        for feat in tracked:
-            redMeepleRecords = {loc: self.board.meepled.get(loc) for loc in feat.coordsMeepled if self.board.meepled.get(loc) is not None and self.board.meepled.get(loc).color == 'red'}
-            blueMeepleRecords = {loc: self.board.meepled.get(loc) for loc in feat.coordsMeepled if self.board.meepled.get(loc) is not None and self.board.meepled.get(loc).color == 'blue'}
-            if len(redMeepleRecords) > len(blueMeepleRecords):  ## if red outnumbers - add one record for red on this feature
-                loc,record = next(iter(redMeepleRecords.items()))
-                cleansedRecords[loc] = record
-            elif len(redMeepleRecords) < len(blueMeepleRecords):
-                loc,record = next(iter(blueMeepleRecords.items()))
-                cleansedRecords[loc] = record
-            elif len(redMeepleRecords) > 0:                         ## non zero tie = share so add one for red and one for blue
-                loc,record = next(iter(redMeepleRecords.items()))
-                cleansedRecords[loc] = record
-                loc,record = next(iter(blueMeepleRecords.items()))
-                cleansedRecords[loc] = record
 
     def scoreFeature(self, node: Node, meepled: meepleInfo, meepledLocs: list[tuple[int]]):
         bF = self.board.findTracked(node,meepled.edge,self.board.trackedFeatures)

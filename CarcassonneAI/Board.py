@@ -104,7 +104,22 @@ class Board:
 
         self.trackedFeatures: List[builtFeature] = [builtFeature(feat.featType, {startingNode.id: feat.edges},(0,0),feat.score(),feat.getHoles((0,0))) for feat in startingTile.features]
         self.trackedFields: List[builtFeature] = [builtFeature(FeatType.GRASS, {startingNode.id: grass.edges},(0,0),{self.nodeAt(0,0):grass.edges[0]},set()) for grass in startingTile.grasses]
-        
+
+        ## keep a dictionary of open locations but broken up by which type of feature is needed and which edge it requires.
+        self.cityEdges: dict[tuple(int),list[int]] = {}
+        self.roadEdges: dict[tuple(int),list[int]] = {}
+        self.grassEdges: dict[tuple(int),list[int]] = {}
+
+        for i in range(4):
+            ft = startingTile.edges[i]
+            oppEdge = (i + 2) % 4
+            coord = shiftCoords(0,0,i)
+            if ft is FeatType.ROAD:
+                self.roadEdges[coord] = [oppEdge]
+            elif ft is FeatType.CITY:
+                self.cityEdges[coord] = [oppEdge]
+            else:
+                self.grassEdges[coord] = [oppEdge]        
 
         ## { (x, y) : meepleInfo }
         self.meepled: Dict[tuple, meepleInfo] = {}
@@ -136,6 +151,34 @@ class Board:
         self.board[(x, y)] = node
         self.openLocations.remove((x, y))
         self.expandBounds(neighbors)
+
+        ## we've added a tile, so remove records of our feature holes...
+        self.roadEdges.pop((x,y), None)
+        self.cityEdges.pop((x,y), None)
+        self.grassEdges.pop((x,y), None)
+
+        ## ...and add records for new open locations
+        for i in range(4):
+            coord = shiftCoords(x,y,i)
+            if coord in self.openLocations:
+                ft = tile.edges[i]
+                oppEdge = (i + 2) % 4
+                if ft is FeatType.ROAD:
+                    if coord in self.roadEdges:
+                        self.roadEdges[coord].append(oppEdge)
+                    else:
+                        self.roadEdges[coord] = [oppEdge]
+                elif ft is FeatType.CITY:
+                    if coord in self.cityEdges:
+                        self.cityEdges[coord].append(oppEdge)
+                    else:
+                        self.cityEdges[coord] = [oppEdge]
+                else:
+                    if coord in self.grassEdges:
+                        self.grassEdges[coord].append(oppEdge)
+                    else:
+                        self.grassEdges[coord] = [oppEdge]   
+
         return node
 
     def findTracked(self, node: Node, edge: int, trackedList : List[builtFeature]) -> builtFeature:

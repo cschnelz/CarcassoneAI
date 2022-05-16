@@ -47,40 +47,75 @@ def validActions(board: Board, currTileOrientations: List[Tile], meepleAvailable
     actions = set()
 
     for tile in currTileOrientations:
-        for location in board.openLocations:
-            if board.isValid(location[0], location[1], tile):
+
+        validLocations = findLocations(board, tile)
+        for location in validLocations:
+            #if board.isValid(location[0], location[1], tile):
                 # check if meeple is valid by inserting tile and running feature expansion      
-                actions.add(Action(location[0],location[1], tile, False, None))
-                if meepleAvailable:
-                    for feat in tile.features:
-                        bFMeepled = False # <--- check if the built feature this feature would connect to is already meepled
-                        for edge in feat.edges:
-                            neighborLoc = shiftCoords(location[0],location[1],edge)
-                            oppEdge = (edge+2) % 4
-                            bF = board.findTracked(board.nodeAt(neighborLoc[0],neighborLoc[1]),oppEdge,board.trackedFeatures)
-                            if bF is not None and len(bF.meepled) > 0:
-                                # the built feat that the current feat would connect to is already meepled :(
-                                bFMeepled = True
-                        if bFMeepled is False:
-                            actions.add(Action(location[0],location[1],tile,True,feat))
-                    
-                    for field in tile.grasses:
-                        fieldMeepled = False
-                        for edge in field.edges:
-                            neighborLoc = shiftCoordsGrass(location[0],location[1],edge)
-                            if edge % 2 == 0:
-                                oppEdge = (edge + 5) % 8
-                            else:
-                                oppEdge = (edge + 3) % 8
-                            bF = board.findTracked(board.nodeAt(neighborLoc[0],neighborLoc[1]),oppEdge,board.trackedFields)
-                            if bF is not None and len(bF.meepled) > 0:
-                                fieldMeepled = True
-                        if fieldMeepled is False:
-                            actions.add(Action(location[0],location[1],tile,True,field))
+            actions.add(Action(location[0],location[1], tile, False, None))
+
+            if meepleAvailable:
+                addMeepleActions(location, tile, board, actions)
                        
     actions = list(actions)
     actions.sort(key=lambda action: (action.x, action.y, action.tile.orientation, action.meeple))
     return actions  
+
+def addMeepleActions(location:tuple[int], tile:Tile, board:Board, actions:list[Action]):
+    for feat in tile.features:
+        bFMeepled = False # <--- check if the built feature this feature would connect to is already meepled
+        for edge in feat.edges:
+            neighborLoc = shiftCoords(location[0],location[1],edge)
+            #if neighborLoc not in board.openLocations:
+            oppEdge = (edge+2) % 4
+            bF = board.findTracked(board.nodeAt(neighborLoc[0],neighborLoc[1]),oppEdge,board.trackedFeatures)
+            if bF is not None and len(bF.meepled) > 0:
+                # the built feat that the current feat would connect to is already meepled :(
+                bFMeepled = True
+        if bFMeepled is False:
+            actions.add(Action(location[0],location[1],tile,True,feat))
+    
+    for field in tile.grasses:
+        fieldMeepled = False
+        for edge in field.edges:
+            neighborLoc = shiftCoordsGrass(location[0],location[1],edge)
+            #if neighborLoc not in board.openLocations:
+            if edge % 2 == 0:
+                oppEdge = (edge + 5) % 8
+            else:
+                oppEdge = (edge + 3) % 8
+            bF = board.findTracked(board.nodeAt(neighborLoc[0],neighborLoc[1]),oppEdge,board.trackedFields)
+            if bF is not None and len(bF.meepled) > 0:
+                fieldMeepled = True
+        if fieldMeepled is False:
+            actions.add(Action(location[0],location[1],tile,True,field))
+
+def findLocations(board: Board, tile:Tile) -> set[tuple[int]]:
+    locations = set(board.openLocations.copy())
+
+    ## for each edge
+    for i in range(4):
+        fT = tile.edges[i]
+        oppEdge = (i + 2) % 4
+        ## if the edge feat is a city
+        if fT is FeatType.CITY:
+            ## remove locations calling for something that isn't a city on that edge
+            roads = {key:value for (key, value) in board.roadEdges.items() if i in value}
+            locations = locations.difference(set(roads.keys()))
+            grasses = {key:value for (key, value) in board.grassEdges.items() if i in value}
+            locations = locations.difference(set(grasses.keys()))
+        elif fT is FeatType.ROAD:
+            cities = {key:value for (key, value) in board.cityEdges.items() if i in value}
+            locations = locations.difference(set(cities.keys()))
+            grasses = {key:value for (key, value) in board.grassEdges.items() if i in value}
+            locations = locations.difference(set(grasses.keys()))
+        else:
+            cities = {key:value for (key, value) in board.cityEdges.items() if i in value}
+            locations = locations.difference(set(cities.keys()))
+            roads = {key:value for (key, value) in board.roadEdges.items() if i in value}
+            locations = locations.difference(set(list(roads.keys())))
+
+    return locations
 
 ## get valid locations for a single tile for a single location
 def validActionsLocation(board:Board,location:Tuple[int],currTile:Tile,meepleAvailable:Boolean) -> List[Action]:

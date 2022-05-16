@@ -31,8 +31,12 @@ def launch():
 
 
 def launch2():
-    carcassonne = Game(players=[HumanAgent(), HumanAgent()])
+    carcassonne = Game(players=[RandomAgent(), GreedyDeterminized()])
     carcassonne.render()
+
+    for i in range(61):
+        actions = carcassonne.getActions()
+        carcassonne.applyAction(actions[0])
 
     # carcassonne.state.turn = 68
     # carcassonne.state.order = carcassonne.state.order[66:70]
@@ -79,7 +83,7 @@ if __name__ == '__main__':
     import cProfile, pstats
     profiler = cProfile.Profile()
     profiler.enable()
-    launch()
+    launch2()
     profiler.disable()
     stats = pstats.Stats(profiler).sort_stats('cumtime')
     stats.print_stats()

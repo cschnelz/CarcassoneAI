@@ -11,7 +11,7 @@ def launch():
     players=[RandomAgent(), GreedyDeterminized()]
     carcassonne = Game(players,order=list(range(72)))
 
-    for i in range(11):
+    for i in range(3):
         actions = carcassonne.getActions()
         carcassonne.applyAction(actions[0])
 

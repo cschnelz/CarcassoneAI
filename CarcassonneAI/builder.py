@@ -79,8 +79,16 @@ def reconstruct(orderN):
 
 
 
-
     carcassonne.render()
+
+    mutable = carcassonne.startSim()
+    for i in range(20):
+        mutable.applyAction(random.choice(mutable.currentActions))
+        mutable.dispatchTile()
+    
+    carcassonne.refresh(mutable)
+    carcassonne.compareStates(carcassonne.state, mutable)
+
     print(carcassonne.getScore())
     print(carcassonne.evaluate())
 

@@ -5,6 +5,7 @@ from Player import Player
 from State import State
 from Render import render3
 from Action import validActions, Action
+import collections
 
 from typing import List
 import copy
@@ -78,6 +79,31 @@ class Game:
     def simApply(self, simState: State, action: Action):
         simState.applyAction(action,quiet=True)        
         simState.dispatchTile()
+
+    def compareStates(self, stateA:State, stateB:State):
+        if  stateA.players[0].meepleCount != stateB.players[0].meepleCount or \
+            stateA.players[1].meepleCount != stateB.players[1].meepleCount or \
+            stateA.players[0].score != stateB.players[0].score or \
+            stateA.players[1].score != stateB.players[1].score:
+            print("mismatch in player")
+
+        if stateA.turn != stateB.turn:
+            print("mismatch in turn")
+
+        if collections.Counter(stateA.order) != collections.Counter(stateB.order):
+            print("mismatch in order")
+
+        if collections.Counter(stateA.currentActions) != collections.Counter(stateB.currentActions):
+            print("mismatch in current actions")
+
+        if collections.Counter(stateA.currentTile) != collections.Counter(stateB.currentTile):
+            print("mismatch in current tile")
+
+        if collections.Counter(stateA.board.trackedFeatures) != collections.Counter(stateB.board.trackedFeatures):
+            print("mismatch in tracked features")
+        if collections.Counter(stateA.board.trackedFields) != collections.Counter(stateB.board.trackedFields):
+            print("mismatch in tracked fields")
+        
     
     def refresh(self, simState: State):
         simState.players[0].meepleCount = self.state.players[0].meepleCount
@@ -96,8 +122,8 @@ class Game:
 
         simState.board.board = self.state.board.board.copy()
         simState.board.openLocations = self.state.board.openLocations.copy()
-        simState.board.trackedFeatures = self.state.board.trackedFeatures.copy()
-        simState.board.trackedFields = self.state.board.trackedFields.copy()
+        simState.board.trackedFeatures = copy.deepcopy(self.state.board.trackedFeatures)
+        simState.board.trackedFields = copy.deepcopy(self.state.board.trackedFields)
         simState.board.meepled = self.state.board.meepled.copy()
 
     def refreshSpecific(self,mutatedState:State, backupState:State):
@@ -117,8 +143,9 @@ class Game:
 
         mutatedState.board.board = backupState.board.board.copy()
         mutatedState.board.openLocations = backupState.board.openLocations.copy()
-        mutatedState.board.trackedFeatures = backupState.board.trackedFeatures.copy()
-        mutatedState.board.trackedFields = backupState.board.trackedFields.copy()
+
+        mutatedState.board.trackedFeatures = copy.deepcopy(backupState.board.trackedFeatures)
+        mutatedState.board.trackedFields = copy.deepcopy(backupState.board.trackedFields)
         mutatedState.board.meepled = backupState.board.meepled.copy()
 
     ## cache partially made features

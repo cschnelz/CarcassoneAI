@@ -373,8 +373,10 @@ class GreedyDeterminized(Agent):
         best_avg_action = None
 
         mutable = game.startSim()
-        self.backup = game.startSim()
-        self.backupInner = game.startSim()
+        # self.backup = game.startSim()
+        # self.backupInner = game.startSim()
+
+        action_copy = mutable.getActions().copy()
 
         depth = min(2, 71 - game.state.turn)
 
@@ -383,8 +385,9 @@ class GreedyDeterminized(Agent):
             avg_eval = 0.0
             examined = 0.0
             mutable.applyAction(action, quiet=True)
-            self.backup.applyAction(action, quiet=True)
-            self.backupInner.applyAction(action, quiet=True)
+            STATE_COPY = copy.deepcopy(mutable)
+            # self.backup.applyAction(action, quiet=True)
+            # self.backupInner.applyAction(action, quiet=True)
 
             self.action_stack.append(action)
 
@@ -399,6 +402,7 @@ class GreedyDeterminized(Agent):
                     examined += 1.0
                 else:
                     self.misses += 1
+            game.compareStates(mutable, STATE_COPY)
                     
             ## find average after examining the determinzations and compare it to current best
             avg_eval = avg_eval / examined
@@ -408,8 +412,17 @@ class GreedyDeterminized(Agent):
 
             self.action_stack.pop()  
             game.refresh(mutable)
-            game.refresh(self.backup)
-            game.refresh(self.backupInner)
+            # game.refresh(self.backup)
+            # game.refresh(self.backupInner)
+
+            for i in range(len(mutable.getActions())):
+                tst = mutable.getActions()[i]
+                old = action_copy[i]
+                if tst != old:
+                    print('waa')
+
+            
+                
 
         ## finally, return the action that we found to be the best across the sampled determinzations
         print(self.misses)
@@ -418,11 +431,14 @@ class GreedyDeterminized(Agent):
     def search2(self, mutable:State, game:Game, order:List[int], depth:int, maximizing:string) -> tuple(int, Action):
         bestAction = None
         maxEval = -math.inf
+
+        action_copy = mutable.getActions().copy()
+
         for action in [a for a in mutable.getActions()]:
             len_inner_z = len(mutable.getActions())
             ## apply action and save it to stack
             mutable.applyAction(action, quiet=True)
-            self.backupInner.applyAction(action, quiet=True)
+            #self.backupInner.applyAction(action, quiet=True)
             if mutable.dispatchSpecific(order[0]):
                 self.action_stack.append(action)
                 
@@ -436,9 +452,17 @@ class GreedyDeterminized(Agent):
 
                 ## pop action, rollback mutable state for next action
                 self.action_stack.pop()
-            game.refreshSpecific(mutable, self.backup)
-            game.refreshSpecific(self.backupInner, self.backup)
-            #[mutable.applyAction(a, quiet=True) for a in self.action_stack]
+            # game.refreshSpecific(mutable, self.backup)
+            # game.refreshSpecific(self.backupInner, self.backup)
+
+            game.refresh(mutable)
+            [mutable.applyAction(a, quiet=True) for a in self.action_stack]
+
+            # for i in range(len(mutable.getActions())):
+            #     tst = mutable.getActions()[i]
+            #     old = action_copy[i]
+            #     if tst != old:
+            #         print('waa')
             
         return maxEval, bestAction
 
@@ -458,8 +482,9 @@ class GreedyDeterminized(Agent):
             else:
                 self.misses += 1
 
-            game.refreshSpecific(mutable, self.backupInner)
-            #[mutable.applyAction(a, quiet=True) for a in self.action_stack]
+            #game.refreshSpecific(mutable, self.backupInner)
+            game.refresh(mutable)
+            [mutable.applyAction(a, quiet=True) for a in self.action_stack]
             
         return minEval, bestAction
 

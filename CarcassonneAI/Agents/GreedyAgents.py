@@ -385,24 +385,24 @@ class GreedyDeterminized(Agent):
             avg_eval = 0.0
             examined = 0.0
             mutable.applyAction(action, quiet=True)
-            STATE_COPY = copy.deepcopy(mutable)
             # self.backup.applyAction(action, quiet=True)
             # self.backupInner.applyAction(action, quiet=True)
 
-            self.action_stack.append(action)
+            
 
             ## for this action, what the avg evaluation look like across sampled determinizations?
             for det in determinzations:
 
                 if mutable.dispatchSpecific(det[0]):
+                    self.action_stack.append(action)
                     ## two deep greedy search the continuation
                     curr_eval, ret = self.search2(mutable, game, det[1:len(det)], depth, 'zero')
                     ## accrue stats
                     avg_eval += curr_eval
                     examined += 1.0
+                    self.action_stack.pop() 
                 else:
                     self.misses += 1
-            game.compareStates(mutable, STATE_COPY)
                     
             ## find average after examining the determinzations and compare it to current best
             avg_eval = avg_eval / examined
@@ -410,7 +410,7 @@ class GreedyDeterminized(Agent):
                 best_avg_eval = avg_eval
                 best_avg_action = action
 
-            self.action_stack.pop()  
+             
             game.refresh(mutable)
             # game.refresh(self.backup)
             # game.refresh(self.backupInner)
@@ -437,7 +437,10 @@ class GreedyDeterminized(Agent):
         for action in [a for a in mutable.getActions()]:
             len_inner_z = len(mutable.getActions())
             ## apply action and save it to stack
+
             mutable.applyAction(action, quiet=True)
+
+            
             #self.backupInner.applyAction(action, quiet=True)
             if mutable.dispatchSpecific(order[0]):
                 self.action_stack.append(action)
@@ -455,8 +458,10 @@ class GreedyDeterminized(Agent):
             # game.refreshSpecific(mutable, self.backup)
             # game.refreshSpecific(self.backupInner, self.backup)
 
+
             game.refresh(mutable)
             [mutable.applyAction(a, quiet=True) for a in self.action_stack]
+
 
             # for i in range(len(mutable.getActions())):
             #     tst = mutable.getActions()[i]
@@ -473,6 +478,8 @@ class GreedyDeterminized(Agent):
 
         for action in [a for a in mutable.getActions()]:
             len_inner_o = len(mutable.getActions())
+
+            STATE_COPY = copy.deepcopy(mutable)
             mutable.applyAction(action, quiet=True)
 
             res = self.search0(mutable,game,order[1:len(order)],depth-1,'zero')
@@ -483,8 +490,15 @@ class GreedyDeterminized(Agent):
                 self.misses += 1
 
             #game.refreshSpecific(mutable, self.backupInner)
-            game.refresh(mutable)
+
+            #game.refresh(mutable)
+            mutable = game.startSim()
             [mutable.applyAction(a, quiet=True) for a in self.action_stack]
+
+            game.compareStates(mutable, STATE_COPY)
+
+
+            
             
         return minEval, bestAction
 

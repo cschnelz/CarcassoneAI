@@ -79,7 +79,7 @@ if __name__ == '__main__':
     import cProfile, pstats
     profiler = cProfile.Profile()
     profiler.enable()
-    launchX()
+    launch()
     profiler.disable()
     stats = pstats.Stats(profiler).sort_stats('cumtime')
     stats.print_stats()

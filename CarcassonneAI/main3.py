@@ -5,19 +5,16 @@ import time
 
 from Agents import *
 from Game import Game
+from Action import Action
 
 def launch():
     players=[RandomAgent(), GreedyDeterminized()]
     carcassonne = Game(players,order=list(range(72)))
 
-    for i in range(20):
+    for i in range(21):
         actions = carcassonne.getActions()
         carcassonne.applyAction(actions[0])
 
-    actions = carcassonne.getActions()
-    #currPlayer = carcassonne.currentPlayer()
-    #response = currPlayer.agent.getResponse(actions,game=carcassonne,maxPlayer=currPlayer.id)
-    carcassonne.applyAction(actions[0])
     # carcassonne.render()
     # input()
     carcassonne.render()
@@ -33,10 +30,6 @@ def launch():
 def launch2():
     carcassonne = Game(players=[RandomAgent(), GreedyDeterminized()])
     carcassonne.render()
-
-    for i in range(61):
-        actions = carcassonne.getActions()
-        carcassonne.applyAction(actions[0])
 
     # carcassonne.state.turn = 68
     # carcassonne.state.order = carcassonne.state.order[66:70]
@@ -83,7 +76,7 @@ if __name__ == '__main__':
     import cProfile, pstats
     profiler = cProfile.Profile()
     profiler.enable()
-    launch2()
+    launch()
     profiler.disable()
     stats = pstats.Stats(profiler).sort_stats('cumtime')
     stats.print_stats()

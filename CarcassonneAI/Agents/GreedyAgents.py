@@ -403,7 +403,7 @@ class GreedyDeterminized(Agent):
                 best_avg_eval = avg_eval
                 best_avg_action = action
 
-            self.action_stack.pop()  
+            self.action_stack.pop() 
             game.refresh(mutable)
             game.refresh(self.backup)
             game.refresh(self.backupInner)

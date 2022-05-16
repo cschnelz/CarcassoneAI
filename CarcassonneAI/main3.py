@@ -63,11 +63,14 @@ def launch2():
 def launchX():
     players=[RandomAgent(), GreedyDeterminized()]
     carcassonne = Game(players,order=list(range(72)))
+    state = carcassonne.state
 
     for i in range(60):
         while carcassonne.gameOver() is False:
             carcassonne.applyAction(carcassonne.getActions()[0])
-        carcassonne = Game(players, order=list(range(72)))
+        carcassonne = Game(players,order=list(range(72)))
+
+
 
 
 if __name__ == '__main__':
@@ -76,7 +79,7 @@ if __name__ == '__main__':
     import cProfile, pstats
     profiler = cProfile.Profile()
     profiler.enable()
-    launch()
+    launchX()
     profiler.disable()
     stats = pstats.Stats(profiler).sort_stats('cumtime')
     stats.print_stats()

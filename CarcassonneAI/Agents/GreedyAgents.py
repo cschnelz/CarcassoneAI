@@ -376,8 +376,6 @@ class GreedyDeterminized(Agent):
         # self.backup = game.startSim()
         # self.backupInner = game.startSim()
 
-        action_copy = mutable.getActions().copy()
-
         depth = min(2, 71 - game.state.turn)
 
         for action in [a for a in mutable.getActions()]: ## if a.meeple and a.feature.featType is not FeatType.GRASS]:
@@ -413,15 +411,7 @@ class GreedyDeterminized(Agent):
              
             game.refresh(mutable)
             # game.refresh(self.backup)
-            # game.refresh(self.backupInner)
-
-            for i in range(len(mutable.getActions())):
-                tst = mutable.getActions()[i]
-                old = action_copy[i]
-                if tst != old:
-                    print('waa')
-
-            
+            # game.refresh(self.backupInner)        
                 
 
         ## finally, return the action that we found to be the best across the sampled determinzations
@@ -431,8 +421,6 @@ class GreedyDeterminized(Agent):
     def search2(self, mutable:State, game:Game, order:List[int], depth:int, maximizing:string) -> tuple(int, Action):
         bestAction = None
         maxEval = -math.inf
-
-        action_copy = mutable.getActions().copy()
 
         for action in [a for a in mutable.getActions()]:
             len_inner_z = len(mutable.getActions())
@@ -476,10 +464,10 @@ class GreedyDeterminized(Agent):
                 
         minEval = math.inf
 
-        for action in [a for a in mutable.getActions()]:
+        for action in [mutable.getActions()[0]]:
             len_inner_o = len(mutable.getActions())
 
-            STATE_COPY = copy.deepcopy(mutable)
+            #STATE_COPY = copy.deepcopy(mutable)
             mutable.applyAction(action, quiet=True)
 
             res = self.search0(mutable,game,order[1:len(order)],depth-1,'zero')
@@ -491,11 +479,11 @@ class GreedyDeterminized(Agent):
 
             #game.refreshSpecific(mutable, self.backupInner)
 
-            #game.refresh(mutable)
-            mutable = game.startSim()
+            game.refresh(mutable)
+            #mutable = game.startSim()
             [mutable.applyAction(a, quiet=True) for a in self.action_stack]
 
-            game.compareStates(mutable, STATE_COPY)
+           # game.compareStates(mutable, STATE_COPY)
 
 
             

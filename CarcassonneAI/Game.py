@@ -100,9 +100,14 @@ class Game:
             print("mismatch in current tile")
 
         if collections.Counter(stateA.board.trackedFeatures) != collections.Counter(stateB.board.trackedFeatures):
+            a = stateA.board.trackedFeatures
+            b = stateB.board.trackedFeatures
             print("mismatch in tracked features")
         if collections.Counter(stateA.board.trackedFields) != collections.Counter(stateB.board.trackedFields):
             print("mismatch in tracked fields")
+
+        if collections.Counter(stateA.board.meepled) != collections.Counter(stateB.board.meepled):
+            print("mismatch in meepled")
         
     
     def refresh(self, simState: State):

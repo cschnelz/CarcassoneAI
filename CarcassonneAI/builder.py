@@ -8,32 +8,34 @@ from Board import builtFeature
 from Game import Game
 from Action import Action
 from State import State
+from Render import Renderer
 
 
 def build(orderN):
     carcassonne = Game(players=[HumanAgent(), HumanAgent()], order=orderN)
-    carcassonne.render()
+    rend = Renderer()
+    carcassonne.render(rend)
     repeat = True
     action_string = ""
     state = carcassonne.state
 
-    carcassonne.render()
+    carcassonne.render(rend)
 
-    for i in range(10):
-        actions = carcassonne.getActions()
-        response = random.choice(actions)
-        if response.meeple:
-            if response.feature.featType == FeatType.CHAPEL:
-                action_string += f'carcassonne.applyAction(Action({response.x},{response.y},state.currentTile[{response.tile.orientation}],True,state.currentTile[{response.tile.orientation}].features[0]))\n'  
-            elif response.feature.featType == FeatType.GRASS: 
-                action_string += f'carcassonne.applyAction(Action({response.x},{response.y},state.currentTile[{response.tile.orientation}],True,state.currentTile[{response.tile.orientation}].grassAtEdge({response.feature.edges[0]})))\n'            
-            else:
-                action_string += f'carcassonne.applyAction(Action({response.x},{response.y},state.currentTile[{response.tile.orientation}],True,state.currentTile[{response.tile.orientation}].featureAtEdge({response.feature.edges[0]})))\n'
+    # for i in range(10):
+    #     actions = carcassonne.getActions()
+    #     response = random.choice(actions)
+    #     if response.meeple:
+    #         if response.feature.featType == FeatType.CHAPEL:
+    #             action_string += f'carcassonne.applyAction(Action({response.x},{response.y},state.currentTile[{response.tile.orientation}],True,state.currentTile[{response.tile.orientation}].features[0]))\n'  
+    #         elif response.feature.featType == FeatType.GRASS: 
+    #             action_string += f'carcassonne.applyAction(Action({response.x},{response.y},state.currentTile[{response.tile.orientation}],True,state.currentTile[{response.tile.orientation}].grassAtEdge({response.feature.edges[0]})))\n'            
+    #         else:
+    #             action_string += f'carcassonne.applyAction(Action({response.x},{response.y},state.currentTile[{response.tile.orientation}],True,state.currentTile[{response.tile.orientation}].featureAtEdge({response.feature.edges[0]})))\n'
             
-        else:
-            action_string += f'carcassonne.applyAction(Action({response.x},{response.y},state.currentTile[{response.tile.orientation}],False,None))\n'
-        carcassonne.applyAction(response)
-    carcassonne.render()
+    #     else:
+    #         action_string += f'carcassonne.applyAction(Action({response.x},{response.y},state.currentTile[{response.tile.orientation}],False,None))\n'
+    #     carcassonne.applyAction(response)
+    # carcassonne.render(rend)
 
 
     while(repeat):
@@ -52,45 +54,24 @@ def build(orderN):
         else:
             action_string += f'carcassonne.applyAction(Action({response.x},{response.y},state.currentTile[{response.tile.orientation}],False,None))\n'
         carcassonne.applyAction(response)
-        carcassonne.render()
+        carcassonne.render(rend)
         repeat = input("continue?")
 
     print(action_string)
 
 def reconstruct(orderN):
     carcassonne = Game(players=[HumanAgent(), HumanAgent()], order=orderN)
+    rend = Renderer()
     state = carcassonne.state
 
-    # carcassonne.applyAction(Action(0,-1,state.currentTile[0],True,state.currentTile[0].grassAtEdge(0)))
-    # carcassonne.applyAction(Action(-1,-1,state.currentTile[1],False,None))
-    # carcassonne.applyAction(Action(1,0,state.currentTile[3],True,state.currentTile[3].grassAtEdge(0)))
-    # carcassonne.applyAction(Action(0,-2,state.currentTile[2],False,None))
-    # carcassonne.applyAction(Action(0,-3,state.currentTile[1],False,None))
-    # carcassonne.applyAction(Action(0,-4,state.currentTile[2],False,None))
-    # carcassonne.applyAction(Action(1,-4,state.currentTile[1],False,None))
-    # carcassonne.applyAction(Action(-2,-1,state.currentTile[1],False,None))
-    # carcassonne.applyAction(Action(-2,-2,state.currentTile[0],False,None))
-    # carcassonne.applyAction(Action(1,-1,state.currentTile[3],False,None))
-
-    carcassonne.applyAction(Action(1,0,state.currentTile[2],True,state.currentTile[2].grassAtEdge(4)))
-    carcassonne.applyAction(Action(1,1,state.currentTile[1],True,state.currentTile[1].featureAtEdge(1)))
-    carcassonne.applyAction(Action(2,1,state.currentTile[0],True,state.currentTile[0].grassAtEdge(5)))
-    carcassonne.applyAction(Action(1,-1,state.currentTile[2],True,state.currentTile[2].grassAtEdge(1)))
-    carcassonne.applyAction(Action(1,2,state.currentTile[1],False,None))
-    carcassonne.applyAction(Action(3,1,state.currentTile[3],True,state.currentTile[3].grassAtEdge(3)))
-    carcassonne.applyAction(Action(3,0,state.currentTile[0],False,None))
-    carcassonne.applyAction(Action(4,1,state.currentTile[2],True,state.currentTile[2].featureAtEdge(2)))
-    carcassonne.applyAction(Action(1,-2,state.currentTile[0],False,None))
-    carcassonne.applyAction(Action(0,-2,state.currentTile[0],True,state.currentTile[0].featureAtEdge(2)))
-    carcassonne.applyAction(Action(2,2,state.currentTile[3],True,state.currentTile[3].featureAtEdge(3)))
-    carcassonne.applyAction(Action(3,-1,state.currentTile[0],True,state.currentTile[0].features[0]))
-
-    #carcassonne.applyAction(Action(3,-1,state.currentTile[0],True,state.currentTile[0].features[0]))
 
 
+    carcassonne.applyAction(Action(1,0,state.currentTile[0],True,state.currentTile[0].featureAtEdge(1)))
+    carcassonne.applyAction(Action(2,0,state.currentTile[1],True,state.currentTile[1].grassAtEdge(2)))
+    #carcassonne.applyAction(Action(0,1,state.currentTile[2],True,state.currentTile[2].featureAtEdge(3)))
 
 
-    carcassonne.render()
+    carcassonne.render(rend)
 
     mutable = carcassonne.startSim()
     for i in range(20):
@@ -176,13 +157,19 @@ ROAD_CAPPED_BONUS = 1.25
 
 CITY_BIAS = 0.075
 
+TOTAL_TURNS = 72.0
+ROAD_BIAS = 0.025
+ROAD_CAPPED_BONUS = 1.25
+
+CITY_BIAS = 0.075
+
 def heuristic_roads(state:State, roads:list[builtFeature], meeples_left:int):
     total_road_score = 0.0
     for road in roads:
         base = road.score   # start with the road score
-        bias = MCTS_Saver.ROAD_BIAS * ((MCTS_Saver.TOTAL_TURNS - state.turn) / 2.0) # add an amount representing future additions
+        bias = ROAD_BIAS * ((TOTAL_TURNS - state.turn) / 2.0) # add an amount representing future additions
         if len(road.holes) == 1:
-            bias *= MCTS_Saver.ROAD_CAPPED_BONUS  # give a bonus to half-ended roads over no-ended roads
+            bias *= ROAD_CAPPED_BONUS  # give a bonus to half-ended roads over no-ended roads
         
         road_score = base + bias
         total_road_score += road_score
@@ -193,9 +180,9 @@ def heuristic_city(state:State, cities:list[builtFeature], meeples_left:int):
     total_city_score = 0.0
     for city in cities:
         base = city.score / 2  # start with city score
-        odds = MCTS_Saver.CITY_BIAS * (((MCTS_Saver.TOTAL_TURNS - state.turn) / 2.0) / (len(city.holes) * .5) ) # add a bias for finishing city divided by edges left open
+        odds = CITY_BIAS * (((TOTAL_TURNS - state.turn) / 2.0) / (len(city.holes)*.5)) # add a bias for finishing city divided by edges left open
         
-        city_score = base * odds
+        city_score = min(base * odds, ((base + 1)*2)-.1)
         total_city_score += city_score
     
     return total_city_score
@@ -204,7 +191,7 @@ def heuristic_chapel(state:State, chapels:list[builtFeature], meeples_left:int):
     chapel_score = 0.0
     for chapel in chapels:
         chapel_neighbors = len(state.board.neighbors8(chapel.locs[0][0], chapel.locs[0][1]))
-        chapel_score += min(9, ((MCTS_Saver.TOTAL_TURNS - state.turn) / 2) - (9 - chapel_neighbors))
+        chapel_score += min(9, ((TOTAL_TURNS - state.turn) / 2) - (9 - chapel_neighbors))
     
     return chapel_score
 
@@ -224,7 +211,7 @@ def heuristic_field(state:State, fields:list[builtFeature], meeples_left:int):
         for city in adjacent_cities:
             field_score += (2.5 - len(city.holes))
 
-    return field_score
+    return field_score 
 
 
 def hueristic_meeples(meeples_left:int):
@@ -240,5 +227,6 @@ def hueristic_meeples(meeples_left:int):
 # 19, 43
 # [56,10,8,32,28,30,2,21,11,40,58,49,29,59,24,55,37,69,41,23,67,22,71,42,25,47,15,9,27,63,6,48,1,39,45,68,60,51,38,26,33,5,35,34,64,46,72,17,50,4,3,31,65,52,36,16,54,62,20,12,18,66,14,57,61,53,7,70,13,44]
 if __name__ == '__main__':
-    #build([41, 24,46, 14,8, 26,62, 5,47, 0,38, 44,67, 59,50, 37,25, 32,4, 34,33, 63,45, 71,16, 49,3, 2,30, 64,51, 35,15, 53,61, 19,11, 17,65, 13,56,  60,52, 6,69, 12,43])
-    reconstruct([41, 24,46, 14,8, 26,62, 5,47, 0,38, 44,67, 59,50, 37,25, 32,4, 34,33, 63,45, 71,16, 49,3, 2,30, 64,51, 35,15, 53,61, 19,11, 17,65, 13,56,  60,52, 6,69, 12,43])
+    o = [1, 53, 31, 14,8, 26,62, 5,47, 0,38, 44,67, 59,50, 37,25, 32,4, 34,33, 63,45, 71,16, 49,3, 2,30, 64,51, 35,15, 53,61, 19,11, 17,65, 13,56,  60,52, 6,69, 12,43]
+    #build(o)
+    reconstruct(o)

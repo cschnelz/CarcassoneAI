@@ -5,6 +5,7 @@ import time
 
 from Agents import *
 from Game import Game
+from Render import Renderer
 from Action import Action
 
 def launch():
@@ -28,8 +29,9 @@ def launch():
 
 
 def launch2():
-    carcassonne = Game(players=[MCTS_Saver(), HumanAgent()])
-    carcassonne.render()
+    carcassonne = Game(players=[MCTS_Saver(), MCTS_Saver()])
+    rend = Renderer()
+    carcassonne.render(rend)
 
     # carcassonne.state.turn = 68
     # carcassonne.state.order = carcassonne.state.order[66:70]
@@ -50,7 +52,7 @@ def launch2():
         if carcassonne.state.turn %2 == 0:
             print()
 
-        carcassonne.render()
+        carcassonne.render(rend)
         # input()
         
     print(f'score: {carcassonne.finalScore()}')
@@ -58,29 +60,34 @@ def launch2():
     
 
 def launchX():
-    players=[MCTS_Saver(), RandomAgent()]
-    carcassonne = Game(players,order=[48,28,58,23,54, 36,68, 40,22, 66,21, 70,41, 24,46, 14,8, 26,62, 5,47, 0,38, 44,67, 59,50, 37,25, 32,4, 34,33, 63,45, 71,16, 49,3, 2,30, 64,51, 35,15, 53,61, 19,11, 17,65, 13,56,  60,52, 6,69, 12,43])
+    players=[MCTS_Saver(), MCTS_Saver()]
+    rend = Renderer()
+    carcassonne = Game(players,order=[1, 53, 31, 14,8, 26,62, 5,47, 0,38, 44,67, 59,50, 37,25])
     state = carcassonne.state
 
-    carcassonne.applyAction(Action(0,-1,state.currentTile[0],True,state.currentTile[0].grassAtEdge(0)))
-    carcassonne.applyAction(Action(0,1,state.currentTile[3],False,None))
-    carcassonne.applyAction(Action(1,1,state.currentTile[0],True,state.currentTile[0].featureAtEdge(3)))
-    carcassonne.applyAction(Action(0,-2,state.currentTile[1],False,None))
-    carcassonne.applyAction(Action(2,1,state.currentTile[1],False,None))
-    carcassonne.applyAction(Action(2,0,state.currentTile[1],True,state.currentTile[1].featureAtEdge(1)))
-    carcassonne.applyAction(Action(1,2,state.currentTile[0],True,state.currentTile[0].featureAtEdge(0)))
-    carcassonne.applyAction(Action(-1,0,state.currentTile[3],True,state.currentTile[3].grassAtEdge(2)))
-    carcassonne.applyAction(Action(3,0,state.currentTile[0],True,state.currentTile[0].grassAtEdge(2)))
-    carcassonne.applyAction(Action(-1,1,state.currentTile[1],False,None))
+    # carcassonne.applyAction(Action(0,-1,state.currentTile[0],True,state.currentTile[0].grassAtEdge(0)))
+    # carcassonne.applyAction(Action(0,1,state.currentTile[3],False,None))
+    # carcassonne.applyAction(Action(1,1,state.currentTile[0],True,state.currentTile[0].featureAtEdge(3)))
+    # carcassonne.applyAction(Action(0,-2,state.currentTile[1],False,None))
+    # carcassonne.applyAction(Action(2,1,state.currentTile[1],False,None))
+    # carcassonne.applyAction(Action(2,0,state.currentTile[1],True,state.currentTile[1].featureAtEdge(1)))
+    # carcassonne.applyAction(Action(1,2,state.currentTile[0],True,state.currentTile[0].featureAtEdge(0)))
+    # carcassonne.applyAction(Action(-1,0,state.currentTile[3],True,state.currentTile[3].grassAtEdge(2)))
+    # carcassonne.applyAction(Action(3,0,state.currentTile[0],True,state.currentTile[0].grassAtEdge(2)))
+    # carcassonne.applyAction(Action(-1,1,state.currentTile[1],False,None))
+    # carcassonne.applyAction(carcassonne.getActions()[0])
 
-    carcassonne.render()
+    carcassonne.applyAction(Action(1,0,state.currentTile[0],True,state.currentTile[0].grassAtEdge(4)))
+
+
+    carcassonne.render(rend)
     actions = carcassonne.getActions()
     currPlayer = carcassonne.currentPlayer()
     response = currPlayer.agent.getResponse(actions,game=carcassonne,maxPlayer=currPlayer.id)
     print(response)
     carcassonne.applyAction(response)
 
-    carcassonne.render()
+    carcassonne.render(rend)
     input()
 
 
@@ -89,7 +96,7 @@ def launchX():
 
 if __name__ == '__main__':
     #launch2()
-    launch2()
+    launchX()
 
 
     # import cProfile, pstats

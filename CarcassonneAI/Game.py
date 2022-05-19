@@ -3,7 +3,7 @@ from Board import meepleInfo, builtFeature
 from Feature import FeatType
 from Player import Player
 from State import State
-#from Render import render3
+from Render import Renderer
 from Action import validActions, Action
 import collections
 
@@ -47,8 +47,8 @@ class Game:
         
         return tuple(map(sum, zip(self.getScore(), self.state.finalScore())))
 
-    def render(self):
-        render3(self.state.board, self.state.currentTile,self.state.players)
+    def render(self, renderer:Renderer):
+        renderer.render3(self.state.board, self.state.currentTile,self.state.players)
 
 
 

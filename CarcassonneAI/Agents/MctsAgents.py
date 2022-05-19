@@ -168,8 +168,8 @@ class MCTS_Saver(Agent):
         #return self.determinizedMCTS(validActions,game,maxPlayer)
         return self.determinizedMP(validActions,game,maxPlayer)
 
-    DET = 200
-    ITER = 500
+    DET = 100
+    ITER = 1000
 
     C = 3
     CORES = 8
@@ -232,6 +232,7 @@ class MCTS_Saver(Agent):
         self.backups = [game.startSim() for i in range(self.CORES)]
         self.muteStates = [game.startSim() for i in range(self.CORES)]
         self.game = game
+        self.maxPlayer = maxPlayer
 
         ## pool and call mcts func for each determinization
         determinization_pool = mp.Pool(self.CORES)
@@ -277,7 +278,7 @@ class MCTS_Saver(Agent):
         
         root = Saver_Node(None, None, 0)
         for iteration in range(self.ITER):
-            v = MCTS_Saver.tree_policy(root, 0, self.muteStates[i], self.C)
+            v = MCTS_Saver.tree_policy(root, self.maxPlayer, self.muteStates[i], self.C)
 
             #score = MCTS_Saver.default_fast(v, self.game, self.muteStates[i])
             score = MCTS_Saver.hueristic_evaluation(v, self.game, self.muteStates[i])
@@ -446,7 +447,7 @@ class MCTS_Saver(Agent):
             base = city.score / 2  # start with city score
             odds = MCTS_Saver.CITY_BIAS * (((MCTS_Saver.TOTAL_TURNS - state.turn) / 2.0) / (len(city.holes)*.5)) # add a bias for finishing city divided by edges left open
             
-            city_score = base * odds
+            city_score = min(base * odds, ((base + 1)*2)-.1)
             total_city_score += city_score
         
         return total_city_score

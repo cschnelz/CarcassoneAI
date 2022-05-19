@@ -174,56 +174,57 @@ class MCTS_Saver(Agent):
     C = 3
     CORES = 8
 
-    # def determinizedMCTS(self, vA,  game:Game=None, maxPlayer:int=None) -> Action:
-    #     determinzation = game.state.order.copy()       
+    def determinizedMCTS(self, vA,  game:Game=None, maxPlayer:int=None) -> Action:
+        determinzation = game.state.order.copy()       
         
-    #     stats = []
-    #     self.backup = game.startSim()
-    #     self.muteState = game.startSim()
+        stats = []
+        self.backup = game.startSim()
+        self.muteState = game.startSim()
+        self.game = game
 
-    #     for i in range(self.DET):
-    #         random.shuffle(determinzation)
-    #         self.backup.order = determinzation.copy()
-    #         self.muteState.order = determinzation.copy()
-    #         root = Saver_Node(None, None, maxPlayer)
-    #         curr_stats = []
+        for i in range(self.DET):
+            random.shuffle(determinzation)
+            self.backup.order = determinzation.copy()
+            self.muteState.order = determinzation.copy()
+            root = Saver_Node(None, None, maxPlayer)
+            curr_stats = []
 
-    #         for iteration in range(self.ITER):
-    #             v = MCTS_Saver.tree_policy(root, maxPlayer, self.muteState)
-    #             #score = MCTS_Saver.heuristic_policy(v,game,self.muteState)                
-    #             score = MCTS_Saver.default_fast(v,game,self.muteState)
+            for iteration in range(self.ITER):
+                v = MCTS_Saver.tree_policy(root, maxPlayer, self.muteState, self.C)
+                #score = MCTS_Saver.heuristic_policy(v,game,self.muteState)         
+                       
+                score = MCTS_Saver.hueristic_evaluation(v, self.game, self.muteState)
+                self.game.refreshSpecific(self.muteState,self.backup)
+                MCTS_Saver.backProp(v, score)
 
-    #             game.refreshSpecific(self.muteState,self.backup)
-    #             MCTS_Saver.backProp(v, score)
-
-    #         for action, node in root.get_first_nodes():
-    #            curr_stats.append(node.get_ucb(0))
+            for action, node in root.get_first_nodes():
+               curr_stats.append(node.get_ucb(0))
             
-    #         stats.append(curr_stats)
-    #         game.refreshSpecific(self.muteState,self.backup)
+            stats.append(curr_stats)
+            game.refreshSpecific(self.muteState,self.backup)
         
-    #     actions = root.get_first_actions()
+        actions = root.get_first_actions()
 
-    #     ## make a list of all first level nodes for each determinzation
-    #     best_avg_ucb = -math.inf
-    #     best_avg_action = None
-    #     ## we want to compare average performace of actions across deterinzations
-    #     ## so outer loop has a range of the number of possible actions
-    #     for i in range(len(actions)):
-    #         avg_ucb = 0.0
-    #         ## and the inner loop ranges the number of determinzations
-    #         for det in range(self.DET):
-    #             ## add the ucb of this determinzations ith action
-    #             avg_ucb += stats[det][i]
-    #         avg_ucb = avg_ucb / self.DET
-    #         ## if its better, we have a new candidate action
-    #         if avg_ucb > best_avg_ucb:
-    #             best_avg_ucb = avg_ucb
-    #             ## we can use the nth determinization bc all the actions are equal
-    #             best_avg_action = actions[i]
+        ## make a list of all first level nodes for each determinzation
+        best_avg_ucb = -math.inf
+        best_avg_action = None
+        ## we want to compare average performace of actions across deterinzations
+        ## so outer loop has a range of the number of possible actions
+        for i in range(len(actions)):
+            avg_ucb = 0.0
+            ## and the inner loop ranges the number of determinzations
+            for det in range(self.DET):
+                ## add the ucb of this determinzations ith action
+                avg_ucb += stats[det][i]
+            avg_ucb = avg_ucb / self.DET
+            ## if its better, we have a new candidate action
+            if avg_ucb > best_avg_ucb:
+                best_avg_ucb = avg_ucb
+                ## we can use the nth determinization bc all the actions are equal
+                best_avg_action = actions[i]
             
-    #     #print(f"\n\nBEST AVG Action: {best_avg_action} AvgUcb: {best_avg_ucb}")
-    #     return best_avg_action
+        #print(f"\n\nBEST AVG Action: {best_avg_action} AvgUcb: {best_avg_ucb}")
+        return best_avg_action
     
     def determinizedMP(self, validActions, game:Game=None, maxPlayer=None):
         ## setup
@@ -443,7 +444,7 @@ class MCTS_Saver(Agent):
         total_city_score = 0.0
         for city in cities:
             base = city.score / 2  # start with city score
-            odds = MCTS_Saver.CITY_BIAS * (((MCTS_Saver.TOTAL_TURNS - state.turn) / 2.0) / len(city.holes)) # add a bias for finishing city divided by edges left open
+            odds = MCTS_Saver.CITY_BIAS * (((MCTS_Saver.TOTAL_TURNS - state.turn) / 2.0) / (len(city.holes)*.5)) # add a bias for finishing city divided by edges left open
             
             city_score = base * odds
             total_city_score += city_score
@@ -454,7 +455,7 @@ class MCTS_Saver(Agent):
         chapel_score = 0.0
         for chapel in chapels:
             chapel_neighbors = len(state.board.neighbors8(chapel.locs[0][0], chapel.locs[0][1]))
-            chapel_score += min(9, (9 - chapel_neighbors) - ((MCTS_Saver.TOTAL_TURNS - state.turn) / 2))
+            chapel_score += min(9, ((MCTS_Saver.TOTAL_TURNS - state.turn) / 2) - (9 - chapel_neighbors))
         
         return chapel_score
 

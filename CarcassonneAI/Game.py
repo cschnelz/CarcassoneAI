@@ -1,14 +1,15 @@
 from Agents.Agent import RandomAgent
-from Board import meepleInfo
+from Board import meepleInfo, builtFeature
 from Feature import FeatType
 from Player import Player
 from State import State
-from Render import render3
+#from Render import render3
 from Action import validActions, Action
 import collections
 
 from typing import List
 import copy
+
 
 class Game:
     def __init__(self, players=[RandomAgent(), RandomAgent()], order=[]):
@@ -127,8 +128,36 @@ class Game:
 
         simState.board.board = self.state.board.board.copy()
         simState.board.openLocations = self.state.board.openLocations.copy()
-        simState.board.trackedFeatures = copy.deepcopy(self.state.board.trackedFeatures)
-        simState.board.trackedFields = copy.deepcopy(self.state.board.trackedFields)
+        
+        
+        simState.board.trackedFeatures = self.state.board.trackedFeatures.copy()
+        # simState.board.trackedFeatures = []
+        # for tF in self.state.board.trackedFeatures:
+        #     newTF = builtFeature(tF.featType, None, None, None, None)
+        #     newTF.tracked = tF.tracked.copy()
+        #     newTF.locs = tF.locs.copy()
+        #     newTF.meepled = tF.meepled.copy()
+        #     newTF.coordsMeepled = tF.coordsMeepled.copy()
+        #     newTF.score = tF.score
+        #     newTF.adjacentCities = tF.adjacentCities.copy()
+        #     newTF.holes = tF.holes.copy()
+        #     newTF.completed = tF.completed
+        #     simState.board.trackedFeatures.append(newTF)
+
+        simState.board.trackedFields = self.state.board.trackedFields.copy()
+        # simState.board.trackedFields = []
+        # for tF in self.state.board.trackedFields:
+        #     newTF = builtFeature(tF.featType, None, None, None, None)
+        #     newTF.tracked = tF.tracked.copy()
+        #     newTF.locs = tF.locs.copy()
+        #     newTF.meepled = tF.meepled.copy()
+        #     newTF.coordsMeepled = tF.coordsMeepled.copy()
+        #     newTF.score = tF.score
+        #     newTF.adjacentCities = tF.adjacentCities.copy()
+        #     newTF.holes = tF.holes.copy()
+        #     newTF.completed = tF.completed
+        #     simState.board.trackedFields.append(newTF)
+
         simState.board.meepled = self.state.board.meepled.copy()
 
     def refreshSpecific(self,mutatedState:State, backupState:State):
@@ -149,8 +178,8 @@ class Game:
         mutatedState.board.board = backupState.board.board.copy()
         mutatedState.board.openLocations = backupState.board.openLocations.copy()
 
-        mutatedState.board.trackedFeatures = copy.deepcopy(backupState.board.trackedFeatures)
-        mutatedState.board.trackedFields = copy.deepcopy(backupState.board.trackedFields)
+        mutatedState.board.trackedFeatures = backupState.board.trackedFeatures.copy()
+        mutatedState.board.trackedFields = backupState.board.trackedFields.copy()
         mutatedState.board.meepled = backupState.board.meepled.copy()
 
     ## cache partially made features

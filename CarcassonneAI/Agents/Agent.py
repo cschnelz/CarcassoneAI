@@ -17,10 +17,15 @@ import queue
 
 class Agent(ABC):
     @abstractmethod
+    def __init__(self, info=None) -> None:
+        pass
+    @abstractmethod
     def getResponse(self, validActions, game=None, maxPlayer=None):
         pass
 
 class HumanAgent(Agent):
+    def __init__(self, info=None) -> None:
+        super().__init__(info)
     def getResponse(self, validActions, game=None, maxPlayer=None):
         os.system('cls' if os.name == 'nt' else 'clear')
         
@@ -39,6 +44,8 @@ class HumanAgent(Agent):
             return validActions[res]
 
 class RandomAgent(Agent):
+    def __init__(self, info=None) -> None:
+        super().__init__(info)
     def getResponse(self, validActions, game=None, maxPlayer=None):
         return random.choice(validActions)
 

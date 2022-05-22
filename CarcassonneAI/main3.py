@@ -1,4 +1,5 @@
 import cProfile
+from email import policy
 import sys
 import random
 import time
@@ -29,9 +30,9 @@ def launch():
 
 
 def launch2():
-    carcassonne = Game(players=[MCTS_Saver(), MCTS_Saver()])
+    carcassonne = Game(players=[MCTS_Saver(info='Rollout'), MCTS_Saver(info='Heuristic')])
     rend = Renderer()
-    carcassonne.render(rend)
+    #carcassonne.render(rend)
 
     # carcassonne.state.turn = 68
     # carcassonne.state.order = carcassonne.state.order[66:70]
@@ -52,7 +53,7 @@ def launch2():
         if carcassonne.state.turn %2 == 0:
             print()
 
-        carcassonne.render(rend)
+        #carcassonne.render(rend)
         # input()
         
     print(f'score: {carcassonne.finalScore()}')
@@ -60,24 +61,12 @@ def launch2():
     
 
 def launchX():
-    players=[MCTS_Saver(), MCTS_Saver()]
+    players=[MCTS_Saver(info='Rollout'), MCTS_Saver(info='Heuristic')]
     rend = Renderer()
     carcassonne = Game(players,order=[1, 53, 31, 14,8, 26,62, 5,47, 0,38, 44,67, 59,50, 37,25])
     state = carcassonne.state
 
-    # carcassonne.applyAction(Action(0,-1,state.currentTile[0],True,state.currentTile[0].grassAtEdge(0)))
-    # carcassonne.applyAction(Action(0,1,state.currentTile[3],False,None))
-    # carcassonne.applyAction(Action(1,1,state.currentTile[0],True,state.currentTile[0].featureAtEdge(3)))
-    # carcassonne.applyAction(Action(0,-2,state.currentTile[1],False,None))
-    # carcassonne.applyAction(Action(2,1,state.currentTile[1],False,None))
-    # carcassonne.applyAction(Action(2,0,state.currentTile[1],True,state.currentTile[1].featureAtEdge(1)))
-    # carcassonne.applyAction(Action(1,2,state.currentTile[0],True,state.currentTile[0].featureAtEdge(0)))
-    # carcassonne.applyAction(Action(-1,0,state.currentTile[3],True,state.currentTile[3].grassAtEdge(2)))
-    # carcassonne.applyAction(Action(3,0,state.currentTile[0],True,state.currentTile[0].grassAtEdge(2)))
-    # carcassonne.applyAction(Action(-1,1,state.currentTile[1],False,None))
-    # carcassonne.applyAction(carcassonne.getActions()[0])
-
-    carcassonne.applyAction(Action(1,0,state.currentTile[0],True,state.currentTile[0].grassAtEdge(4)))
+    carcassonne.applyAction(Action(1,0,state.currentTile[0],True,state.currentTile[0].featureAtEdge(1)))
 
 
     carcassonne.render(rend)
@@ -95,8 +84,7 @@ def launchX():
 
 
 if __name__ == '__main__':
-    #launch2()
-    launchX()
+    launch2()
 
 
     # import cProfile, pstats

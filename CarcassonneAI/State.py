@@ -91,10 +91,11 @@ class State:
             self.players[self.currentPlayer].meepleCount -= 1
             self.players[self.currentPlayer].meeplesPlaced += 1
 
-        self.playTile(action,quiet)
+        locs = self.playTile(action,quiet)
         self.currentPlayer = (self.currentPlayer + 1) % 2
         self.turn += 1
         self.currentTile = None
+        return locs
 
     def playTile(self, action: Action, quiet=False):
         ## Add the tile to the board
@@ -104,7 +105,11 @@ class State:
 
         ## Calculate and update scores
         completed = self.checkCompletedFeatures(action.x, action.y)
+        locs = []
+        for bF in completed:
+            locs.extend(bF.coordsMeepled)
         self.calculateScore(completed, quiet)
+        return locs
 
     ## dispatches the next tile but picks a random valid location first
     ##   and then only calculates actions for that location
@@ -161,8 +166,8 @@ class State:
         ## check each neighbor to see if a chapel has been finished
         for node in self.board.neighbors8(x,y):
             # if the neighbor coords are in our meepled dictioanry
-            if (x,y) in self.board.meepled.keys():
-                meepled = self.board.meepled.get((x,y))
+            if (node.x,node.y) in self.board.meepled.keys():
+                meepled = self.board.meepled.get((node.x,node.y))
                 # and that meepled record is of the feature on a chapel tile
                 if meepled.feature and node.tile.chapel:
                     # check if it has tiles in all 8 neighbor spots
@@ -170,8 +175,23 @@ class State:
                         combined = builtFeature(FeatType.CHAPEL, node.id, (node.x,node.y),0,set())
                         combined.score = 9
                         combined.meepled.append(meepled.color)
+                        combined.coordsMeepled = [(node.x,node.y)]
                         completed.append(combined)
-                        self.board.meepled.pop((x,y))
+                        self.board.meepled.pop((node.x,node.y))
+
+        node = self.board.nodeAt(x,y)
+        if (node.x, node.y) in self.board.meepled.keys():
+            meepled = self.board.meepled.get((node.x,node.y))
+                # and that meepled record is of the feature on a chapel tile
+            if meepled.feature and node.tile.chapel:
+                # check if it has tiles in all 8 neighbor spots
+                if len(self.board.neighbors8(node.x,node.y)) == 8:
+                    combined = builtFeature(FeatType.CHAPEL, node.id, (node.x,node.y),0,set())
+                    combined.score = 9
+                    combined.meepled.append(meepled.color)
+                    combined.coordsMeepled = [(node.x, node.y)]
+                    completed.append(combined)
+                    self.board.meepled.pop((node.x,node.y))
 
         return completed
 
@@ -272,7 +292,10 @@ class State:
 
             # remove records
             for loc in bF.coordsMeepled:
-                meepledLocs.remove(loc)
+                try:
+                    meepledLocs.remove(loc)
+                except:
+                    pass
 
 
             return colorWinner, score

@@ -146,6 +146,22 @@ class MCTS_Saver(Agent):
        from Action import Action
        from State import State
        from Board import Board, builtFeature
+
+    def __init__(self, info=None) -> None:
+        if info == 'Rollout':
+            self.DET = 70
+            self.ITER = 70
+            self.policy: function = MCTS_Saver.default_fast
+        elif info == 'Heuristic':
+            self.DET = 100
+            self.ITER = 1000
+            self.policy: function = MCTS_Saver.hueristic_evaluation
+        else:
+            print('Invalid Policy')
+            sys.exit()
+
+        self.C = 3
+        self.CORES = 4
     
     def getLegalMoves(state: State) -> list[Action]:
         return state.currentActions
@@ -164,15 +180,8 @@ class MCTS_Saver(Agent):
     #             #
     ####*******####
 
-    def getResponse(self, validActions, game=None, maxPlayer=None):
-        #return self.determinizedMCTS(validActions,game,maxPlayer)
-        return self.determinizedMP(validActions,game,maxPlayer)
-
-    DET = 100
-    ITER = 1000
-
-    C = 3
-    CORES = 8
+    def getResponse(self, vA, game=None, maxPlayer=None):
+        return self.determinizedMP(game,maxPlayer)
 
     def determinizedMCTS(self, vA,  game:Game=None, maxPlayer:int=None) -> Action:
         determinzation = game.state.order.copy()       
@@ -226,7 +235,7 @@ class MCTS_Saver(Agent):
         #print(f"\n\nBEST AVG Action: {best_avg_action} AvgUcb: {best_avg_ucb}")
         return best_avg_action
     
-    def determinizedMP(self, validActions, game:Game=None, maxPlayer=None):
+    def determinizedMP(self, game:Game=None, maxPlayer=None):
         ## setup
         self.determinization = game.state.order.copy()
         self.backups = [game.startSim() for i in range(self.CORES)]
@@ -281,7 +290,9 @@ class MCTS_Saver(Agent):
             v = MCTS_Saver.tree_policy(root, self.maxPlayer, self.muteStates[i], self.C)
 
             #score = MCTS_Saver.default_fast(v, self.game, self.muteStates[i])
-            score = MCTS_Saver.hueristic_evaluation(v, self.game, self.muteStates[i])
+            #score = MCTS_Saver.hueristic_evaluation(v, self.game, self.muteStates[i])
+
+            score = self.policy(v, self.game, self.muteStates[i])
             self.game.refreshSpecific(self.muteStates[i],self.backups[i])
             MCTS_Saver.backProp(v, score)
 
@@ -370,6 +381,9 @@ class MCTS_Saver(Agent):
     def hueristic_evaluation(node:Saver_Node,game:Game,muteState:State,print_final=False):
         from Board import Board, builtFeature
         from Feature import FeatType
+
+        if muteState.gameOver():
+            return muteState.scoreDelta()
 
         muteState.applyAction(node.action, quiet=True)
         state = muteState
@@ -476,7 +490,8 @@ class MCTS_Saver(Agent):
             for city in adjacent_cities:
                 field_score += (2.5 - len(city.holes))
 
-        return field_score
+        ## a negative field bias that decreases as game length progresses to avoid overly early fielding
+        return max(0,field_score - (.15 * (MCTS_Saver.TOTAL_TURNS - state.turn) / 2))
 
 
     def hueristic_meeples(meeples_left:int):

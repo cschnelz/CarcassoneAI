@@ -153,13 +153,14 @@ class MCTS_Saver(Agent):
             self.ITER = 70
             self.policy: function = MCTS_Saver.default_fast
         elif info == 'Heuristic':
-            self.DET = 100
-            self.ITER = 1000
+            self.DET = 50
+            self.ITER = 250
             self.policy: function = MCTS_Saver.hueristic_evaluation
         else:
             print('Invalid Policy')
             sys.exit()
 
+        self.type = 'MCTS'
         self.C = 3
         self.CORES = 4
     
@@ -180,10 +181,12 @@ class MCTS_Saver(Agent):
     #             #
     ####*******####
 
-    def getResponse(self, vA, game=None, maxPlayer=None):
+    def getResponse(self, callBack, game=None, maxPlayer=None):
+        
         return self.determinizedMP(game,maxPlayer)
+       # return self.determinizedMCTS(callBack,game,maxPlayer)
 
-    def determinizedMCTS(self, vA,  game:Game=None, maxPlayer:int=None) -> Action:
+    def determinizedMCTS(self, callBack,  game:Game=None, maxPlayer:int=None) -> Action:
         determinzation = game.state.order.copy()       
         
         stats = []
@@ -211,6 +214,8 @@ class MCTS_Saver(Agent):
             
             stats.append(curr_stats)
             game.refreshSpecific(self.muteState,self.backup)
+            if i % 10 == 9 and callBack is not None:
+                callBack(curr_stats)
         
         actions = root.get_first_actions()
 
@@ -361,7 +366,8 @@ class MCTS_Saver(Agent):
     def default_fast(node:Saver_Node,game:Game,muteState:State,print_final=False) -> int:
         #node.construct_state(muteState)
         muteState.applyAction(node.action,quiet=True)
-        muteState.dispatchTileOptimized()
+        if not muteState.gameOver():
+            muteState.dispatchTileOptimized()
 
         while(not muteState.gameOver()):
             moves = MCTS_Saver.getLegalMoves(muteState)

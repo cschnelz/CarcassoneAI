@@ -1,4 +1,3 @@
-from asyncio import base_events
 from doctest import master
 from re import L
 import tkinter
@@ -9,6 +8,11 @@ from PIL import Image, ImageTk
 from functools import partial
 from Action import Action
 from Feature import Feature
+import threading
+
+
+
+
 
 
 def rotateImage(img, orientation):
@@ -26,18 +30,15 @@ class app:
 
     def __init__(self) -> None:
         self.t = tkinter.Tk()
-        self.greeting = tkinter.Label(text="Carcassonne").pack()
         tkinter.Button(self.t, command=self.t.destroy, text='Close').pack()
-        self.randButton = tkinter.Button(self.t, command=self.play0,text='random play')
-        self.randButton.pack()
 
-        self.WIDTH = 1500
-        self.HEIGHT = 600
+        self.WIDTH = 2000
+        self.HEIGHT = 900
         self.TILESIZE = 60
         self.HALFTILE = self.TILESIZE / 2
 
-        self.cX = self.WIDTH / 2 - self.HALFTILE
-        self.cY = self.HEIGHT / 2 - self.HALFTILE
+        self.cX = self.WIDTH / 2 - self.HALFTILE - 200
+        self.cY = self.HEIGHT / 2 - self.HALFTILE + 50
 
         self.CANVASBG = 'gray75'
         self.c = tkinter.Canvas(self.t, width=self.WIDTH,height=self.HEIGHT,background=self.CANVASBG)
@@ -52,25 +53,65 @@ class app:
         self.orientation = 0
         self.currTileImg = None
 
+        ## Labels and border for scorboard
         self.scoreLabel = tkinter.Label(self.c, text=f'Score: Red 0 | Blue 0', font=("Arial", 25), bg=self.CANVASBG)
-        self.scoreLabel.place(x=1500, y=10)
+        self.scoreLabel.place(x=1525, y=35)
         self.toMoveLabel = tkinter.Label(self.c, text=f'Red to play', font=("Arial", 25),bg=self.CANVASBG)
-        self.toMoveLabel.place(x=1500, y=60)
+        self.toMoveLabel.place(x=1525, y=85)
         self.turnsLabel = tkinter.Label(self.c, font=("Arial", 25),bg=self.CANVASBG, text=f'{70} turns left')
-        self.turnsLabel.place(x=1500, y=110)
+        self.turnsLabel.place(x=1525, y=135)
+        self.c.create_rectangle(1500, 25, 1900, 300, width=5)
+
+
+        ## Labels and outline for MCTS info
+        tkinter.Label(self.c, text="A Peek Into the Agent", font=("Arial", 20), bg=self.CANVASBG).place(x=1500, y=375)
+        tkinter.Label(self.c, text="Current Best Estimate:", font=("Arial",15), bg=self.CANVASBG).place(x=1550, y=450)
+        self.c.create_rectangle(1500, 425, 1900, 900, width=5)
+         
+
+        
+        colors = ['orange', 'green', 'yellow']
+        for ind in range(3):
+            self.c.create_rectangle(1550, 500 + (120 * ind), 1650, 600 + (120 * ind), outline=colors[ind], width=5)
+
+
+
+        self.bestAgentInfos = [tkinter.Label(self.c, text="Score: ", font=("Arial",15), bg=self.CANVASBG) for i in range(3)]
+        for i in range(3):
+            self.bestAgentInfos[i].place(x=1700, y=525 + (i * 125))
+        self.bestAgentRectangles = [None for i in range(3)]
+
+        self.bestAgentTiles = []
+        self.bestAgentMeeples = []
+        # self.bestAgentLabels = [tkinter.Label(self.c, image=None, bg=colors[i], borderwidth=2) for i in range(3)]
+        # for i in range(3):
+        #     self.bestAgentLabels[i].place(x=1300, y=500 + (100 * i))
+
 
         self.meeples = {}
         self.meepleButtons = []
         self.meepleButtonImgs = []
         self.buttons = [] 
 
+        self.stats = []
+        self.statsIter = 0
+        self.statsMax = 0
+        self.currActions = None
+        self.labelPtr = None
+
+  
+
     def spawnGame(self):
         self.rotateButton = tkinter.Button(self.c, command=self.rotate,text='Rotate Tile')
         self.rotateButton.place(x=90,y=180)
         tkinter.Label(self.c, text='Current Tile', font=("Arial", 25), background=self.CANVASBG).place(x=50,y=10)
+        self.logo = ImageTk.PhotoImage(Image.open(rf'Images/logo.png').resize((500,150)), master=self.c)
+        self.c.create_image(750, 100, image=self.logo)
 
         ## Start a new game
-        self.carcassonne = Game(order=[24,5,17,16,23])
+        self.carcassonne = Game(players=[HumanAgent(), MCTS_Saver(info='Heuristic')])
+        #self.carcassonne = Game(players=[HumanAgent(), HumanAgent()], order=[33,10,65,19,0,35])
+
         self.board = self.carcassonne.state.board
 
         self.images = []
@@ -95,16 +136,16 @@ class app:
         mBlue = self.carcassonne.state.players[1].meepleCount
 
         self.stock = []
-        tkinter.Label(text=f'{mRed}:', font=("Arial",25), background=self.CANVASBG).place(x=25,y=300)
-        tkinter.Label(text=f'{mBlue}:', font=("Arial",25), background=self.CANVASBG).place(x=25,y=375)
+        tkinter.Label(text=f'{mRed}:', font=("Arial",25), background=self.CANVASBG).place(x=1525,y=275)
+        tkinter.Label(text=f'{mBlue}:', font=("Arial",25), background=self.CANVASBG).place(x=1525,y=335)
         for i in range(mRed):
             meepleImage = ImageTk.PhotoImage(Image.open(rf'Images/red.png').resize((50,50)), master=self.c)
             self.stock.append(meepleImage)
-            self.c.create_image(90 + (i * 25),300, image=meepleImage)
+            self.c.create_image(1585 + (i * 25),215, image=meepleImage)
         for i in range(mBlue):
             meepleImage = ImageTk.PhotoImage(Image.open(rf'Images/blue.png').resize((50,50)), master=self.c)
             self.stock.append(meepleImage)
-            self.c.create_image(90 + (i * 25),375, image=meepleImage)
+            self.c.create_image(1585 + (i * 25),270, image=meepleImage)
     
     ## Draws curent score and who's turn it is
     def scoreBoard(self):
@@ -112,7 +153,7 @@ class app:
         self.scoreLabel.configure(text=f'Score: Red {score[0]} | Blue {score[1]}')
 
         toMove = 'Red' if self.carcassonne.state.currentPlayer == 0 else 'Blue'
-        self.toMoveLabel.configure(text=f'{toMove} to play')
+        self.toMoveLabel.configure(text=f'{toMove} to play', fg=toMove)
         
         self.turnsLabel.configure(text=f'{72 - self.carcassonne.state.turn} turns left')
 
@@ -136,24 +177,27 @@ class app:
         self.newGameButton =tkinter.Button(self.c, text="New Game?", font=("Arial",25),command=self.newGame)
         self.newGameButton.place(x=600, y=500)
 
-        self.randButton["state"] = "disabled"
         self.rotateButton["state"] = "disabled"
 
     def newGame(self):
-        self.t.destroy()
-        self.t = tkinter.Tk()
-        self.greeting = tkinter.Label(text="Carcassonne").pack()
-        tkinter.Button(self.t, command=self.t.destroy, text='Close').pack()
-        self.randButton = tkinter.Button(self.t, command=self.play0,text='random play')
-        self.randButton.pack()
+        # self.t.destroy()
+        # self.t = tkinter.Tk()
+        # self.greeting = tkinter.Label(text="Carcassonne").pack()
+        # tkinter.Button(self.t, command=self.t.destroy, text='Close').pack()
+        # self.randButton = tkinter.Button(self.t, command=self.play0,text='random play')
+        # self.randButton.pack()
 
-        # self.finalScore.place_forget()
-        # self.winner.place_forget()
-        # self.newGameButton.place_forget()
+        self.finalScore.place_forget()
+        self.winner.place_forget()
+        self.newGameButton.place_forget()
 
-        # self.c.pack_forget()
+        self.c.pack_forget()
         self.c = tkinter.Canvas(self.t, width=self.WIDTH,height=self.HEIGHT,background=self.CANVASBG)
         self.c.pack(expand='YES', fill='both')
+        self.rotateButton = tkinter.Button(self.c, command=self.rotate,text='Rotate Tile')
+        self.rotateButton.place(x=90,y=180)
+        tkinter.Label(self.c, text='Current Tile', font=("Arial", 25), background=self.CANVASBG).place(x=50,y=10)
+
 
         self.scoreLabel = tkinter.Label(self.c, text=f'Score: Red 0 | Blue 0', font=("Arial", 25), bg=self.CANVASBG)
         self.scoreLabel.place(x=1500, y=10)
@@ -163,8 +207,12 @@ class app:
         self.turnsLabel.place(x=1500, y=110)
 
 
-        self.carcassonne = Game()
+        self.carcassonne = Game(players=[HumanAgent(), MCTS_Saver(info='Heuristic')])
         self.board = self.carcassonne.state.board
+
+        self.bestAgentInfos = [tkinter.Label(self.c, text="", font=("Arial",15), bg=self.CANVASBG) for i in range(3)]
+        for i in range(3):
+            self.bestAgentInfos[i].place(x=1400, y=800 + (i * 50))
 
         self.images = []
         self.stock = []
@@ -180,7 +228,6 @@ class app:
             b.place_forget()
         self.buttons = []
 
-        self.randButton["state"] = "normal"
         self.rotateButton["state"] = "normal"
 
 
@@ -255,6 +302,71 @@ class app:
         self.c.create_image(mx, my, image=meepleImage)
 
     
+    def drawBestTile(self, tile, ind, act):
+        img = Image.open(rf'Images/tile-{tile.imgCode}.png').resize((int(self.TILESIZE*1.5),int(self.TILESIZE*1.5)))
+        imgR = rotateImage(img, tile.orientation)
+        imgTk = ImageTk.PhotoImage(imgR, master=self.c)
+        self.bestAgentTiles.append(imgTk)
+        self.c.create_image(1600, 550 + (120 * ind), image=imgTk)
+        colors = ['orange', 'green', 'yellow']
+        self.bestAgentRectangles[ind] = self.c.create_rectangle(self.cX + (act.x * self.TILESIZE) + (ind * 2) - (self.TILESIZE / 2), 
+                                                                self.cY + (act.y * self.TILESIZE) + (ind * 2) - (self.TILESIZE / 2), 
+                                                                self.cX + (act.x * self.TILESIZE) + self.TILESIZE - (ind * 2) - (self.TILESIZE / 2), 
+                                                                self.cY + (act.y * self.TILESIZE) + self.TILESIZE - (ind * 2) - (self.TILESIZE / 2), 
+                                                                outline=colors[ind], width=5)
+    
+
+
+    def drawBestMeeple(self, action, ind):
+        col = self.carcassonne.currentPlayer().color
+        img = Image.open(rf'Images/{col}.png').resize((30,30))
+        imgTk = ImageTk.PhotoImage(img, master=self.c)
+        self.bestAgentMeeples.append(imgTk)
+        mx = 1600
+        my = 550 + (120 * ind)
+        long = 20
+        short = 15
+        if action.feature.featType == FeatType.CHAPEL:
+            mx += 0
+        elif action.feature.featType is not FeatType.GRASS:
+            edge = action.feature.edges[0]
+            if edge == 0:
+                my -= long
+            elif edge == 1:
+                mx += long
+            elif edge == 2:
+                my += long
+            else:
+                mx -= long
+        else:
+            edge = action.feature.edges[0]
+            if edge == 0:
+                mx -= short
+                my -= long
+            elif edge == 1:
+                mx += short
+                my -= long
+            elif edge == 2:
+                mx += long
+                my -= short
+            elif edge == 3:
+                mx += long
+                my += short
+            elif edge == 4:
+                mx += short
+                my += long
+            elif edge == 5:
+                mx -= short
+                my += long
+            elif edge == 6:
+                mx -= long
+                my += short
+            else:
+                mx -= long
+                my -= short
+        self.c.create_image(mx,my,image=imgTk)
+
+
     ####################
     #
     #   CORE LOGIC LOOP
@@ -313,13 +425,76 @@ class app:
         if self.carcassonne.gameOver():
             self.endScreen()
 
+        else:  
+            self.scoreBoard()
+            self.drawCurrTile()
+            self.meepleStock()
+
+            if self.carcassonne.currentPlayer().agent.type != 'Human':
+                threading.Thread(target=self.agentResponse).start()
+
+            else:
+                self.drawLocations()
+
+    def agentResponse(self):
+        self.rotateButton["state"] = "disabled"
+
+        self.stats = []
+        self.bestAgentTiles = []
+        self.currActions = self.carcassonne.getActions()
+        response = self.carcassonne.currentPlayer().agent.getResponse(self.trackCalculation,self.carcassonne,self.carcassonne.currentPlayerId())
+        
+        completed = self.carcassonne.applyAction(response)
+    
+        self.drawTile(response.x,response.y,response.tile)
+        if response.meeple:
+            self.drawMeeple(response.x,response.y,response.feature)
+    
+        for loc in completed:
+            del self.meeples[loc]  
+
+        self.orientation = 0
+        if self.carcassonne.gameOver():
+            self.endScreen()
+
         else:
             self.scoreBoard()
             self.drawCurrTile()
             self.drawLocations()
             self.meepleStock()
 
-     
+        self.rotateButton["state"] = "normal"
+        self.c.after(1500, lambda: [self.c.delete(self.bestAgentRectangles[i]) for i in range(3)])
+            #self.c.delete(self.bestAgentRectangles[i])
+
+
+    ## A callback to track the current mcts evluation
+    def trackCalculation(self, info):
+        self.stats.append(info)
+
+        rank = []
+        self.bestAgentMeeples = []
+        for i in range(3):
+            self.c.delete(self.bestAgentRectangles[i])
+        
+        for i in range(len(self.stats[0])):
+            avg_ucb = 0.0
+            ## and the inner loop ranges the number of determinzations
+            for det in range(len(self.stats)):
+                ## add the ucb of this determinzations ith action
+                avg_ucb += self.stats[det][i]
+                
+            avg_ucb = avg_ucb / len(self.stats)
+            rank.append(avg_ucb)
+        
+        for i in range(3):
+            ind = rank.index(max(rank))
+            act = self.currActions[ind]
+            self.drawBestTile(act.tile, i, act)
+            self.bestAgentInfos[i].configure(text="Score: {:0.2f}".format((rank[ind])))
+            if act.meeple:
+                self.drawBestMeeple(act, i)
+            rank[ind] = -math.inf
 
     ## draw in the new tile and spawn buttons for meeple options
     ## callback flow: MEEPLE OPTION

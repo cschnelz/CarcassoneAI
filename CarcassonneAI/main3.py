@@ -30,13 +30,12 @@ def launch():
 
 
 def launch2():
-    carcassonne = Game(players=[MCTS_Saver(info='Rollout'), MCTS_Saver(info='Heuristic')])
+    carcassonne = Game(players=[MCTS_Saver(info='Heuristic'), MCTS_Saver(info='Rollout')])
     rend = Renderer()
     #carcassonne.render(rend)
 
-    # carcassonne.state.turn = 68
-    # carcassonne.state.order = carcassonne.state.order[66:70]
-    # carcassonne.state.players[1].meepleCount = 0
+    for i in range(60):
+        carcassonne.applyAction(random.choice(carcassonne.getActions()))
     
     while(carcassonne.gameOver() is False):
         start_time = time.time()
@@ -44,10 +43,10 @@ def launch2():
         #print(f'Current tile: {carcassonne.state.currentTile[0]}')
         actions = carcassonne.getActions()
         currPlayer = carcassonne.currentPlayer()
-        response = currPlayer.agent.getResponse(actions,game=carcassonne,maxPlayer=currPlayer.id)
+        response = currPlayer.agent.getResponse(None,game=carcassonne,maxPlayer=currPlayer.id)
 
         end_time = time.time()
-        print(f'tile: {tile_num} {response} in {int(end_time-start_time)} seconds')
+        print(f'turn: {carcassonne.state.turn} tile: {tile_num} {response} in {int(end_time-start_time)} seconds')
         carcassonne.applyAction(response)
 
         if carcassonne.state.turn %2 == 0:

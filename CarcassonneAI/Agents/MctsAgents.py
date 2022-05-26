@@ -183,8 +183,8 @@ class MCTS_Saver(Agent):
 
     def getResponse(self, callBack, game=None, maxPlayer=None):
         
-        return self.determinizedMP(game,maxPlayer)
-       # return self.determinizedMCTS(callBack,game,maxPlayer)
+        #return self.determinized(game,maxPlayer)
+       return self.determinizedMCTS(callBack,game,maxPlayer)
 
     def determinizedMCTS(self, callBack,  game:Game=None, maxPlayer:int=None) -> Action:
         determinzation = game.state.order.copy()       

@@ -266,6 +266,11 @@ class Board:
                     newField.coordsMeepled.extend(field.coordsMeepled)
 
                 newField.tracked.update(field.tracked)
+                for node, edgeList in field.tracked.items():
+                    if node in newField.tracked.keys():
+                        newField.tracked[node] = list(set(newField.tracked.get(node).extend(edgeList)))
+                    else:
+                        newField.tracked[node] = edgeList
                 
                 newField.holes = newField.holes.union(field.holes)
                 newField.locs.extend(field.locs)

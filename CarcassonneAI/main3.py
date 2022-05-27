@@ -6,10 +6,7 @@ import time
 
 from Agents import *
 from Game import Game
-<<<<<<< HEAD
-=======
 from Render import Renderer
->>>>>>> main
 from Action import Action
 
 def launch():

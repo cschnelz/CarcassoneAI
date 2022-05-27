@@ -472,10 +472,6 @@ class GreedyDeterminized(Agent):
         bestAction = None
                 
         minEval = math.inf
-<<<<<<< HEAD
-        actions = mutable.getActions()
-=======
->>>>>>> main
 
         for action in mutable.getActions():
             len_inner_o = len(mutable.getActions())

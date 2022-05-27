@@ -63,18 +63,6 @@ def launch2():
     
 
 def launchX():
-<<<<<<< HEAD
-    players=[RandomAgent(), GreedyDeterminized()]
-    carcassonne = Game(players,order=list(range(72)))
-    state = carcassonne.state
-
-    for i in range(60):
-        while carcassonne.gameOver() is False:
-            carcassonne.applyAction(carcassonne.getActions()[0])
-        carcassonne = Game(players,order=list(range(72)))
-
-
-=======
     players=[MCTS_Saver(info='Rollout'), MCTS_Saver(info='Heuristic')]
     rend = Renderer()
     carcassonne = Game(players,order=[1, 53, 31, 14,8, 26,62, 5,47, 0,38, 44,67, 59,50, 37,25])
@@ -95,7 +83,6 @@ def launchX():
 
 
 
->>>>>>> main
 
 
 if __name__ == '__main__':

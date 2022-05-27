@@ -264,7 +264,9 @@ class Board:
                 if field.meepled:
                     newField.meepled.extend(field.meepled) 
                     newField.coordsMeepled.extend(field.coordsMeepled)
+
                 newField.tracked.update(field.tracked)
+                
                 newField.holes = newField.holes.union(field.holes)
                 newField.locs.extend(field.locs)
                 newField.adjacentCities.update(field.adjacentCities)

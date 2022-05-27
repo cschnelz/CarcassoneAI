@@ -83,6 +83,8 @@ class Ui_MainWindow(object):
         self.endScore = QtWidgets.QLabel(self.centralwidget)
         self.endScore.setGeometry(self.cX - 100, self.cY - 200, 600, 30)
         self.endScore.setFont(QFont("Times", 25))
+        self.endScore.setStyleSheet("background-color: white")
+        self.endScore.hide()
 
         self.endBtn = QtWidgets.QPushButton(self.centralwidget)
         self.endBtn.setFont(QFont("Time", 25))
@@ -327,6 +329,7 @@ class Ui_MainWindow(object):
 
     def newGame(self):
         self.endScore.setText("")
+        self.endScore.hide()
         self.endBtn.hide()
         self.rotateBtn.setEnabled(True)
         self.ScoreLabel.setText("Score: Red 0 | Blue 0")
@@ -356,6 +359,7 @@ class Ui_MainWindow(object):
         self.rotateBtn.setEnabled(False)
         fscore = self.game.finalScore()
         self.endScore.setText(f"Final Score:   Red  {fscore[0]}  |  Blue  {fscore[1]}")
+        self.endScore.show()
         self.endScore.raise_()
         self.endBtn.show()
         self.endBtn.raise_()

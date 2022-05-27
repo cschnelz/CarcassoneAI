@@ -2,17 +2,21 @@
 
 
 
-
+<br/><br/>
 ## About the Project
 
-The goal of this project was to explore the possibilities of applying 
+The goal of this project was to explore the possibilities of applying an agnostic decision algorithm to the game of Carcassonne. <br>
+The project became a ground-up python reimplementation of the board game to establish an API that was then used to develop and analyze a variety of agents.
 
 
+<br/><br/>
 ## Built With
 
 The backend, API, and agents are made with pure python. 
 The UI is built with [PyQt5](https://pypi.org/project/PyQt5/)
 
+
+<br/><br/>
 ## Getting Started
 
 ### Prerequisites
@@ -29,7 +33,9 @@ The UI is built with [PyQt5](https://pypi.org/project/PyQt5/)
   ```sh
   pip install requirements
   ```
-  
+
+
+<br/><br/>
 ## Usage
 
 There are two main ways of interacting with this project:
@@ -68,6 +74,8 @@ print(Carcassonne.finalScore())
 
 will create and run a game between an MCTS-heuristic bot and a Greedy bot.  The API provides many options for running and analyzing Carcassonne games.
 
+
+<br/><br/>
 ## Current Agents
 * Human Agent - Gets CLI response from human for moves
 * Random Agent - Randomly picks from valid actions

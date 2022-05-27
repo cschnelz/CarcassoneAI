@@ -50,6 +50,9 @@ class Tile:
     def __eq__(self, __o: object) -> bool:
         return self.id == __o.id and self.orientation == __o.orientation
 
+    def __hash__(self) -> int:
+        return hash(str(self))
+
     ## Checks if some otherTile can connect to this tile on given edge
     def canConnectTo(self, otherTile, edge: int) -> bool:
         return self.edges[edge] == otherTile.edges[(edge + 2) % 4]

@@ -85,6 +85,23 @@ class builtFeature:
         # update it when tiles are added, and if a tile closes all the holes the feat is completed
         self.holes = holes
         self.completed = False
+
+    def __eq__(self, __o: object) -> bool:
+        return self.featType == __o.featType and \
+            self.tracked == __o.tracked and \
+            self.locs == __o.locs and \
+            self.meepled == __o.meepled and \
+            self.coordsMeepled == __o.coordsMeepled and \
+            self.score == __o.score and \
+            self.holes == __o.holes and \
+            self.completed == __o.completed
+            #self.adjacentCities == __o.adjacentCities and \
+            
+
+    def __str__(self) -> str:
+        return f'{self.featType}{self.locs}{self.meepled}{self.coordsMeepled}{0}{self.holes}{self.completed}{self.tracked}'
+    def __hash__(self) -> int:
+        return hash(str(self))
         
 class meepleInfo:
     def __init__(self, player: Player, feature: Feature):

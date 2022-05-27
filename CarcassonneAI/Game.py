@@ -1,16 +1,19 @@
+from turtle import back
 from Agents.Agent import RandomAgent
-from Board import meepleInfo
+from Board import meepleInfo, builtFeature, Node
 from Feature import FeatType
 from Player import Player
 from State import State
-from Render import render3
+from Render import Renderer
 from Action import validActions, Action
+import collections
 
 from typing import List
 import copy
 
+
 class Game:
-    def __init__(self, players=[RandomAgent(), RandomAgent()], order=[]):
+    def __init__(self, players=[RandomAgent(info=None), RandomAgent(info=None)], order=[]):
         self.state = State([Player(0, players[0]), Player(1, players[1])], order)  
 
     def getState(self) -> State:
@@ -24,9 +27,10 @@ class Game:
         return self.state.currentActions
 
     # update the state based on the action
-    def applyAction(self, action: Action) -> None: 
-        self.state.applyAction(action)
+    def applyAction(self, action: Action) -> list[tuple[int]]: 
+        locs = self.state.applyAction(action)
         self.state.dispatchTile()
+        return locs
 
     def currentPlayer(self) -> Player:
         return self.state.players[self.state.currentPlayer]
@@ -45,8 +49,8 @@ class Game:
         
         return tuple(map(sum, zip(self.getScore(), self.state.finalScore())))
 
-    def render(self):
-        render3(self.state.board, self.state.currentTile,self.state.players)
+    def render(self, renderer:Renderer):
+        renderer.render3(self.state.board, self.state.currentTile,self.state.players)
 
 
 
@@ -78,6 +82,36 @@ class Game:
     def simApply(self, simState: State, action: Action):
         simState.applyAction(action,quiet=True)        
         simState.dispatchTile()
+
+    def compareStates(self, stateA:State, stateB:State):
+        if  stateA.players[0].meepleCount != stateB.players[0].meepleCount or \
+            stateA.players[1].meepleCount != stateB.players[1].meepleCount or \
+            stateA.players[0].score != stateB.players[0].score or \
+            stateA.players[1].score != stateB.players[1].score:
+            print("mismatch in player")
+
+        if stateA.turn != stateB.turn:
+            print("mismatch in turn")
+
+        if collections.Counter(stateA.order) != collections.Counter(stateB.order):
+            print("mismatch in order")
+
+        if collections.Counter(stateA.currentActions) != collections.Counter(stateB.currentActions):
+            print("mismatch in current actions")
+
+        if collections.Counter(stateA.currentTile) != collections.Counter(stateB.currentTile):
+            print("mismatch in current tile")
+
+        if collections.Counter(stateA.board.trackedFeatures) != collections.Counter(stateB.board.trackedFeatures):
+            a = stateA.board.trackedFeatures
+            b = stateB.board.trackedFeatures
+            print("mismatch in tracked features")
+        if collections.Counter(stateA.board.trackedFields) != collections.Counter(stateB.board.trackedFields):
+            print("mismatch in tracked fields")
+
+        if collections.Counter(stateA.board.meepled) != collections.Counter(stateB.board.meepled):
+            print("mismatch in meepled")
+        
     
     def refresh(self, simState: State):
         simState.players[0].meepleCount = self.state.players[0].meepleCount
@@ -96,8 +130,36 @@ class Game:
 
         simState.board.board = self.state.board.board.copy()
         simState.board.openLocations = self.state.board.openLocations.copy()
-        simState.board.trackedFeatures = self.state.board.trackedFeatures.copy()
-        simState.board.trackedFields = self.state.board.trackedFields.copy()
+        
+        
+        #simState.board.trackedFeatures = self.state.board.trackedFeatures.copy()
+        simState.board.trackedFeatures = []
+        for tF in self.state.board.trackedFeatures:
+            newTF = builtFeature(tF.featType, None, None, None, None)
+            newTF.tracked = tF.tracked.copy()
+            newTF.locs = tF.locs.copy()
+            newTF.meepled = tF.meepled.copy()
+            newTF.coordsMeepled = tF.coordsMeepled.copy()
+            newTF.score = tF.score
+            newTF.adjacentCities = tF.adjacentCities.copy()
+            newTF.holes = tF.holes.copy()
+            newTF.completed = tF.completed
+            simState.board.trackedFeatures.append(newTF)
+
+       # simState.board.trackedFields = self.state.board.trackedFields.copy()
+        simState.board.trackedFields = []
+        for tF in self.state.board.trackedFields:
+            newTF = builtFeature(tF.featType, None, None, None, None)
+            newTF.tracked = tF.tracked.copy()
+            newTF.locs = tF.locs.copy()
+            newTF.meepled = tF.meepled.copy()
+            newTF.coordsMeepled = tF.coordsMeepled.copy()
+            newTF.score = tF.score
+            newTF.adjacentCities = tF.adjacentCities.copy()
+            newTF.holes = tF.holes.copy()
+            newTF.completed = tF.completed
+            simState.board.trackedFields.append(newTF)
+
         simState.board.meepled = self.state.board.meepled.copy()
 
         simState.board.cityEdges = self.state.board.cityEdges.copy()
@@ -119,11 +181,47 @@ class Game:
         mutatedState.tileList = backupState.tileList.copy()
         mutatedState.currentTile = backupState.currentTile
 
-        mutatedState.board.board = backupState.board.board.copy()
+        #mutatedState.board.board = backupState.board.board.copy()
+        mutatedState.board.board = {}
+        for loc, node in backupState.board.board.items():
+            newNode = Node(node.x, node.y, node.tile)
+            newNode.neighbors = node.neighbors.copy()
+            mutatedState.board.board[loc] = newNode
         mutatedState.board.openLocations = backupState.board.openLocations.copy()
-        mutatedState.board.trackedFeatures = backupState.board.trackedFeatures.copy()
-        mutatedState.board.trackedFields = backupState.board.trackedFields.copy()
-        mutatedState.board.meepled = backupState.board.meepled.copy()
+
+        #mutatedState.board.trackedFeatures = backupState.board.trackedFeatures.copy()
+        mutatedState.board.trackedFeatures = []
+        for tF in backupState.board.trackedFeatures:
+            newTF = builtFeature(tF.featType, None, None, None, None)
+            newTF.tracked = tF.tracked.copy()
+            newTF.locs = tF.locs.copy()
+            newTF.meepled = tF.meepled.copy()
+            newTF.coordsMeepled = tF.coordsMeepled.copy()
+            newTF.score = tF.score
+            newTF.adjacentCities = tF.adjacentCities.copy()
+            newTF.holes = tF.holes.copy()
+            newTF.completed = tF.completed
+            mutatedState.board.trackedFeatures.append(newTF)
+
+        #mutatedState.board.trackedFields = backupState.board.trackedFields.copy()
+        mutatedState.board.trackedFields = []
+        for tF in backupState.board.trackedFields:
+            newTF = builtFeature(tF.featType, None, None, None, None)
+            newTF.tracked = tF.tracked.copy()
+            newTF.locs = tF.locs.copy()
+            newTF.meepled = tF.meepled.copy()
+            newTF.coordsMeepled = tF.coordsMeepled.copy()
+            newTF.score = tF.score
+            newTF.adjacentCities = tF.adjacentCities.copy()
+            newTF.holes = tF.holes.copy()
+            newTF.completed = tF.completed
+            mutatedState.board.trackedFields.append(newTF)
+
+        #mutatedState.board.meepled = backupState.board.meepled.copy()
+        mutatedState.board.meepled = {}
+        for tuple, mI in backupState.board.meepled.items():
+            newMI = meepleInfo(mutatedState.players[mI.id], mI.featureObject)
+            mutatedState.board.meepled[tuple] = newMI
 
         mutatedState.board.cityEdges = backupState.board.cityEdges.copy()
         mutatedState.board.roadEdges = backupState.board.roadEdges.copy()

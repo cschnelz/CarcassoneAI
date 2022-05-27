@@ -148,10 +148,12 @@ class GreedyDeterminized(Agent):
         from Action import Action
         from State import State
 
-    DETERMINZATIONS = 1
-    CORES = 0
-    TOTINNER = 0
-    TOTONEDEP = 0
+    def __init__(self) -> None:
+        self.DETERMINZATIONS = 4
+        self.CORES = 0
+        self.TOTINNER = 0
+        self.TOTONEDEP = 0
+        self.calls = 0
     
 #     def getResponse(self, validActions, game:Game=None, maxPlayer=None):
         
@@ -354,7 +356,7 @@ class GreedyDeterminized(Agent):
     #             game.refreshSpecific(mutable, self.backupInner)
     #             #[mutable.applyAction(a, quiet=True) for a in self.action_stack]
             
-    #         return minEval, bestAction
+        #         return minEval, bestAction
 
 
 
@@ -365,6 +367,9 @@ class GreedyDeterminized(Agent):
         self.action_stack = []    
         determinzations = [game.state.order.copy() for i in range(self.DETERMINZATIONS)]
         
+        self.calls = 0
+        self.misses = 0
+        
         #[random.shuffle(d) for d in determinzations]
         
         ## goal: find the tile play that will get the best average continuation eval 
@@ -372,8 +377,8 @@ class GreedyDeterminized(Agent):
         best_avg_action = None
 
         mutable = game.startSim()
-        self.backup = game.startSim()
-        self.backupInner = game.startSim()
+        # self.backup = game.startSim()
+        # self.backupInner = game.startSim()
 
         depth = min(2, 71 - game.state.turn)
 
@@ -382,43 +387,58 @@ class GreedyDeterminized(Agent):
             avg_eval = 0.0
             examined = 0.0
             mutable.applyAction(action, quiet=True)
-            self.backup.applyAction(action, quiet=True)
-            self.backupInner.applyAction(action, quiet=True)
+            self.calls += 1
+            # self.backup.applyAction(action, quiet=True)
+            # self.backupInner.applyAction(action, quiet=True)
 
-            self.action_stack.append(action)
+            
 
             ## for this action, what the avg evaluation look like across sampled determinizations?
             for det in determinzations:
 
                 if mutable.dispatchSpecific(det[0]):
+                    self.action_stack.append(action)
                     ## two deep greedy search the continuation
                     curr_eval, ret = self.search2(mutable, game, det[1:len(det)], depth, 'zero')
                     ## accrue stats
                     avg_eval += curr_eval
                     examined += 1.0
+                    self.action_stack.pop() 
+                else:
+                    self.misses += 1
                     
             ## find average after examining the determinzations and compare it to current best
-            avg_eval = avg_eval / examined
+            if examined > 0:
+                avg_eval = avg_eval / examined
             if avg_eval < best_avg_eval:
                 best_avg_eval = avg_eval
                 best_avg_action = action
 
-            self.action_stack.pop()  
+             
             game.refresh(mutable)
-            game.refresh(self.backup)
-            game.refresh(self.backupInner)
+            # game.refresh(self.backup)
+            # game.refresh(self.backupInner)        
+                
 
         ## finally, return the action that we found to be the best across the sampled determinzations
+        ##print(self.misses)
+        if best_avg_action is None:
+            return random.choice(validActions)
         return best_avg_action
 
     def search2(self, mutable:State, game:Game, order:List[int], depth:int, maximizing:string) -> tuple(int, Action):
         bestAction = None
         maxEval = -math.inf
+
         for action in mutable.getActions():
             len_inner_z = len(mutable.getActions())
             ## apply action and save it to stack
+
             mutable.applyAction(action, quiet=True)
-            self.backupInner.applyAction(action, quiet=True)
+            self.calls += 1
+
+            
+            #self.backupInner.applyAction(action, quiet=True)
             if mutable.dispatchSpecific(order[0]):
                 self.action_stack.append(action)
                 
@@ -427,12 +447,24 @@ class GreedyDeterminized(Agent):
                 if res[0] > maxEval:
                     maxEval = res[0]
                     bestAction = action
+                else:
+                    self.misses += 1
 
                 ## pop action, rollback mutable state for next action
                 self.action_stack.pop()
-            game.refreshSpecific(mutable, self.backup)
-            game.refreshSpecific(self.backupInner, self.backup)
-            #[mutable.applyAction(a, quiet=True) for a in self.action_stack]
+            # game.refreshSpecific(mutable, self.backup)
+            # game.refreshSpecific(self.backupInner, self.backup)
+
+
+            game.refresh(mutable)
+            [mutable.applyAction(a, quiet=True) for a in self.action_stack]
+
+
+            # for i in range(len(mutable.getActions())):
+            #     tst = mutable.getActions()[i]
+            #     old = action_copy[i]
+            #     if tst != old:
+            #         print('waa')
             
         return maxEval, bestAction
 
@@ -440,21 +472,162 @@ class GreedyDeterminized(Agent):
         bestAction = None
                 
         minEval = math.inf
+<<<<<<< HEAD
         actions = mutable.getActions()
+=======
+>>>>>>> main
 
         for action in mutable.getActions():
             len_inner_o = len(mutable.getActions())
+
+            #STATE_COPY = copy.deepcopy(mutable)
             mutable.applyAction(action, quiet=True)
+            self.calls += 1
 
             res = self.search0(mutable,game,order[1:len(order)],depth-1,'zero')
             if res[0] < minEval:
                 minEval = res[0]
                 bestAction = action
+            else:
+                self.misses += 1
 
-            game.refreshSpecific(mutable, self.backupInner)
-            #[mutable.applyAction(a, quiet=True) for a in self.action_stack]
+            #game.refreshSpecific(mutable, self.backupInner)
+
+            game.refresh(mutable)
+            #mutable = game.startSim()
+            [mutable.applyAction(a, quiet=True) for a in self.action_stack]
+
+           # game.compareStates(mutable, STATE_COPY)
+
+
+            
             
         return minEval, bestAction
 
     def search0(self, mutable:State, game:Game, order:List[int], depth:int, maximizing:string):
         return mutable.scoreDelta(), None
+
+
+
+class Greedy2:
+    if TYPE_CHECKING:
+        from Game import Game
+        from Action import Action
+        from State import State
+
+    def __init__(self) -> None:
+        self.DETERMINZATIONS = 4
+        self.CORES = 0
+        self.TOTINNER = 0
+        self.TOTONEDEP = 0
+        self.calls = 0
+
+    def getResponse(self, validActions, game:Game=None, maxPlayer=None):
+      
+        ## generate a sample of random shuffles of possible next tiles - "determinzations"
+        self.action_stack = []    
+        determinzations = [game.state.order.copy() for i in range(self.DETERMINZATIONS)]
+        
+        self.calls = 0
+        self.misses = 0
+        
+        #[random.shuffle(d) for d in determinzations]
+        
+        ## goal: find the tile play that will get the best average continuation eval 
+        best_avg_eval = math.inf
+        best_avg_action = None
+
+        mutable = game.startSim()
+        # self.backup = game.startSim()
+        # self.backupInner = game.startSim()
+
+        depth = min(2, 71 - game.state.turn)
+
+        for action in mutable.getActions(): ## if a.meeple and a.feature.featType is not FeatType.GRASS]:
+            len_outer = len(mutable.getActions())
+            avg_eval = 0.0
+            examined = 0.0
+            mutable.applyAction(action, quiet=True)
+            self.calls += 1
+            # self.backup.applyAction(action, quiet=True)
+            # self.backupInner.applyAction(action, quiet=True)
+
+            
+
+            ## for this action, what the avg evaluation look like across sampled determinizations?
+            for det in determinzations:
+
+                if mutable.dispatchSpecific(det[0]):
+                    self.action_stack.append(action)
+                    ## two deep greedy search the continuation
+                    curr_eval, ret = self.search2(mutable, game, det[1:len(det)], depth, 'zero')
+                    ## accrue stats
+                    avg_eval += curr_eval
+                    examined += 1.0
+                    self.action_stack.pop() 
+                else:
+                    self.misses += 1
+                    
+            ## find average after examining the determinzations and compare it to current best
+            if examined > 0:
+                avg_eval = avg_eval / examined
+            ## we want the evaluation that has the best average score delta for us
+            if avg_eval < best_avg_eval:
+                best_avg_eval = avg_eval
+                best_avg_action = action
+
+             
+            game.refresh(mutable)
+            # game.refresh(self.backup)
+            # game.refresh(self.backupInner)        
+                
+
+        ## finally, return the action that we found to be the best across the sampled determinzations
+        ##print(self.misses)
+        if best_avg_action is None:
+            return random.choice(validActions)
+        return best_avg_action
+
+    def search2(self, mutable:State, game:Game, order:List[int], depth:int, maximizing:string) -> tuple(int, Action):
+        bestAction = None
+        maxEval = -math.inf
+
+        for action in mutable.getActions():
+            len_inner_z = len(mutable.getActions())
+            ## apply action and save it to stack
+
+            mutable.applyAction(action, quiet=True)
+            self.calls += 1
+
+            
+            #self.backupInner.applyAction(action, quiet=True)
+            if mutable.dispatchSpecific(order[0]):
+                self.action_stack.append(action)
+                
+                ## recurse in and get evaluation
+                eval = mutable.scoreDelta()
+
+                ## opp player wants to maximize their eval
+                if eval > maxEval:
+                    maxEval = eval
+                    bestAction = action
+                else:
+                    self.misses += 1
+
+                ## pop action, rollback mutable state for next action
+                self.action_stack.pop()
+            # game.refreshSpecific(mutable, self.backup)
+            # game.refreshSpecific(self.backupInner, self.backup)
+
+
+            game.refresh(mutable)
+            [mutable.applyAction(a, quiet=True) for a in self.action_stack]
+
+
+            # for i in range(len(mutable.getActions())):
+            #     tst = mutable.getActions()[i]
+            #     old = action_copy[i]
+            #     if tst != old:
+            #         print('waa')
+            
+        return maxEval, bestAction

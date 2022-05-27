@@ -123,185 +123,185 @@ def render2(board: Board):
 
 
 
+class Renderer():
+    def __init__(self) -> None:
+        self.top = tk.Tk()
+        self.top.geometry("800x800")
+
+        self.MEEPLE_SIZE = 35
+        self.TILE_SIZE = 100
+
+        self.images = []
+
+        self.currTileFrame = tk.Frame(self.top)
+        self.gridFrame = tk.Frame(self.top)
+        self.gridFrameY = tk.Frame(self.top)
+        self.canvas = tk.Canvas(self.top, width=1000, height=1000)
 
 
-top = tk.Tk()
-top.geometry("800x800")
+    def destroyFrames(self):
+        for widgets in self.gridFrameY.winfo_children():
+            widgets.destroy()
+        self.gridFrameY.pack_forget()
+        for widgets in self.currTileFrame.winfo_children():
+            widgets.destroy()
+        self.currTileFrame.pack_forget()
+        for widgets in self.gridFrame.winfo_children():
+            widgets.destroy()
+        self.gridFrame.pack_forget()
 
-MEEPLE_SIZE = 35
-TILE_SIZE = 100
+    def rotateAndRedraw(self, board: Board, currTile: Tile, players: List[Player]):
+        rTile = rotate(currTile, 1)
+        self.render3(board, rTile, players)
 
-images = []
+    def drawCurrTileOrient(self, root, currTile, orient):
+        img = Image.open(rf'Images/tile-{currTile[0].imgCode}.png')
+        imgR = self.rotateImage(img, orient)
+        imgTk = ImageTk.PhotoImage(imgR)
+        label = tk.Label(root, text="Current Tile:")
+        label.grid(column=orient,row=0)
 
-def destroyFrames():
-    for widgets in gridFrameY.winfo_children():
-        widgets.destroy()
-    gridFrameY.pack_forget()
-    for widgets in currTileFrame.winfo_children():
-        widgets.destroy()
-    currTileFrame.pack_forget()
-    for widgets in gridFrame.winfo_children():
-        widgets.destroy()
-    gridFrame.pack_forget()
+        # create the label for the current tile image
+        labelImg = tk.Label(root, image=imgTk)
+        labelImg.img = imgTk
+        labelImg.grid(column=orient,row=1)
 
-def rotateAndRedraw(board: Board, currTile: Tile, players: List[Player]):
-    rTile = rotate(currTile, 1)
-    render3(board, rTile, players)
+        labelO = tk.Label(root, text=f"Orientation {orient}")
+        labelO.grid(column=orient, row=2)
 
-def drawCurrTileOrient(root, currTile, orient):
-    img = Image.open(rf'Images/tile-{currTile[0].imgCode}.png')
-    imgR = rotateImage(img, orient)
-    imgTk = ImageTk.PhotoImage(imgR)
-    label = tk.Label(root, text="Current Tile:")
-    label.grid(column=orient,row=0)
+    def drawCurrTile(self, root, currTile: Tile, players: List[Player], board):
+        for i in range(4):
+            self.drawCurrTileOrient(root, currTile, i)
 
-    # create the label for the current tile image
-    labelImg = tk.Label(root, image=imgTk)
-    labelImg.img = imgTk
-    labelImg.grid(column=orient,row=1)
+        labelScore = tk.Label(root, text="Current Score:")
+        labelScore.grid(column=5,row=0, padx=20)
+        labelScore2 = tk.Label(root, text=f"{players[0].color} {players[0].score} | {players[1].color} {players[1].score}")
+        labelScore2.grid(column=5, row=1)
 
-    labelO = tk.Label(root, text=f"Orientation {orient}")
-    labelO.grid(column=orient, row=2)
+        root.grid(column=0,row=1, pady=10, columnspan=5)
 
-def drawCurrTile(root, currTile: Tile, players: List[Player], board):
-    for i in range(4):
-        drawCurrTileOrient(root, currTile, i)
+    def drawCoordsY(self, root, board: Board):
+        for y in range(board.minY, board.maxY + 1):
+            label = tk.Label(root, text=f'{y}')
+            label.grid(column=0, row=y - board.minY, pady=40, sticky='w')
+        root.grid(column=0, row=3,padx=10, sticky="n")
 
-    labelScore = tk.Label(root, text="Current Score:")
-    labelScore.grid(column=5,row=0, padx=20)
-    labelScore2 = tk.Label(root, text=f"{players[0].color} {players[0].score} | {players[1].color} {players[1].score}")
-    labelScore2.grid(column=5, row=1)
-
-    root.grid(column=0,row=1, pady=10, columnspan=5)
-
-def drawCoordsY(root, board: Board):
-    for y in range(board.minY, board.maxY + 1):
-        label = tk.Label(root, text=f'{y}')
-        label.grid(column=0, row=y - board.minY, pady=40, sticky='w')
-    root.grid(column=0, row=3,padx=10, sticky="n")
-
-def drawCoords(root, board: Board):
-    for x in range(board.minX, board.maxX+1):
-        label = tk.Label(root, text=f'{x}')
-        label.grid(row=0, column=x - board.minX, padx=40, sticky='n')
-    root.grid(column=1, row=2,pady=10, sticky="w")
+    def drawCoords(self, root, board: Board):
+        for x in range(board.minX, board.maxX+1):
+            label = tk.Label(root, text=f'{x}')
+            label.grid(row=0, column=x - board.minX, padx=40, sticky='n')
+        root.grid(column=1, row=2,pady=10, sticky="w")
 
 
-def rotateImage(img, orientation):
-    if orientation == 0:
-        return img
-    if orientation == 1:
-        return img.rotate(270)
-    if orientation == 2:
-        return img.rotate(180)
-    if orientation == 3:
-        return img.rotate(90)
+    def rotateImage(self, img, orientation):
+        if orientation == 0:
+            return img
+        if orientation == 1:
+            return img.rotate(270)
+        if orientation == 2:
+            return img.rotate(180)
+        if orientation == 3:
+            return img.rotate(90)
 
-def meepleOffset(board: Board, x: int, y: int, meeple: meepleInfo, t: Tile):
-    xCoord = (x - board.minX) * TILE_SIZE
-    yCoord = (y - board.minY)* TILE_SIZE
+    def meepleOffset(self, board: Board, x: int, y: int, meeple: meepleInfo, t: Tile):
+        xCoord = (x - board.minX) * self.TILE_SIZE
+        yCoord = (y - board.minY)* self.TILE_SIZE
 
-    if t.chapel:
+        if t.chapel:
+            return xCoord, yCoord
+
+        if meeple.feature:
+            if meeple.edge == 0:
+                yCoord -= self.MEEPLE_SIZE
+            elif meeple.edge == 1:
+                xCoord += self.MEEPLE_SIZE
+            elif meeple.edge == 2:
+                yCoord += self.MEEPLE_SIZE
+            else:
+                xCoord -= self.MEEPLE_SIZE
+        else:
+            if meeple.edge == 0:
+                yCoord -= (self.MEEPLE_SIZE - 10)
+                xCoord -= (self.MEEPLE_SIZE - 15)
+            elif meeple.edge == 1:
+                yCoord -= (self.MEEPLE_SIZE - 10)
+                xCoord += (self.MEEPLE_SIZE - 15)
+            elif meeple.edge == 2:
+                yCoord -= (self.MEEPLE_SIZE - 15)
+                xCoord += (self.MEEPLE_SIZE - 10)
+            elif meeple.edge == 3:
+                yCoord += (self.MEEPLE_SIZE - 15)
+                xCoord += (self.MEEPLE_SIZE - 10)
+            elif meeple.edge == 4:
+                yCoord += (self.MEEPLE_SIZE - 10)
+                xCoord += (self.MEEPLE_SIZE - 15)
+            elif meeple.edge == 5:
+                yCoord -= (self.MEEPLE_SIZE - 10)
+                xCoord -= (self.MEEPLE_SIZE - 15)
+            elif meeple.edge == 6:
+                yCoord -= (self.MEEPLE_SIZE - 15)
+                xCoord -= (self.MEEPLE_SIZE - 10)
+            elif meeple.edge == 7:
+                yCoord -= (self.MEEPLE_SIZE - 15)
+                xCoord -= (self.MEEPLE_SIZE - 10)
+
+
         return xCoord, yCoord
 
-    if meeple.feature:
-        if meeple.edge == 0:
-            yCoord -= MEEPLE_SIZE
-        elif meeple.edge == 1:
-            xCoord += MEEPLE_SIZE
-        elif meeple.edge == 2:
-            yCoord += MEEPLE_SIZE
-        else:
-            xCoord -= MEEPLE_SIZE
-    else:
-        if meeple.edge == 0:
-            yCoord -= (MEEPLE_SIZE - 10)
-            xCoord -= (MEEPLE_SIZE - 15)
-        elif meeple.edge == 1:
-            yCoord -= (MEEPLE_SIZE - 10)
-            xCoord += (MEEPLE_SIZE - 15)
-        elif meeple.edge == 2:
-            yCoord -= (MEEPLE_SIZE - 15)
-            xCoord += (MEEPLE_SIZE - 10)
-        elif meeple.edge == 3:
-            yCoord += (MEEPLE_SIZE - 15)
-            xCoord += (MEEPLE_SIZE - 10)
-        elif meeple.edge == 4:
-            yCoord += (MEEPLE_SIZE - 10)
-            xCoord += (MEEPLE_SIZE - 15)
-        elif meeple.edge == 5:
-            yCoord -= (MEEPLE_SIZE - 10)
-            xCoord -= (MEEPLE_SIZE - 15)
-        elif meeple.edge == 6:
-            yCoord -= (MEEPLE_SIZE - 15)
-            xCoord -= (MEEPLE_SIZE - 10)
-        elif meeple.edge == 7:
-            yCoord -= (MEEPLE_SIZE - 15)
-            xCoord -= (MEEPLE_SIZE - 10)
-
-
-    return xCoord, yCoord
-
-def drawMeeple(canvas: tk.Canvas, board: Board, x, y, node: Node):
-    coords = (node.x, node.y)
-    
-    if coords in board.meepled.keys():
-        meeple: meepleInfo = board.meepled.get(coords)
-        meepleImage = ImageTk.PhotoImage(Image.open(rf'Images/{meeple.color}.png').resize((MEEPLE_SIZE,MEEPLE_SIZE)))
-        images.append(meepleImage)
-
-        xCoord, yCoord = meepleOffset(board, x, y, meeple, node.tile)
-        canvas.create_image(xCoord,yCoord, image=meepleImage)
-
-    # if t.occupied is not None and t.occupied.occupiedBy is not None:
-    #     color = t.occupied.occupiedBy.color
+    def drawMeeple(self, canvas: tk.Canvas, board: Board, x, y, node: Node):
+        coords = (node.x, node.y)
         
-    #     meeple = ImageTk.PhotoImage(Image.open(rf'Images/{color}.png').resize((MEEPLE_SIZE,MEEPLE_SIZE)))
-    #     images.append(meeple)
+        if coords in board.meepled.keys():
+            meeple: meepleInfo = board.meepled.get(coords)
+            meepleImage = ImageTk.PhotoImage(Image.open(rf'Images/{meeple.color}.png').resize((self.MEEPLE_SIZE,self.MEEPLE_SIZE)))
+            self.images.append(meepleImage)
+
+            xCoord, yCoord = self.meepleOffset(board, x, y, meeple, node.tile)
+            canvas.create_image(xCoord,yCoord, image=meepleImage)
+
+        # if t.occupied is not None and t.occupied.occupiedBy is not None:
+        #     color = t.occupied.occupiedBy.color
+            
+        #     meeple = ImageTk.PhotoImage(Image.open(rf'Images/{color}.png').resize((MEEPLE_SIZE,MEEPLE_SIZE)))
+        #     images.append(meeple)
+            
+        #     xCoord, yCoord = meepleOffset(board, x, y, t)
+        #     canvas.create_image(xCoord,yCoord, image=meeple)
+
+    def drawTile(self, canvas: tk.Canvas, board: Board, x, y, node: Node):
+        img = Image.open(rf'Images/tile-{node.tile.imgCode}.png')
+        imgR = self.rotateImage(img, node.tile.orientation)
+        imgTk = ImageTk.PhotoImage(imgR)
+        self.images.append(imgTk)
+
+        canvas.create_image((x - board.minX) * self.TILE_SIZE, (y - board.minY)* self.TILE_SIZE,image=imgTk)
+
+        self.drawMeeple(canvas, board, x, y, node)
+        #label.grid(column= x - board.minX, row= y - board.minY)
         
-    #     xCoord, yCoord = meepleOffset(board, x, y, t)
-    #     canvas.create_image(xCoord,yCoord, image=meeple)
 
-def drawTile(canvas: tk.Canvas, board: Board, x, y, node: Node):
-    img = Image.open(rf'Images/tile-{node.tile.imgCode}.png')
-    imgR = rotateImage(img, node.tile.orientation)
-    imgTk = ImageTk.PhotoImage(imgR)
-    images.append(imgTk)
+        #canvas.grid(column= x - board.minX, row= y - board.minY)
 
-    canvas.create_image((x - board.minX) * TILE_SIZE, (y - board.minY)* TILE_SIZE,image=imgTk)
+    def render3(self, board: Board, currTile: Tile, players: List[Player]):
+        self.destroyFrames()
+        for widget in self.canvas.winfo_children():
+            widget.destroy()
+        self.canvas.pack_forget()
+        self.canvas.destroy()
+        self.canvas = tk.Canvas(self.top, width=1000, height=1000)
+     
+        del self.images
+        self.images = []
 
-    drawMeeple(canvas, board, x, y, node)
-    #label.grid(column= x - board.minX, row= y - board.minY)
-    
+        self.drawCurrTile(self.currTileFrame, currTile, players, board)
+        self.drawCoordsY(self.gridFrameY, board)
+        self.drawCoords(self.gridFrame, board)
+        #frame.grid(column=3, row=3, rowspan=(board.maxY- board.minY), columnspan=(board.maxX - board.minX))
+        self.canvas.grid(column=1, row=3, padx=40, pady=50)
+        for item, node in board.board.items():
+            self.drawTile(self.canvas, board, item[0], item[1], node)
 
-    #canvas.grid(column= x - board.minX, row= y - board.minY)
+        #can.create_rectangle(50,50,1010,1010,fill="red")
 
-currTileFrame = tk.Frame(top)
-gridFrame = tk.Frame(top)
-gridFrameY = tk.Frame(top)
-canvas = tk.Canvas(top, width=1000, height=1000)
-
-def render3(board: Board, currTile: Tile, players: List[Player]):
-    destroyFrames()
-    global canvas
-    for widget in canvas.winfo_children():
-        widget.destroy()
-    canvas.pack_forget()
-    canvas.destroy()
-    canvas = tk.Canvas(top, width=1000, height=1000)
-    global images
-    del images
-    images = []
-
-    drawCurrTile(currTileFrame, currTile, players, board)
-    drawCoordsY(gridFrameY, board)
-    drawCoords(gridFrame, board)
-    #frame.grid(column=3, row=3, rowspan=(board.maxY- board.minY), columnspan=(board.maxX - board.minX))
-    canvas.grid(column=1, row=3, padx=40, pady=50)
-    for item, node in board.board.items():
-        drawTile(canvas, board, item[0], item[1], node)
-
-    #can.create_rectangle(50,50,1010,1010,fill="red")
-
-    #frame.grid(column=2, row=2, rowspan=(board.maxY- board.minY), columnspan=(board.maxX - board.minX))
-    top.update()
+        #frame.grid(column=2, row=2, rowspan=(board.maxY- board.minY), columnspan=(board.maxX - board.minX))
+        self.top.update()

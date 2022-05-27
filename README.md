@@ -1,4 +1,14 @@
 ## Carcassone-AI
 
 
-Developing a carcassone computer opponent to compete against a human player in a hand-made python Carcassone implementation. 
+
+
+## About the Project
+
+The goal of this project was to explore the possibilities of applying 
+
+
+## Built With
+
+The backend, API, and agents are made with pure python. 
+The UI is built with [PyQt5](https://pypi.org/project/PyQt5/)

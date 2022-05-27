@@ -1,232 +1,411 @@
-from doctest import master
-from re import L
-import tkinter
-from turtle import back
+from time import sleep
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QApplication, QMainWindow
+from PyQt5.QtGui import QIcon, QPixmap, QFont
+from PyQt5.QtCore import QSize, pyqtSignal, QObject
+from Agents.Agent import Agent, HumanAgent
+from Agents.MctsAgents import MCTS_Saver
+
 from Game import Game
-from Agents import *
-from PIL import Image, ImageTk
-from functools import partial
 from Action import Action
-from Feature import Feature
+from Feature import FeatType
+import random
+
+import sys
+from functools import partial
 import threading
+import math
 
 
 
+class Ui_MainWindow(object):
+    def setupUi(self, MainWindow):
+
+        MainWindow.setObjectName("MainWindow")
+        MainWindow.resize(self.UIWIDTH, self.UIHEIGHT)
+        self.centralwidget = QtWidgets.QWidget(MainWindow)
+        self.centralwidget.setObjectName("centralwidget")
+
+        self.menuWIDTH = 250
+        self.menuPAD = 25
+        self.menuX = self.UIWIDTH - self.menuWIDTH - self.menuPAD
+        self.menuY = self.menuPAD
+
+        subTitle = QFont("Times", 15)
+        title = QFont("Times", 25)
+
+
+        self.NewGameBtn = QtWidgets.QPushButton(self.centralwidget)
+        self.NewGameBtn.setObjectName("NewGameBtn")
+        self.NewGameBtn.setGeometry(self.menuX, self.menuY, self.menuWIDTH, 40)
+        self.NewGameBtn.setText("Start New Game")
+        self.NewGameBtn.clicked.connect(self.cleanup)
+
+        self.rotateBtn = QtWidgets.QPushButton(self.centralwidget)
+        self.rotateBtn.setGeometry(QtCore.QRect(self.menuX - 175, 250, 100, 40))
+        self.rotateBtn.setFont(QFont("Times",20))
+        self.rotateBtn.setText("Rotate")
+
+        currentTileTitle = QtWidgets.QLabel(self.centralwidget)
+        currentTileTitle.setGeometry(self.menuX - 190, 25, 150, 80)
+        currentTileTitle.setFont(QFont("Times",20))
+        currentTileTitle.setText("Current Tile")
+
+
+        self.randBtn = QtWidgets.QPushButton(self.centralwidget)
+        self.randBtn.setGeometry(QtCore.QRect(self.menuX - 100, 210, 80, 23))
+        self.randBtn.setObjectName("randBtn")
+        self.randBtn.setText("Random")
+        
+        self.carcLogo = QtWidgets.QLabel(self.centralwidget)
+        self.carcLogo.setGeometry(QtCore.QRect(15, 15, 300, 81))
+        self.carcImg = QPixmap('Images/logo.png')
+        self.carcLogo.setPixmap(self.carcImg)
+        self.carcLogo.setScaledContents(True)
+
+        self.scorePop = QtWidgets.QLabel(self.centralwidget)
+        self.scorePop.setGeometry(350, 15, 800, 80)
+        self.scorePop.setFont(title)
+        self.scorePop.setText("")
+        self.scorePop.setObjectName("ScoreBug")
+
+        self.currTile = QtWidgets.QLabel(self.centralwidget)
+        self.currTile.setGeometry(QtCore.QRect(self.menuX - 200, self.menuY + self.NewGameBtn.height() + self.menuPAD, 150, 150))
+        self.currTile.setText("")
+        self.currTile.setObjectName("currTile")
+        self.currTile.setScaledContents(True)
+
+        self.startTile = QtWidgets.QLabel(self.centralwidget)
+        self.startTile.setGeometry(QtCore.QRect(260, 270, 71, 61))
+        self.startTile.setText("")
+        self.startTile.setObjectName("startTile")
+
+        self.endScore = QtWidgets.QLabel(self.centralwidget)
+        self.endScore.setGeometry(self.cX - 100, self.cY - 200, 600, 30)
+        self.endScore.setFont(QFont("Times", 25))
+
+        self.endBtn = QtWidgets.QPushButton(self.centralwidget)
+        self.endBtn.setFont(QFont("Time", 25))
+        self.endBtn.setText("Play Again?")
+        self.endBtn.setGeometry(self.cX - 50, self.cY - 100, 200, 50)
+        self.endBtn.hide()
+        self.endBtn.clicked.connect(self.cleanup)
+   
+        ####
+        ####  RIGHT HAND MENUS
+        ####
+
+        nextFrameY =  self.menuY + self.NewGameBtn.height() + self.menuPAD
+        #### SCOREBOARD
+        self.ScoreFrame = QtWidgets.QFrame(self.centralwidget)
+        self.ScoreFrame.setGeometry(QtCore.QRect(self.menuX, nextFrameY, self.menuWIDTH, 131))
+        self.ScoreFrame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.ScoreFrame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.ScoreFrame.setObjectName("ScoreFrame")
+        self.verticalLayoutWidget = QtWidgets.QWidget(self.ScoreFrame)
+        self.verticalLayoutWidget.setGeometry(QtCore.QRect(10, 10, 201, 111))
+        self.verticalLayoutWidget.setObjectName("verticalLayoutWidget")
+        self.ScoreBoard = QtWidgets.QVBoxLayout(self.verticalLayoutWidget)
+        self.ScoreBoard.setContentsMargins(0, 0, 0, 0)
+        self.ScoreBoard.setObjectName("ScoreBoard")
+
+        self.menu_Scoreboard = QtWidgets.QLabel(self.verticalLayoutWidget)
+        self.menu_Scoreboard.setText("Scoreboard")
+        self.menu_Scoreboard.setFont(QFont("Times", 20))
+        self.ScoreBoard.addWidget(self.menu_Scoreboard)
+        self.ScoreLabel = QtWidgets.QLabel(self.verticalLayoutWidget)
+        self.ScoreLabel.setText("Score: Red 0 | Blue 0")
+        self.ScoreLabel.setFont(subTitle)
+        self.ScoreBoard.addWidget(self.ScoreLabel)
+        self.TurnsLabel = QtWidgets.QLabel(self.verticalLayoutWidget)
+        self.TurnsLabel.setText("Turns Remaining: 30")
+        self.TurnsLabel.setFont(subTitle)
+        self.ScoreBoard.addWidget(self.TurnsLabel)
+
+        nextFrameY += self.ScoreFrame.height() + self.menuPAD
+        ## MEEPLE STOCK
+        self.MeeplesFrame = QtWidgets.QFrame(self.centralwidget)
+        self.MeeplesFrame.setGeometry(QtCore.QRect(self.menuX, nextFrameY, self.menuWIDTH, 150))
+        self.MeeplesFrame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.MeeplesFrame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.MeeplesFrame.setObjectName("MeeplesFrame")
+        self.verticalLayoutWidget_4 = QtWidgets.QWidget(self.MeeplesFrame)
+        self.verticalLayoutWidget_4.setGeometry(QtCore.QRect(10, 10, self.menuWIDTH - 10, self.MeeplesFrame.height() - 10))
+        self.verticalLayoutWidget_4.setObjectName("verticalLayoutWidget_4")
+        self.ScoreBoard_4 = QtWidgets.QVBoxLayout(self.verticalLayoutWidget_4)
+        self.ScoreBoard_4.setContentsMargins(0, 0, 0, 0)
+        self.ScoreBoard_4.setObjectName("ScoreBoard_4")
+        self.menu_Meeples_2 = QtWidgets.QLabel(self.verticalLayoutWidget_4)
+        self.menu_Meeples_2.setText("Meeples Remaining")
+        self.menu_Meeples_2.setFont(QFont("Times", 20))
+        self.ScoreBoard_4.addWidget(self.menu_Meeples_2)
+        self.redMeepLabel = QtWidgets.QLabel(self.verticalLayoutWidget_4)
+        self.redMeepLabel.setText("7: ")
+        self.redMeepLabel.setFont(QFont("Times", 15))
+        self.ScoreBoard_4.addWidget(self.redMeepLabel)
+        self.blueMeepLabel = QtWidgets.QLabel(self.verticalLayoutWidget_4)
+        self.blueMeepLabel.setText("7: ")
+        self.blueMeepLabel.setFont(QFont("Times", 15))
+        self.ScoreBoard_4.addWidget(self.blueMeepLabel)
+
+        nextFrameY += self.MeeplesFrame.height() + self.menuPAD
+        ##### AGENT INFO
+        self.AgentFrame = QtWidgets.QFrame(self.centralwidget)
+        self.AgentFrame.setGeometry(QtCore.QRect(self.menuX, nextFrameY, self.menuWIDTH, 450))
+        self.AgentFrame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        self.AgentFrame.setFrameShadow(QtWidgets.QFrame.Raised)
+        self.AgentFrame.setObjectName("AgentFrame")
+
+        self.menu_Agent = QtWidgets.QLabel(self.AgentFrame)
+        self.menu_Agent.setText("Peek into the Bot")
+        self.menu_Agent.setFont(QFont("Times", 20))
+        self.menu_Agent.setGeometry(10, 20, self.menuWIDTH - 10, 31)
+
+        self.menu_Estimates = QtWidgets.QLabel(self.AgentFrame)
+        self.menu_Estimates.setText("Current Best Estimates")
+        self.menu_Estimates.setFont(subTitle)
+        self.menu_Estimates.setGeometry(10, 60, self.menuWIDTH - 10, 20)
+
+
+        self.firstBorder = QtWidgets.QLabel(self.AgentFrame)
+        self.firstBorder.setGeometry(7, 87, 86, 86)
+        self.firstBorder.setScaledContents(True)
+        self.firstReal = QtWidgets.QLabel(self.centralwidget)
+        self.firstReal.setScaledContents(True)
+        self.firstReal.setPixmap(self.orange)
+        self.firstReal.setGeometry(0,0,80,80)
+        self.firstReal.hide()
+
+        self.secondBorder = QtWidgets.QLabel(self.AgentFrame)
+        self.secondBorder.setGeometry(7, 182, 86, 86)
+        self.secondBorder.setScaledContents(True)
+        self.secondReal = QtWidgets.QLabel(self.centralwidget)
+        self.secondReal.setScaledContents(True)
+        self.secondReal.setPixmap(self.purple)
+        self.secondReal.setGeometry(0,0,80,80)
+        self.secondReal.hide()
+
+        self.thirdBorder = QtWidgets.QLabel(self.AgentFrame)
+        self.thirdBorder.setGeometry(7, 272, 86, 86)
+        self.thirdBorder.setScaledContents(True)
+        self.thirdReal = QtWidgets.QLabel(self.centralwidget)
+        self.thirdReal.setScaledContents(True)
+        self.thirdReal.setPixmap(self.green)
+        self.thirdReal.setGeometry(0,0,80,80)
+        self.thirdReal.hide()
+
+        self.First = QtWidgets.QLabel(self.AgentFrame)
+        self.First.setText("First")
+        self.First.setGeometry(10, 90, 80, 80)
+        self.First.setScaledContents(True)
+        self.FirstScore = QtWidgets.QLabel(self.AgentFrame)
+        self.FirstScore.setGeometry(100, 130, 80, 20)
+
+        self.Second = QtWidgets.QLabel(self.AgentFrame)
+        self.Second.setText("Second")
+        self.Second.setGeometry(10, 185, 80, 80)
+        self.Second.setScaledContents(True)
+        self.SecondScore = QtWidgets.QLabel(self.AgentFrame)
+        self.SecondScore.setGeometry(100, 225, 80, 20)
+
+        self.Third = QtWidgets.QLabel(self.AgentFrame)
+        self.Third.setText("Third")
+        self.Third.setGeometry(10, 275, 80, 80)
+        self.Third.setScaledContents(True)
+        self.thirdScore = QtWidgets.QLabel(self.AgentFrame)
+        self.thirdScore.setGeometry(100, 315, 80, 20)
+
+        self.estimateScores = [self.FirstScore, self.SecondScore, self.thirdScore]
+        self.estimateLabels = [self.First, self.Second, self.Third]
+        self.estimateMeeples = [QtWidgets.QLabel(self.AgentFrame) for x in range(3)]
+        self.estimateLocs = [self.firstReal, self.secondReal, self.thirdReal]
+
+        self.menu_progress = QtWidgets.QLabel(self.AgentFrame)
+        self.menu_progress.setText("Evaluation Progress")
+        self.menu_progress.setFont(subTitle)
+        self.menu_progress.setGeometry(10, 360, self.menuWIDTH - 20, 25)
+
+        self.progressBar = QtWidgets.QProgressBar(self.AgentFrame)
+        self.progressBar.setProperty("value", 0)
+        self.progressBar.setGeometry(10, 400, self.menuWIDTH - 20, 23)
+
+        progInfo = QtWidgets.QLabel(self.AgentFrame)
+        progInfo.setText("10% Represents 1250 Iterations")
+        progInfo.setGeometry(20, 425, self.menuWIDTH - 20, 20)
+
+
+        MainWindow.setCentralWidget(self.centralwidget)
+        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 810, 20))
+        self.menubar.setObjectName("menubar")
+        MainWindow.setMenuBar(self.menubar)
+        self.statusbar = QtWidgets.QStatusBar(MainWindow)
+        self.statusbar.setObjectName("statusbar")
+        MainWindow.setStatusBar(self.statusbar)
 
 
 
-def rotateImage(img, orientation):
-    if orientation == 0:
-        return img
-    if orientation == 1:
-        return img.rotate(270)
-    if orientation == 2:
-        return img.rotate(180)
-    if orientation == 3:
-        return img.rotate(90)
+        self.retranslateUi(MainWindow)
+        QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
-class app:
-    #WIDTH = 2000
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        
 
-    def __init__(self) -> None:
-        self.t = tkinter.Tk()
-        self.closeBtn = tkinter.Button(self.t, command=self.t.destroy, text='Close')
-        self.closeBtn.pack()
-        self.newGameBtn = tkinter.Button(self.t, command=self.newGameB, text='New Game')
-        self.newGameBtn.pack()
-
-        self.WIDTH = 2000
-        self.HEIGHT = 900
-        self.TILESIZE = 80
-        self.HALFTILE = self.TILESIZE / 2
-
-        self.cX = self.WIDTH / 2 - self.HALFTILE - 200
-        self.cY = self.HEIGHT / 2 - self.HALFTILE + 50
-
-        self.CANVASBG = 'gray75'
-
-        self.MaxTurns = 30
-       
-        self.carcassonne = None
-        self.board = None
-        self.images = []
-        self.stock = []
-        self.orientation = 0
-        self.currTileImg = None
-
-        self.bestAgentRectangles = [None for i in range(3)]
-
-        self.bestAgentTiles = []
-        self.bestAgentMeeples = []
-        # self.bestAgentLabels = [tkinter.Label(self.c, image=None, bg=colors[i], borderwidth=2) for i in range(3)]
-        # for i in range(3):
-        #     self.bestAgentLabels[i].place(x=1300, y=500 + (100 * i))
-
-
-        self.meeples = {}
-        self.meepleButtons = []
-        self.meepleButtonImgs = []
-        self.buttons = [] 
-
-        self.stats = []
-        self.statsIter = 0
-        self.statsMax = 0
-        self.currActions = None
-        self.labelPtr = None
 
     def init(self):
-        self.spawnGame()
-        self.t.mainloop()
+        app = QApplication(sys.argv)
+        app.setFont(QFont('Times'))
+        win = QMainWindow()
+
+        self.orange = QPixmap('Images/orange.png')
+        self.purple = QPixmap('Images/purple.png')
+        self.green = QPixmap('Images/green.png')
+
+        self.UIWIDTH = 1900
+        self.UIHEIGHT = 950
+        self.cX = 750
+        self.cY = 500
+
+        self.setupUi(win)
+        self.retranslateUi(win)
 
   
+        self.tileSize = 80
+        self.halfSize = int(self.tileSize / 2)
+        self.meepleSize = 40
+        self.halfMeeple = int(self.meepleSize / 2)
 
-    def spawnGame(self):
-        ## canvas
-        self.c = tkinter.Canvas(self.t, width=self.WIDTH,height=self.HEIGHT,background=self.CANVASBG)
-        self.c.pack(expand='YES', fill='both')
+        self.randBtn.clicked.connect(self.randPlay)
+        self.randBtn.hide()
+        self.rotateBtn.clicked.connect(self.rotate)
 
-        # Carcassonne Logo
-        self.logo = ImageTk.PhotoImage(Image.open(rf'Images/logo.png').resize((500,150)), master=self.c)
-        self.c.create_image(260, 85, image=self.logo)
+        self.agent = Agent()
+        self.agent.res.connect(self.agentPlay)
+        self.agent.best.connect(self.trackProgress)
 
-        # current tile things
-        self.rotateButton = tkinter.Button(self.c, command=self.rotate,text='Rotate Tile')
-        self.rotateButton.place(x=1325,y=180)
-        tkinter.Label(self.c, text='Current Tile', font=("Arial", 25), background=self.CANVASBG).place(x=1290,y=25)
+ 
 
-        ## Labels and border for scorboard
-        self.scoreLabel = tkinter.Label(self.c, text=f'Score: Red 0 | Blue 0', font=("Arial", 25), bg=self.CANVASBG)
-        self.scoreLabel.place(x=1525, y=35)
-        self.toMoveLabel = tkinter.Label(self.c, text=f'Red to play', font=("Arial", 25),bg=self.CANVASBG)
-        self.toMoveLabel.place(x=1525, y=85)
-        self.turnsLabel = tkinter.Label(self.c, font=("Arial", 25),bg=self.CANVASBG, text=f'{self.MaxTurns} turns left')
-        self.turnsLabel.place(x=1525, y=135)
-        self.c.create_rectangle(1500, 25, 1900, 300, width=5)
+        self.newGame()
 
-        ## Labels and outline for MCTS info
-        tkinter.Label(self.c, text="A Peek Into the Agent", font=("Arial", 20), bg=self.CANVASBG).place(x=1500, y=375)
-        tkinter.Label(self.c, text="Current Best Estimate:", font=("Arial",15), bg=self.CANVASBG).place(x=1550, y=450)
-        self.c.create_rectangle(1500, 425, 1900, 900, width=5)
-      
-        colors = ['orange', 'green', 'yellow']
-        for ind in range(3):
-            self.c.create_rectangle(1550, 500 + (120 * ind), 1650, 600 + (120 * ind), outline=colors[ind], width=5)
+        win.show()
+        sys.exit(app.exec_())
 
-        self.bestAgentInfos = [tkinter.Label(self.c, text="Score: ", font=("Arial",15), bg=self.CANVASBG) for i in range(3)]
-        for i in range(3):
-            self.bestAgentInfos[i].place(x=1700, y=525 + (i * 125))
+    def cleanup(self):
+        for lb in self.tileLabels:
+            lb.setParent(None)
+            del lb
+        self.tileLabels = []
 
-        ## Start a new game
-        self.carcassonne = Game(players=[HumanAgent(), MCTS_Saver(info='Heuristic')])
-        #self.carcassonne = Game(players=[HumanAgent(), HumanAgent()], order=[24,20,13,6,53,56,18])
-        self.carcassonne.state.turn = 72 - self.MaxTurns
+        for loc, lb in self.meepleLabels.items():
+            lb.hide()
+        self.meepleLabels = {}
 
-        self.board = self.carcassonne.state.board
+        for lb in self.tilePlaceBtns:
+            lb.setParent(None)
+            del lb
+        self.tilePlaceBtns = []
 
-        self.images = []
+        for lb in self.meeplePlaceBtns:
+            lb.setParent(None)
+            del lb
+        self.meeplePlaceBtns = []
 
-        self.drawTile(0,0,self.board.board[(0,0)].tile)
-        self.orientation = 0
-        self.drawCurrTile()
-        self.drawLocations()
-        self.scoreBoard()
-        self.meepleStock()
+        for lb in self.redMeepStock:
+            lb.setParent(None)
+            del lb
+        self.redMeepStock = []
 
-        
-        
+        for lb in self.blueMeepStock:
+            lb.setParent(None)
+            del lb
+        self.blueMeepStock = []
 
-    #################
-    #
-    #   HEADERS
-    #
-    ################
-    def meepleStock(self):
-        mRed = self.carcassonne.state.players[0].meepleCount
-        mBlue = self.carcassonne.state.players[1].meepleCount
+        self.newGame()
 
-        self.stock = []
-        tkinter.Label(text=f'{mRed}:', font=("Arial",25), background=self.CANVASBG).place(x=1525,y=250)
-        tkinter.Label(text=f'{mBlue}:', font=("Arial",25), background=self.CANVASBG).place(x=1525,y=310)
-        for i in range(mRed):
-            meepleImage = ImageTk.PhotoImage(Image.open(rf'Images/red.png').resize((50,50)), master=self.c)
-            self.stock.append(meepleImage)
-            self.c.create_image(1585 + (i * 25),215, image=meepleImage)
-        for i in range(mBlue):
-            meepleImage = ImageTk.PhotoImage(Image.open(rf'Images/blue.png').resize((50,50)), master=self.c)
-            self.stock.append(meepleImage)
-            self.c.create_image(1585 + (i * 25),270, image=meepleImage)
-    
-    ## Draws curent score and who's turn it is
-    def scoreBoard(self):
-        score = self.carcassonne.getScore()
-        self.scoreLabel.configure(text=f'Score: Red {score[0]} | Blue {score[1]}')
-
-        toMove = 'Red' if self.carcassonne.state.currentPlayer == 0 else 'Blue'
-        self.toMoveLabel.configure(text=f'{toMove} to play', fg=toMove)
-        
-        self.turnsLabel.configure(text=f'{72 - self.carcassonne.state.turn} turns left')
-
-    def drawCurrTile(self):
-        tile = self.carcassonne.state.currentTile[self.orientation]
-        img = Image.open(rf'Images/tile-{tile.imgCode}.png').resize((100,100))
-        imgR = rotateImage(img, tile.orientation)
-        imgTk = ImageTk.PhotoImage(imgR, master=self.c)
-        
-        self.currTileImg = imgTk
-        self.c.create_image(1375,125,image=imgTk)
-
-    def endScreen(self):
-        score = self.carcassonne.finalScore()
-        self.finalScore = tkinter.Label(self.c, text=f"Game Over! Red {score[0]} | Blue {score[1]}", font=("Arial",25))
-        self.finalScore.place(x=600, y=100)
-        winText = 'Red Wins!' if score[0] > score[1] else 'Blue Wins!' if score[1] > score[0] else 'Tie!'
-        self.winner = tkinter.Label(self.c, text=winText,font=("Arial",25))
-        self.winner.place(x=600, y=300)
-
-        self.newGameButton =tkinter.Button(self.c, text="New Game?", font=("Arial",25),command=self.newGame)
-        self.newGameButton.place(x=600, y=500)
-
-        self.rotateButton["state"] = "disabled"
-
-    def newGameB(self):
-        self.c.pack_forget()
-        self.spawnGame()
 
     def newGame(self):
-        self.finalScore.place_forget()
-        self.winner.place_forget()
-        self.newGameButton.place_forget()
-
-        self.c.pack_forget()
-      
-        self.spawnGame()
+        self.endScore.setText("")
+        self.endBtn.hide()
+        self.rotateBtn.setEnabled(True)
+        self.ScoreLabel.setText("Score: Red 0 | Blue 0")
+        self.TurnsLabel.setText("Turns Remaining: 32")
 
 
-    ################
-    #
-    #   BOARD DRAWS
-    #
-    ################
-    def drawTile(self, x,y,tile):
-        img = Image.open(rf'Images/tile-{tile.imgCode}.png').resize((self.TILESIZE,self.TILESIZE))
-        imgR = rotateImage(img, tile.orientation)
-        imgTk = ImageTk.PhotoImage(imgR, master=self.c)
-        self.images.append(imgTk)
-        self.c.create_image(self.cX + (self.TILESIZE*x),self.cY + (self.TILESIZE*y),image=imgTk)
+        ### BOARD TILE REFS
+        self.tileLabels = []
+        self.meepleLabels = {}
 
-    def drawMeeple(self, x,y,feature:Feature):
-        if self.carcassonne.state.currentPlayer == 0:
-            col = 'red'
-        else:
-            col = 'blue'
-        meepleImage = ImageTk.PhotoImage(Image.open(rf'Images/{col}.png').resize((30,30)), master=self.c)
-     
-        self.meeples[(x,y)] = meepleImage
-        mx = self.cX + (self.TILESIZE*x)
-        my = self.cY + (self.TILESIZE*y)
+        ## TILE PLACEMENT REFS
+        self.tilePlaceBtns = []
+        self.meeplePlaceBtns = []
 
-        SHORT = 22
-        LONG = 25
+        self.game = Game(players=[HumanAgent(), MCTS_Saver(info='Heuristic')])
+        #self.game = Game(players=[HumanAgent(), HumanAgent()], order=[24,20,13,6,53,56,18])
+        self.game.state.turn = 40
+        self.currentOrientation = 0
+
+        self.drawTile(0,0,self.game.state.board.board[(0,0)].tile)
+        self.tileLocations()
+        self.drawCurrTile()
+        self.createMeepleStock()
+        self.updateMeeples()
+
+    def endGame(self):
+        self.rotateBtn.setEnabled(False)
+        fscore = self.game.finalScore()
+        self.endScore.setText(f"Final Score:   Red  {fscore[0]}  |  Blue  {fscore[1]}")
+        self.endScore.raise_()
+        self.endBtn.show()
+        self.endBtn.raise_()
+
+    #### UI REMOVERS
+    def popTile(self):
+        lb = self.tileLabels.pop()
+        lb.setParent(None)
+        del lb
+
+    def delPlaceTiles(self):
+        for btn in self.tilePlaceBtns:
+            btn.setParent(None)
+        self.tilePlaceBtns = []
+
+    def delPlaceMeeples(self):
+        for btn in self.meeplePlaceBtns:
+            btn.setParent(None)
+        self.meeplePlaceBtns = []
+
+    def randPlay(self):
+        actions = self.game.getActions()
+        action = random.choice(actions)
+        ## add tile and meeple to board
+        self.drawTile(action.x, action.y, action.tile)
+        if action.meeple:
+            self.drawMeeple(action.x, action.y, action.feature)
+        
+        ## apply action
+        self.playTile(action)
+
+    #### BOARD DRAWS
+    def drawTile(self, x, y, tile):
+        tileLabel = QtWidgets.QLabel(self.centralwidget)
+        tileLabel.setGeometry(self.cX+(x*self.tileSize), self.cY+(y*self.tileSize), self.tileSize, self.tileSize)
+        tileImage = QPixmap(rf'Images/tile-{tile.imgCode}.png').transformed(QtGui.QTransform().rotate(90 * tile.orientation))
+        tileLabel.setPixmap(tileImage)
+        tileLabel.setScaledContents(True)
+        self.tileLabels.append(tileLabel)
+        tileLabel.show()
+
+    def drawMeeple(self, x, y, feature):
+        print(feature)
+        mx = self.cX + (self.tileSize*x) + self.halfSize - self.halfMeeple
+        my = self.cY + (self.tileSize*y) + self.halfSize - self.halfMeeple
+
+        col = 'red' if self.game.state.currentPlayer == 0 else 'blue'
+        
+        SHORT = 15
+        LONG = 22
         if feature.featType == FeatType.CHAPEL:
             mx += 0
         elif feature.featType is not FeatType.GRASS:
@@ -265,189 +444,234 @@ class app:
             else:
                 mx -= LONG
                 my -= SHORT
-        self.c.create_image(mx, my, image=meepleImage)
-
-    
-    def drawBestTile(self, tile, ind, act):
-        img = Image.open(rf'Images/tile-{tile.imgCode}.png').resize((90,90))
-        imgR = rotateImage(img, tile.orientation)
-        imgTk = ImageTk.PhotoImage(imgR, master=self.c)
-        self.bestAgentTiles.append(imgTk)
-        self.c.create_image(1600, 550 + (120 * ind), image=imgTk)
-        colors = ['orange', 'green', 'yellow']
-        self.bestAgentRectangles[ind] = self.c.create_rectangle(
-            self.cX + (act.x * self.TILESIZE) + (ind * 2) - (self.TILESIZE / 2), 
-            self.cY + (act.y * self.TILESIZE) + (ind * 2) - (self.TILESIZE / 2), 
-            self.cX + (act.x * self.TILESIZE) + self.TILESIZE - (ind * 2) - (self.TILESIZE / 2), 
-            self.cY + (act.y * self.TILESIZE) + self.TILESIZE - (ind * 2) - (self.TILESIZE / 2), 
-            outline=colors[ind], width=5)
-    
-
-
-    def drawBestMeeple(self, action, ind):
-        col = self.carcassonne.currentPlayer().color
-        img = Image.open(rf'Images/{col}.png').resize((30,30))
-        imgTk = ImageTk.PhotoImage(img, master=self.c)
-        self.bestAgentMeeples.append(imgTk)
-        mx = 1600
-        my = 550 + (120 * ind)
-        long = 20
-        short = 15
-        if action.feature.featType == FeatType.CHAPEL:
-            mx += 0
-        elif action.feature.featType is not FeatType.GRASS:
-            edge = action.feature.edges[0]
-            if edge == 0:
-                my -= long
-            elif edge == 1:
-                mx += long
-            elif edge == 2:
-                my += long
-            else:
-                mx -= long
-        else:
-            edge = action.feature.edges[0]
-            if edge == 0:
-                mx -= short
-                my -= long
-            elif edge == 1:
-                mx += short
-                my -= long
-            elif edge == 2:
-                mx += long
-                my -= short
-            elif edge == 3:
-                mx += long
-                my += short
-            elif edge == 4:
-                mx += short
-                my += long
-            elif edge == 5:
-                mx -= short
-                my += long
-            elif edge == 6:
-                mx -= long
-                my += short
-            else:
-                mx -= long
-                my -= short
-        self.c.create_image(mx,my,image=imgTk)
-
-
-    ####################
-    #
-    #   CORE LOGIC LOOP
-    #
-    ####################
-
-    ### LOGIC LOOP:
-        ## draw locations --->  play tile ---> meeple options ----> draw locations
-        ##                |---> rotate current tile ---> draw locations
-
-
-    ## Check for and report score change
-    def checkScore(self, prevScore):
-        currScore = self.carcassonne.getScore()
-        if prevScore != currScore:
-            if currScore[0] > prevScore[0] and currScore[1] > prevScore[1]:
-                txt = f"Score! Red earned {currScore[0]-prevScore[0]} and Blue earned {currScore[1]-prevScore[1]} points!"
-            elif currScore[0] > prevScore[0] and currScore[1] == prevScore[1]:
-                txt = f'Score! Red earned {currScore[0]-prevScore[0]} points!'
-            elif currScore[0] == prevScore[0] and currScore[1] > prevScore[1]:
-                txt = f'Score! Blue earned {currScore[1]-prevScore[1]} points!'
-            scoreLabel = tkinter.Label(self.c, text=txt, font=("Arial",25),bg=self.CANVASBG)
-            scoreLabel.place(x=650,y=75)
-            self.t.after(3000, scoreLabel.destroy)
-
-
-    ## Rotate current tile and redraw open locatons
-    ## Callback flow: DRAWLOCATION
-    def rotate(self):
-        currTiles = self.carcassonne.state.currentTile
-        max = len(currTiles)
-        self.orientation = (self.orientation + 1) % max
-        self.drawCurrTile()
-        self.drawLocations() 
-
-
-    ## Carry out the meeple decision, destroy spawned buttons and score
-    ## Callback flow: DRAWLOCATIONS
-    def meepleOption(self, action:Action):
-        self.confirmationButton.place_forget()
-        self.cancelButton.place_forget()
-        prevScore = self.carcassonne.getScore()
-        completed = self.carcassonne.applyAction(action)
-       
-        self.orientation = 0
-
-        ## if meeples were scored, we forget their image to undraw them
-        for loc in completed:
-            del self.meeples[loc]
-
-        self.checkScore(prevScore)
-
-        if self.carcassonne.gameOver():
-            self.endScreen()
-
-        else:  
-            self.scoreBoard()
-            self.drawCurrTile()
-            self.meepleStock()
-
-            if self.carcassonne.currentPlayer().agent.type != 'Human':
-                threading.Thread(target=self.agentResponse).start()
-
-            else:
-                self.drawLocations()
-
-    def agentResponse(self):
-        self.rotateButton["state"] = "disabled"
-        self.closeBtn["state"] = "disabled"
-        self.newGameBtn["state"] = "disabled"
-
-        self.stats = []
-        self.bestAgentTiles = []
-        self.currActions = self.carcassonne.getActions()
-        response = self.carcassonne.currentPlayer().agent.getResponse(self.trackCalculation,self.carcassonne,self.carcassonne.currentPlayerId())
         
-        prevScore = self.carcassonne.getScore()
-        self.drawTile(response.x,response.y,response.tile)
-        if response.meeple:
-            self.drawMeeple(response.x,response.y,response.feature)
-        completed = self.carcassonne.applyAction(response)
-        self.checkScore(prevScore)
-    
+        
+        meepleLabel = QtWidgets.QLabel(self.centralwidget)
+        meepleLabel.setGeometry(mx,my,self.meepleSize, self.meepleSize)
+        
+        meepleImage = QPixmap(rf'Images/{col}.png')
+        if feature.featType == FeatType.GRASS:
+            meepleImage = meepleImage.transformed(QtGui.QTransform().rotate(90))
+        meepleLabel.setPixmap(meepleImage)
+        meepleLabel.setScaledContents(True)     
+        self.meepleLabels[(x,y)] = meepleLabel
+        meepleLabel.show()
 
-    
-        for loc in completed:
-            del self.meeples[loc]  
+    def removeMeeples(self, removed):
+        for loc in removed:
+            self.meepleLabels.get(loc).setHidden(True)
 
-        self.orientation = 0
-        if self.carcassonne.gameOver():
-            self.endScreen()
+    #### MENU DRAWS
+    def drawCurrTile(self):
+        tile = self.game.state.currentTile[self.currentOrientation]
+        tileImg = QPixmap(rf'Images/tile-{tile.imgCode}.png').transformed(QtGui.QTransform().rotate(90 * tile.orientation))
+        self.currTile.setPixmap(tileImg)
 
+    def rotate(self):
+        self.currentOrientation = (self.currentOrientation + 1) % len(self.game.state.currentTile)
+        self.drawCurrTile()
+        self.delPlaceTiles()
+        self.tileLocations()
+
+    def checkScore(self, prev, curr):
+        if curr != prev:
+            if curr[0] > prev[0] and curr[1] > prev[1]:
+                txt = f"Score! Red earned {curr[0]-prev[0]} and Blue earned {curr[1]-prev[1]} points!"        
+            elif curr[0] > prev[0] and curr[1] == prev[1]:
+                txt = f'Score! Red earned {curr[0]-prev[0]} points!'
+            elif curr[0] == prev[0] and curr[1] > prev[1]:
+                txt = f'Score! Blue earned {curr[1]-prev[1]} points!'
+            
+            self.scorePop.setText(txt)
+            self.scorePop.setHidden(False)
+            self.ScoreLabel.setText(f'Score: Red {curr[0]} | Blue {curr[1]}')
+            QtCore.QTimer.singleShot(4000, lambda: self.scorePop.setHidden(True))
+
+    def createMeepleStock(self):
+        self.redMeepStock = []
+        self.redMeep = QPixmap('Images/red.png')
+        self.blueMeepStock = []
+        self.blueMeep = QPixmap('Images/blue.png')
+
+        mx = self.menuX + self.meepleSize
+        my = self.MeeplesFrame.y() + 60
+
+        for i in range(self.game.state.players[0].meepleCount):
+            mStock = QtWidgets.QLabel(self.centralwidget)
+            mStock.setGeometry(mx + (self.halfMeeple) * i, my, self.meepleSize, self.meepleSize)
+            mStock.setPixmap(self.redMeep)
+            mStock.setScaledContents(True)
+            self.redMeepStock.append(mStock)
+        
+        my = self.MeeplesFrame.y() + 65 + self.meepleSize
+        for i in range(self.game.state.players[1].meepleCount):
+            mStock = QtWidgets.QLabel(self.centralwidget)
+            mStock.setGeometry(mx + (self.halfMeeple) * i, my, self.meepleSize, self.meepleSize)
+            mStock.setPixmap(self.blueMeep)
+            mStock.setScaledContents(True)
+            self.blueMeepStock.append(mStock)
+
+    def updateMeeples(self):
+        for i in range(7):
+            self.redMeepStock[i].setHidden(True)
+            self.blueMeepStock[i].setHidden(True)
+        for i in range(self.game.state.players[0].meepleCount):
+            self.redMeepStock[i].setHidden(False)
+        for i in range(self.game.state.players[1].meepleCount):
+            self.blueMeepStock[i].setHidden(False)
+        
+        self.redMeepLabel.setText(f"{self.game.state.players[0].meepleCount}: ")
+        self.blueMeepLabel.setText(f"{self.game.state.players[1].meepleCount}: ")
+
+
+
+        # self.carcLogo = QtWidgets.QLabel(self.centralwidget)
+        # self.carcLogo.setGeometry(QtCore.QRect(15, 15, 300, 81))
+        # self.carcImg = QPixmap('Images/logo.png')
+        # self.carcLogo.setPixmap(self.carcImg)
+        # self.carcLogo.setScaledContents(True)
+
+    ### GAMEPLAY LOGIC LOOP
+    def startTurn(self):
+        self.delPlaceTiles()
+        self.delPlaceMeeples()
+
+        self.drawCurrTile()
+        self.TurnsLabel.setText(f"Turns Remaining: {72 - self.game.state.turn}")
+        self.updateMeeples()
+
+        if self.game.currentPlayer().agent.type == 'Human':
+            self.tileLocations()
         else:
-            self.scoreBoard()
-            self.drawCurrTile()
-            self.drawLocations()
-            self.meepleStock()
+            self.progressBar.setValue(0)
+            self.rotateBtn.setEnabled(False)
+            self.NewGameBtn.setEnabled(False)
+            self.stats = []
+            self.currentActions = self.game.getActions()
+            threading.Thread(target=lambda: self.agent.agentResponse(self.game)).start()
 
-        self.rotateButton["state"] = "normal"
-        self.closeBtn["state"] = "normal"
-        self.newGameBtn["state"] = "normal"
-        self.c.after(1500, lambda: [self.c.delete(self.bestAgentRectangles[i]) for i in range(3)])
-            #self.c.delete(self.bestAgentRectangles[i])
+    
+    def tileLocations(self):
+        self.rotateBtn.setEnabled(True)
+        validActions = [action for action in self.game.getActions() if action.tile.orientation == self.currentOrientation and action.meeple is False]
+    
+        for action in validActions:
+            placeBtn = QtWidgets.QPushButton(self.centralwidget)
+            placeBtn.setGeometry(self.cX+(action.x*self.tileSize), self.cY+(action.y*self.tileSize), self.tileSize, self.tileSize)
+            #placeBtn.setText(f"{action.x}, {action.y}")
+            placeBtn.clicked.connect(partial(self.placeTile, action))
+            self.tilePlaceBtns.append(placeBtn)
+            placeBtn.show()
+
+    def placeTile(self, action):
+        self.drawTile(action.x, action.y, action.tile)
+        self.delPlaceTiles()
+        self.rotateBtn.setEnabled(False)
+
+        meepleActions = [act for act in self.game.getActions() if act.tile.orientation == action.tile.orientation and act.x == action.x and act.y == action.y and act.meeple]
+        for mAction in meepleActions:
+            meepX = self.cX + (action.x*self.tileSize) + self.halfSize - self.halfMeeple
+            meepY = self.cY + (action.y*self.tileSize) + self.halfSize - self.halfMeeple
+
+            if mAction.feature.featType == FeatType.GRASS:
+                edge = mAction.feature.edges[0]
+                if edge == 7 or edge == 0:
+                    meepX -= (self.halfSize - 10)
+                    meepY -= (self.halfSize - 10)
+                elif edge == 1 or edge == 2:
+                    meepX += (self.halfSize - 10)
+                    meepY -= (self.halfSize - 10)
+                elif edge == 3 or edge == 4:
+                    meepX += (self.halfSize - 10)
+                    meepY += (self.halfSize - 10)
+                else:
+                    meepX -= (self.halfSize - 10)
+                    meepY += (self.halfSize - 10)
+            elif mAction.feature.featType == FeatType.CITY or mAction.feature.featType == FeatType.ROAD:
+                edge = mAction.feature.edges[0]
+                if edge == 0:
+                    meepY -= self.halfSize
+                elif edge == 1:
+                    meepX += self.halfSize
+                elif edge == 2:
+                    meepY += self.halfSize
+                else:
+                    meepX -= self.halfSize
 
 
-    ## A callback to track the current mcts evluation
-    def trackCalculation(self, info):
+            placeMeeple = QtWidgets.QPushButton(self.centralwidget)
+            placeMeeple.setGeometry(meepX, meepY, self.meepleSize, self.meepleSize)
+
+            placeMeeple.setFlat(True)
+            placeMeeple.setStyleSheet("QPushButton { background-color: transparent }")
+            placeMeeple.setIcon(QtGui.QIcon('Images/place.png'))
+            placeMeeple.setIconSize(QSize(self.meepleSize + 15, self.meepleSize + 15))
+
+            placeMeeple.clicked.connect(partial(self.playTile, mAction))
+
+            self.meeplePlaceBtns.append(placeMeeple)
+            placeMeeple.show()
+
+        placeMeeple = QtWidgets.QPushButton(self.centralwidget)
+        placeMeeple.setGeometry(self.cX + (action.x*self.tileSize) + self.tileSize, self.cY + (action.y*self.tileSize) + self.tileSize, self.meepleSize, self.meepleSize)
+        placeMeeple.setFlat(True)
+        placeMeeple.setStyleSheet("QPushButton { background-color: transparent }")
+        placeMeeple.setIcon(QtGui.QIcon('Images/noMeeple.png'))
+        placeMeeple.setIconSize(QSize(self.meepleSize, self.meepleSize))
+
+        placeMeeple.clicked.connect(partial(self.playTile, action))
+
+        self.meeplePlaceBtns.append(placeMeeple)
+        placeMeeple.show()
+
+        cancelTile = QtWidgets.QPushButton(self.centralwidget)
+        cancelTile.setGeometry(self.cX + (action.x*self.tileSize) - self.halfSize, self.cY + (action.y*self.tileSize) + self.tileSize, self.meepleSize, self.meepleSize)
+        cancelTile.setFlat(True)
+        cancelTile.setStyleSheet("QPushButton { background-color: transparent }")
+        cancelTile.setIcon(QtGui.QIcon('Images/cancelTile.png'))
+        cancelTile.setIconSize(QSize(self.meepleSize, self.meepleSize))
+
+        cancelTile.clicked.connect(partial(self.cancelTile, cancelTile))
+
+        self.meeplePlaceBtns.append(cancelTile)
+        cancelTile.show()
+
+    def cancelTile(self, cancelBtn):
+        self.popTile()
+        self.startTurn()
+
+
+    def playTile(self, action):
+        if action.meeple:
+            self.drawMeeple(action.x, action.y, action.feature)
+
+        prevScore = self.game.getScore()
+        removed = self.game.applyAction(action)
+        newScore = self.game.getScore()
+        self.checkScore(prevScore, newScore)
+        self.removeMeeples(removed)
+        self.currentOrientation = 0
+
+        if self.game.gameOver():
+            self.endGame()
+        else:
+            self.startTurn()
+
+    def agentPlay(self, action):
+        self.rotateBtn.setEnabled(True)
+        self.NewGameBtn.setEnabled(True)
+        self.drawTile(action.x, action.y, action.tile)
+        QtCore.QTimer.singleShot(3000, lambda: [estimateLoc.hide() for estimateLoc in self.estimateLocs])
+        self.playTile(action)
+
+    def trackProgress(self, info):
         self.stats.append(info)
 
         rank = []
         self.bestAgentMeeples = []
-        for i in range(3):
-            self.c.delete(self.bestAgentRectangles[i])
-        
+
+        self.progressBar.setValue(self.progressBar.value() + 20)
+    
         for i in range(len(self.stats[0])):
             avg_ucb = 0.0
             ## and the inner loop ranges the number of determinzations
@@ -457,190 +681,112 @@ class app:
                 
             avg_ucb = avg_ucb / len(self.stats)
             rank.append(avg_ucb)
-        
+
         for i in range(3):
             ind = rank.index(max(rank))
-            act = self.currActions[ind]
-            self.drawBestTile(act.tile, i, act)
-            self.bestAgentInfos[i].configure(text="Score: {:0.2f}".format((rank[ind])))
-            if act.meeple:
-                self.drawBestMeeple(act, i)
+            act = self.currentActions[ind]
+            self.drawBestTile(act, i)
+            #self.bestAgentInfos[i].configure(text="Score: {:0.2f}".format((rank[ind])))
+            self.estimateScores[i].setText("Score: {:0.2f}".format((rank[ind])))
             rank[ind] = -math.inf
+        print(max(rank))
 
-    ## draw in the new tile and spawn buttons for meeple options
-    ## callback flow: MEEPLE OPTION
-    def playTile(self, l, o):
-        action = next((act for act in self.carcassonne.getActions() if act.x == l[0] and act.y == l[1] and act.tile.orientation == o), None)
-        self.drawTile(action.x,action.y,action.tile)
-        
+    def drawBestTile(self, action, polePos):
+        self.firstBorder.setPixmap(self.orange)
+        self.secondBorder.setPixmap(self.purple)
+        self.thirdBorder.setPixmap(self.green)
 
-        for b in self.buttons:
-            b.place_forget()
-        self.buttons = []
-        allActions = [act for act in self.carcassonne.getActions() if act.x == l[0] and act.y == l[1] and act.tile.orientation == o and act.feature is not None]
-        for a in allActions:
-            bx = self.cX + (self.TILESIZE*l[0]) - 15
-            by = self.cY + (self.TILESIZE*l[1]) - 15
-            LONG = 60
-            SHORT = 40
-            vertical = True
-            bgCol = 'red' if self.carcassonne.state.currentPlayer == 0 else 'blue'
-            imgPath = ''
+        self.estimateLocs[polePos].setGeometry(self.cX + action.x * (self.tileSize) + (2 * polePos), self.cY + action.y * (self.tileSize) + (2 * polePos), self.tileSize - (4*polePos), self.tileSize - (4*polePos))
+        self.estimateLocs[polePos].show()
 
+        img = QPixmap(f'Images/tile-{action.tile.imgCode}.png').transformed(QtGui.QTransform().rotate(90 * action.tile.orientation))
+        self.estimateLabels[polePos].setPixmap(img)
+        meep = self.blueMeep
 
-            if a.feature.featType is FeatType.CHAPEL:
-                bg = '#0ec5db'
-                bx += 10
-                by += 10
-                imgPath = 'Images/chapel.png'
-            elif a.feature.featType is not FeatType.GRASS:
-                bg = '#daa412'
-                edge = a.feature.edges[0]
-                if edge == 0:
-                    by -= (LONG + 10)
-                elif edge == 1:
-                    bx += LONG
-                    vertical = False
-                elif edge == 2:
-                    by += LONG
-                else:
-                    bx -= (LONG + 10)
-                    vertical = False
-
-                if a.feature.featType is FeatType.CITY:
-                    imgPath = 'Images/city.png' if vertical else 'Images/cityH.png'
-                else:
-                    imgPath = 'Images/road.png' if vertical else 'Images/roadH.png'
-            else:
-                bg = '#15990a'
-                edge = a.feature.edges[0]
-                if edge == 0:
-                    by -= LONG
-                    bx -= SHORT
-                elif edge == 1:
-                    by -= LONG
-                    bx += SHORT
-                elif edge == 2:
-                    bx += LONG
-                    by -= SHORT
-                    vertical = False
-                elif edge == 3:
-                    bx += LONG
-                    by += SHORT
-                    vertical = False
-                elif edge == 4:
-                    by += LONG
-                    bx += SHORT
-                elif edge == 5:
-                    by += LONG
-                    bx -= SHORT
-                elif edge == 6:
-                    bx -= LONG
-                    by += SHORT
-                    vertical = False
-                else:
-                    bx -= LONG
-                    by -= SHORT
-                    vertical = False
-                
-                imgPath = 'Images/grass.png' if vertical else 'Images/grassH.png'
-
-        
-            img = tkinter.PhotoImage(file=imgPath)
-            self.meepleButtonImgs.append(img)
-            b = tkinter.Button(self.c, command=partial(self.confirmation,a),image=img,borderwidth=1, bg=bgCol)
-            b.place(x=bx,y=by)
-            self.meepleButtons.append(b)
-        
-        ## Don't place meeple option
-        b = tkinter.Button(self.c,command=partial(self.confirmation,action), height=2, width=3, text='None',font=("Arial",10), background='#cebbd2')
-        b.place(x=self.cX + (self.TILESIZE*l[0]) + 75, y = self.cY + (self.TILESIZE*l[1]) +75)
-        self.meepleButtons.append(b)
-
-        ## Cancel placement button
-        b2 = tkinter.Button(self.c,command=self.cancelPlacement,height=2,width=3,text='Cancel',font=("Arial",10) ,background='#cebbd2')
-        b2.place(x=self.cX + (self.TILESIZE*l[0]) - 125, y=self.cY + (self.TILESIZE*l[1]) + 75)
-        self.meepleButtons.append(b2)
-
-    
-    def confirmation(self, action):
-        for b in self.meepleButtons:
-            b.place_forget()
-        self.meepleButtons = []
-        self.meepleButtonImgs = []
-
-        ## draw meeple on tile if specified
-        if action.meeple:
-            self.drawMeeple(action.x,action.y,action.feature)
-
-        self.confirmationButton = tkinter.Button(self.c, command=partial(self.meepleOption,action), text='Confirm', font=("Arial",10), height=2, width=3,background='#cebbd2')
-        self.confirmationButton.place(x=self.cX + (self.TILESIZE*action.x) + 50,y=self.cY + (self.TILESIZE*action.y) + 50)
-
-        self.cancelButton = tkinter.Button(self.c, command=partial(self.cancelMeeple,action), text='Cancel', font=("Arial",10), height=2, width=3,background='#cebbd2')
-        self.cancelButton.place(x=self.cX + (self.TILESIZE*action.x) - 100,y=self.cY + (self.TILESIZE*action.y) + 50)
-    
-    def cancelMeeple(self, action):
-        if (action.x,action.y) in self.meeples.keys():
-            del self.meeples[(action.x,action.y)]
-        self.images.pop()
-        self.confirmationButton.place_forget()
-        self.cancelButton.place_forget()
-        self.drawLocations()
-
-    def cancelPlacement(self):
-        self.images.pop()
-        for b in self.meepleButtons:
-            b.place_forget()
-        self.meepleButtons = []
-        self.meepleButtonImgs = []
-
-        self.drawLocations()
-
-    ## draw valid locations for current tile
-    ## callback flow: PLAYTILE
-    def drawLocations(self):
-        for b in self.buttons:
-            b.place_forget()
-        self.buttons = []
-
-        validLocations = set()
-        [validLocations.add((action.x, action.y)) for action in self.carcassonne.getActions() if (action.x,action.y) not in validLocations and action.tile.orientation == self.orientation]
-
-        for loc in validLocations:
-            b = tkinter.Button(self.c, command=partial(self.playTile,loc,self.orientation), height=2, width=3, text='', bg='#a1a28c',activebackground='#eef821')
-            b.place(x=self.cX + (self.TILESIZE*loc[0]) - 25, y=self.cY + (self.TILESIZE*loc[1]) - 25)
-            self.buttons.append(b)
-
-
-    def play0(self):
-        response = random.choice(self.carcassonne.getActions())
-        completed = self.carcassonne.applyAction(response)
-     
-        self.drawTile(response.x,response.y,response.tile)
-        if response.meeple:
-            self.drawMeeple(response.x,response.y,response.feature)
-       
-
-
-        
-        for loc in completed:
-            del self.meeples[loc]  
-
-        self.orientation = 0
-        if self.carcassonne.gameOver():
-            self.endScreen()
-
+        if action.meeple is False:
+            self.estimateMeeples[polePos].setHidden(True)
         else:
-            self.scoreBoard()
-            self.drawCurrTile()
-            self.drawLocations()
-            self.meepleStock()
+            mx = self.estimateLabels[polePos].x() + self.halfMeeple
+            my = self.estimateLabels[polePos].y() + self.halfMeeple
+
+            feature = action.feature
+            SHORT = 15
+            LONG = 22
+            if feature.featType == FeatType.CHAPEL:
+                mx += 0
+            elif feature.featType is not FeatType.GRASS:
+                edge = feature.edges[0]
+                if edge == 0:
+                    my -= LONG
+                elif edge == 1:
+                    mx += LONG
+                elif edge == 2:
+                    my += LONG
+                else:
+                    mx -= LONG
+            else:
+                meep = meep.transformed(QtGui.QTransform().rotate(90))
+                edge = feature.edges[0]
+                if edge == 0:
+                    mx -= SHORT
+                    my -= LONG
+                elif edge == 1:
+                    mx += SHORT
+                    my -= LONG
+                elif edge == 2:
+                    mx += LONG
+                    my -= SHORT
+                elif edge == 3:
+                    mx += LONG
+                    my += SHORT
+                elif edge == 4:
+                    mx += SHORT
+                    my += LONG
+                elif edge == 5:
+                    mx -= SHORT
+                    my += LONG
+                elif edge == 6:
+                    mx -= LONG
+                    my += SHORT
+                else:
+                    mx -= LONG
+                    my -= SHORT
+
+            self.estimateMeeples[polePos].setScaledContents(True)
+            self.estimateMeeples[polePos].setGeometry(mx, my, self.meepleSize, self.meepleSize)
+            self.estimateMeeples[polePos].setPixmap(meep)
+            self.estimateMeeples[polePos].setHidden(False)
+            self.estimateMeeples[polePos].raise_()
+
+
+
+class Agent(QObject):
+    res = pyqtSignal(Action)
+    best = pyqtSignal(list)
+    #### AGENT TURN
+    def agentResponse(self, game):
+
+        # self.rotateBtn.setEnabled(False)
+        # self.NewGameBtn.setEnabled(False)
+
+        self.stats = []
+        self.bestAgentTiles = []
+        self.currentActions = game.getActions()
+
+
         
+        ## The call to the agent
+        response = game.currentPlayer().agent.getResponse(self.trackProgress,game,game.currentPlayerId())
+        
+        # self.rotateBtn.setEnabled(True)
+        # self.NewGameBtn.setEnabled(True)
+        self.res.emit(response)
 
-if __name__=="__main__":
-    demo = app()
-    demo.init()
+    def trackProgress(self, info):
+        self.best.emit(info)
+
+    
 
 
-
-
+main = Ui_MainWindow()
+main.init()

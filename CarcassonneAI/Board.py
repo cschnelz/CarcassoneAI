@@ -265,7 +265,8 @@ class Board:
                     newField.meepled.extend(field.meepled) 
                     newField.coordsMeepled.extend(field.coordsMeepled)
 
-                newField.tracked.update(field.tracked)
+                #newField.tracked.update(field.tracked)
+                
                 for node, edgeList in field.tracked.items():
                     if node in newField.tracked.keys():
                         newField.tracked[node] = list(set(newField.tracked.get(node).extend(edgeList)))

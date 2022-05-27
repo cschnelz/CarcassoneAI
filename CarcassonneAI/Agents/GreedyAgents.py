@@ -12,7 +12,6 @@ import copy
 import string
 
 import multiprocessing
-from Feature import FeatType
 
 
 class GreedyAgent(Agent):

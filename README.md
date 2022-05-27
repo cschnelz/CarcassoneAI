@@ -44,7 +44,7 @@ Running
 python3.9 app.py
 ```
 
-Launches a game where a human player competes 1 on 1 with the leading agent (currently, the heuristic-based MCTS agent)
+launches a game where a human player competes 1 on 1 with the leading agent (currently, the heuristic-based MCTS agent)
 
 ### Using the API
 

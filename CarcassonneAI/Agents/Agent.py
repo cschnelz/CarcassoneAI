@@ -26,6 +26,7 @@ class Agent(ABC):
 class HumanAgent(Agent):
     def __init__(self, info=None) -> None:
         super().__init__(info)
+        self.type = 'Human'
     def getResponse(self, validActions, game=None, maxPlayer=None):
         os.system('cls' if os.name == 'nt' else 'clear')
         

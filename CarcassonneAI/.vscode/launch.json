@@ -9,7 +9,7 @@
             "type": "python",
             "request": "launch",
             //"program": "ApiTests.py",
-            "program": "app.py",
+            "program": "app2.py",
             "console": "integratedTerminal",
             //"args": ["19", "43", "25","34","14","24","28","41"]
         }

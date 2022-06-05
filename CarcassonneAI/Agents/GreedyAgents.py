@@ -15,7 +15,7 @@ import multiprocessing
 from Feature import FeatType
 
 
-class GreedyAgent(Agent):
+class GreedyAgent():
     if TYPE_CHECKING:
         from Game import Game
         from Action import Action
@@ -142,7 +142,7 @@ class Greedy3(Agent):
         return cumulative / tiles_dispatched, action
     
  
-class GreedyDeterminized(Agent):
+class GreedyDeterminized():
     if TYPE_CHECKING:
         from Game import Game
         from Action import Action

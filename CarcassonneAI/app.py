@@ -333,7 +333,7 @@ class Ui_MainWindow(object):
         self.endBtn.hide()
         self.rotateBtn.setEnabled(True)
         self.ScoreLabel.setText("Score: Red 0 | Blue 0")
-        self.TurnsLabel.setText("Turns Remaining: 32")
+        self.TurnsLabel.setText("Turns Remaining: 22")
 
 
         ### BOARD TILE REFS
@@ -346,7 +346,7 @@ class Ui_MainWindow(object):
 
         self.game = Game(players=[HumanAgent(), MCTS_Saver(info='Heuristic')])
         #self.game = Game(players=[HumanAgent(), HumanAgent()], order=[24,20,13,6,53,56,18])
-        self.game.state.turn = 40
+        self.game.state.turn = 50
         self.currentOrientation = 0
 
         self.drawTile(0,0,self.game.state.board.board[(0,0)].tile)

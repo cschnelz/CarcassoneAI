@@ -551,18 +551,21 @@ class Greedy2:
             
 
             ## for this action, what the avg evaluation look like across sampled determinizations?
-            for det in determinzations:
+            if game.state.turn < 71:
+                for det in determinzations:
 
-                if mutable.dispatchSpecific(det[0]):
-                    self.action_stack.append(action)
-                    ## two deep greedy search the continuation
-                    curr_eval, ret = self.search2(mutable, game, det[1:len(det)], depth, 'zero')
-                    ## accrue stats
-                    avg_eval += curr_eval
-                    examined += 1.0
-                    self.action_stack.pop() 
-                else:
-                    self.misses += 1
+                    if mutable.dispatchSpecific(det[0]):
+                        self.action_stack.append(action)
+                        ## two deep greedy search the continuation
+                        curr_eval, ret = self.search2(mutable, game, det[1:len(det)], depth, 'zero')
+                        ## accrue stats
+                        avg_eval += curr_eval
+                        examined += 1.0
+                        self.action_stack.pop() 
+                    else:
+                        self.misses += 1
+            else:
+                avg_eval = mutable.scoreDelta()
                     
             ## find average after examining the determinzations and compare it to current best
             if examined > 0:

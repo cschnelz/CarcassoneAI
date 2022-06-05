@@ -31,10 +31,9 @@ def launch():
 
 def launch2():
     #carcassonne = Game(players=[MCTS_Saver(info='Heuristic'), MCTS_Saver(info='Rollout')])
-    carcassonne = Game(players=[Greedy2(), GreedyAgent()])
+    carcassonne = Game(players=[GreedyAgent(), Greedy2()])
     rend = Renderer()
     #carcassonne.render(rend)
-
     
     while(carcassonne.gameOver() is False):
         start_time = time.time()
